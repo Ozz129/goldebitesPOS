@@ -1,0 +1,530 @@
+<!doctype html>
+<html lang="es-CO">
+<head>
+<meta charset="UTF-8" />
+<title>Manual de Usuario — Golden Bites Admin</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<style>
+  :root {
+    --gold: #B8862B;
+    --gold-dark: #8a6420;
+    --ink: #1a1a1a;
+    --gray: #5a5a5a;
+    --line: #dcdcdc;
+    --bg-soft: #faf8f4;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #e9e9e9;
+    font-family: 'Georgia', 'Times New Roman', serif;
+    color: var(--ink);
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  }
+  .page {
+    max-width: 780px;
+    margin: 0 auto;
+    background: #fff;
+    padding: 56px 64px;
+  }
+  @media screen {
+    .page { margin: 24px auto; box-shadow: 0 0 24px rgba(0,0,0,0.15); }
+  }
+
+  /* ---------- Cover ---------- */
+  .cover {
+    min-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    border-top: 10px solid var(--gold);
+  }
+  .cover .crown {
+    width: 64px; height: 64px;
+    border-radius: 12px;
+    background: rgba(184,134,43,0.12);
+    border: 1px solid rgba(184,134,43,0.5);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px;
+    margin-bottom: 32px;
+  }
+  .cover .brand { font-size: 15px; letter-spacing: 3px; text-transform: uppercase; color: var(--gold-dark); font-weight: 700; margin-bottom: 12px; }
+  .cover h1 { font-size: 44px; margin: 0 0 12px 0; line-height: 1.15; }
+  .cover .subtitle { font-size: 18px; color: var(--gray); max-width: 480px; line-height: 1.5; margin-bottom: 40px; }
+  .cover .meta { font-size: 13px; color: var(--gray); border-top: 1px solid var(--line); padding-top: 16px; width: 100%; max-width: 480px; }
+  .cover .meta div { margin-bottom: 4px; }
+
+  /* ---------- Table of contents ---------- */
+  .toc { page-break-before: always; }
+  .toc h2 { font-size: 13px; letter-spacing: 2px; text-transform: uppercase; color: var(--gold-dark); margin-bottom: 24px; }
+  .toc ol { list-style: none; margin: 0; padding: 0; counter-reset: toc; }
+  .toc li { counter-increment: toc; margin-bottom: 10px; font-size: 15px; }
+  .toc a { color: var(--ink); text-decoration: none; display: flex; align-items: baseline; }
+  .toc a::before { content: counter(toc, decimal-leading-zero) "  "; color: var(--gold-dark); font-weight: 700; width: 34px; flex-shrink: 0; }
+  .toc .toc-sub { padding-left: 34px; font-size: 13.5px; color: var(--gray); margin-top: -2px; margin-bottom: 6px; }
+  .toc .toc-sub a::before { content: "–  "; color: var(--line); width: 18px; }
+  .toc a::after { content: ""; flex: 1; border-bottom: 1px dotted var(--line); margin: 0 6px 3px 6px; }
+
+  /* ---------- Section headings ---------- */
+  section.chapter { page-break-before: always; }
+  section.chapter:first-of-type { page-break-before: auto; }
+  h2.chapter-title {
+    font-size: 26px;
+    margin: 0 0 4px 0;
+    padding-bottom: 14px;
+    border-bottom: 3px solid var(--gold);
+  }
+  .chapter-eyebrow { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--gold-dark); font-weight: 700; margin-bottom: 6px; }
+  .chapter-lede { color: var(--gray); font-size: 15px; margin: 14px 0 28px 0; line-height: 1.6; }
+
+  h3.module-title {
+    font-size: 18px;
+    margin: 34px 0 4px 0;
+    padding: 10px 14px;
+    background: var(--bg-soft);
+    border-left: 4px solid var(--gold);
+    page-break-after: avoid;
+  }
+  h3.module-title .path { font-weight: 400; color: var(--gray); font-size: 13px; float: right; font-family: 'SF Mono', Consolas, monospace; }
+  .module-desc { color: var(--gray); font-size: 14.5px; margin: 10px 0 12px 2px; }
+
+  ul.actions { margin: 8px 0 18px 2px; padding-left: 20px; }
+  ul.actions li { margin-bottom: 6px; font-size: 14.5px; line-height: 1.55; }
+  ul.actions li strong { color: var(--ink); }
+
+  .note {
+    background: #fff8e8;
+    border: 1px solid #f0dfa8;
+    border-left: 4px solid var(--gold);
+    padding: 12px 16px;
+    font-size: 13.5px;
+    border-radius: 4px;
+    margin: 14px 0;
+    line-height: 1.5;
+  }
+  .note strong { color: var(--gold-dark); }
+
+  .steps { counter-reset: step; margin: 14px 0 20px 0; padding: 0; list-style: none; }
+  .steps li {
+    counter-increment: step;
+    position: relative;
+    padding-left: 38px;
+    margin-bottom: 14px;
+    font-size: 14.5px;
+    line-height: 1.55;
+  }
+  .steps li::before {
+    content: counter(step);
+    position: absolute; left: 0; top: -1px;
+    width: 26px; height: 26px;
+    background: var(--gold);
+    color: #fff;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700;
+  }
+  .steps li strong.lead { display: block; margin-bottom: 2px; }
+
+  table.ref {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0 22px 0;
+    font-size: 13.5px;
+  }
+  table.ref th, table.ref td {
+    border: 1px solid var(--line);
+    padding: 8px 10px;
+    text-align: left;
+    vertical-align: top;
+  }
+  table.ref th { background: var(--bg-soft); font-weight: 700; color: var(--gold-dark); }
+  table.ref tr:nth-child(even) td { background: #fdfdfb; }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 9px;
+    border-radius: 20px;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #fff;
+  }
+  .badge.pending   { background: #6b7280; }
+  .badge.confirmed { background: var(--gold); }
+  .badge.preparing { background: #b8862b; }
+  .badge.ready     { background: #2f9e5c; }
+  .badge.delivered { background: #4a4a4a; }
+  .badge.cancelled { background: #b23b3b; }
+
+  .two-col { display: flex; gap: 24px; }
+  .two-col > div { flex: 1; }
+
+  .footer-note { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--gray); font-size: 12px; text-align: center; }
+
+  a { color: var(--gold-dark); }
+
+  code {
+    background: var(--bg-soft);
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 0.92em;
+    font-family: 'SF Mono', Consolas, monospace;
+  }
+
+  /* ---------- Print ---------- */
+  @media print {
+    html, body { background: #fff; }
+    .page { box-shadow: none; margin: 0; padding: 0; max-width: none; }
+    .cover { min-height: 100vh; }
+    section.chapter { page-break-before: always; }
+    h3.module-title { page-break-after: avoid; }
+    .steps li, ul.actions li, table.ref { page-break-inside: avoid; }
+    a { color: var(--ink); text-decoration: none; }
+    .toc a::after { border-bottom: 1px dotted #999; }
+    @page { size: A4; margin: 18mm 16mm; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ COVER ============ -->
+  <div class="cover">
+    <div class="crown">♛</div>
+    <div class="brand">Golden Bites</div>
+    <h1>Manual de Usuario<br />del Panel Administrativo</h1>
+    <p class="subtitle">
+      Guía de uso del sistema de administración Golden Bites: pedidos, cocina, caja,
+      inventario, personal, roles y las pantallas de tablet para mesero y cocina.
+    </p>
+    <div class="meta">
+      <div><strong>Sistema:</strong> Golden Bites Admin</div>
+      <div><strong>Documento generado:</strong> 30 de julio de 2026</div>
+      <div><strong>Idioma:</strong> Español (Colombia)</div>
+    </div>
+  </div>
+
+  <!-- ============ TOC ============ -->
+  <div class="toc">
+    <h2>Contenido</h2>
+    <ol>
+      <li><a href="#intro">Primeros pasos</a></li>
+      <li><a href="#roles">Roles, permisos y personal</a></li>
+      <li><a href="#estados">Estados de un pedido</a></li>
+      <li><a href="#operacion">Operación diaria</a></li>
+      <div class="toc-sub"><a href="#m-pedidos">Pedidos</a></div>
+      <div class="toc-sub"><a href="#m-cocina">Cocina</a></div>
+      <div class="toc-sub"><a href="#m-caja">Caja</a></div>
+      <li><a href="#catalogo">Catálogo e inventario</a></li>
+      <div class="toc-sub"><a href="#m-productos">Productos</a></div>
+      <div class="toc-sub"><a href="#m-inventario">Inventario</a></div>
+      <div class="toc-sub"><a href="#m-compras">Compras</a></div>
+      <div class="toc-sub"><a href="#m-proveedores">Proveedores</a></div>
+      <li><a href="#clientes">Clientes</a></li>
+      <div class="toc-sub"><a href="#m-clientes">Clientes</a></div>
+      <div class="toc-sub"><a href="#m-fidelizacion">Fidelización</a></div>
+      <li><a href="#negocio">Gestión del negocio</a></li>
+      <div class="toc-sub"><a href="#m-finanzas">Finanzas</a></div>
+      <div class="toc-sub"><a href="#m-personal">Personal</a></div>
+      <div class="toc-sub"><a href="#m-analitica">Analítica</a></div>
+      <div class="toc-sub"><a href="#m-marketing">Marketing</a></div>
+      <li><a href="#control">Control operativo</a></li>
+      <div class="toc-sub"><a href="#m-checklists">Checklists</a></div>
+      <div class="toc-sub"><a href="#m-mermas">Mermas</a></div>
+      <div class="toc-sub"><a href="#m-mantenimiento">Mantenimiento</a></div>
+      <div class="toc-sub"><a href="#m-documentos">Documentos</a></div>
+      <li><a href="#config">Configuración</a></li>
+      <li><a href="#tablet">Modo Tablet: Mesero y Cocina</a></li>
+      <div class="toc-sub"><a href="#t-mesero">Pantalla de mesero</a></div>
+      <div class="toc-sub"><a href="#t-cocina">Pantalla de comandas de cocina</a></div>
+      <li><a href="#faq">Preguntas frecuentes</a></li>
+    </ol>
+  </div>
+
+  <!-- ============ 1. PRIMEROS PASOS ============ -->
+  <section class="chapter" id="intro">
+    <div class="chapter-eyebrow">Capítulo 1</div>
+    <h2 class="chapter-title">Primeros pasos</h2>
+    <p class="chapter-lede">
+      Golden Bites Admin es el panel web desde donde se administra toda la operación del
+      restaurante: pedidos, cocina, caja, inventario, personal y reportes. Se usa desde un
+      navegador (computador o tablet), no requiere instalación.
+    </p>
+
+    <h3 class="module-title">Cómo iniciar sesión</h3>
+    <ol class="steps">
+      <li><strong class="lead">Abre la URL del panel</strong> en el navegador. Verás la pantalla de inicio de sesión con el logo de Golden Bites.</li>
+      <li><strong class="lead">Ingresa tu correo y contraseña.</strong> Estas credenciales las genera un administrador desde el módulo <em>Personal</em> (ver capítulo 2).</li>
+      <li><strong class="lead">Listo.</strong> El sistema te lleva directo al <em>Centro de operaciones</em>, o a la primera sección a la que tengas acceso según tu rol.</li>
+    </ol>
+
+    <div class="note">
+      <strong>Importante:</strong> lo que ves en el menú lateral depende de tu rol. Si a un
+      usuario le falta una sección, no es un error — su rol simplemente no tiene ese permiso
+      asignado. Un administrador puede ajustarlo desde <em>Roles y permisos</em>.
+    </div>
+
+    <h3 class="module-title">Estructura general del panel</h3>
+    <ul class="actions">
+      <li><strong>Menú lateral izquierdo:</strong> acceso a todos los módulos, agrupados por tipo de tarea (operación diaria, catálogo, clientes, gestión del negocio, control operativo).</li>
+      <li><strong>Barra superior:</strong> buscador global (pedidos, productos, clientes), campanita de notificaciones, y el menú de usuario (arriba a la derecha) con tu nombre, rol y la opción de cerrar sesión.</li>
+      <li><strong>Indicador verde/rojo</strong> junto a la campanita: muestra si el panel tiene conexión con el servidor en este momento.</li>
+    </ul>
+  </section>
+
+  <!-- ============ 2. ROLES ============ -->
+  <section class="chapter" id="roles">
+    <div class="chapter-eyebrow">Capítulo 2</div>
+    <h2 class="chapter-title">Roles, permisos y personal</h2>
+    <p class="chapter-lede">
+      El acceso a cada módulo y cada acción del sistema se controla con <strong>roles</strong>.
+      Un rol es un conjunto de permisos con nombre (por ejemplo "Cajero" o "Mesero"). Cada
+      empleado con acceso al sistema tiene asignado un rol.
+    </p>
+
+    <h3 class="module-title">Crear un rol nuevo <span class="path">Roles y permisos</span></h3>
+    <ol class="steps">
+      <li><strong class="lead">Entra a "Roles y permisos"</strong> en el menú (grupo "Gestión del negocio").</li>
+      <li><strong class="lead">Pulsa "Nuevo rol"</strong> y dale un nombre y una descripción (ej. "Mesero turno tarde").</li>
+      <li><strong class="lead">Ábrelo y marca los permisos</strong> que ese rol debe tener, agrupados por módulo (pedidos, cocina, inventario, etc.).</li>
+      <li><strong class="lead">Guarda los permisos.</strong> Cualquier empleado con ese rol queda sujeto exactamente a esos permisos — tanto en lo que ve en el menú, como en lo que el servidor le permite hacer.</li>
+    </ol>
+
+    <div class="note">
+      <strong>Roles del sistema:</strong> el negocio ya trae 7 roles listos para usar —
+      <code>SUPER_ADMIN</code>, <code>OWNER</code>, <code>MANAGER</code>, <code>CASHIER</code>,
+      <code>KITCHEN</code>, <code>INVENTORY</code> y <code>EMPLOYEE</code>. Puedes usarlos tal
+      cual, editar sus permisos, o crear roles propios (por ejemplo "Mesero") desde cero.
+    </div>
+
+    <h3 class="module-title">Generar acceso a un empleado <span class="path">Personal</span></h3>
+    <p class="module-desc">Un empleado (registro de nómina/horario) y un usuario con acceso al sistema son cosas separadas: un empleado puede existir sin tener credenciales, hasta que se las generas.</p>
+    <ol class="steps">
+      <li><strong class="lead">Entra a "Personal"</strong> y abre la ficha del empleado (o créalo primero si no existe).</li>
+      <li><strong class="lead">En "Acceso al sistema", pulsa "Generar acceso".</strong> Escribe su correo y elige su rol.</li>
+      <li><strong class="lead">Copia la contraseña temporal</strong> que aparece — <em>solo se muestra una vez</em>. Compártela con el empleado por un canal seguro.</li>
+      <li>El empleado ya puede iniciar sesión con ese correo y contraseña.</li>
+    </ol>
+
+    <div class="two-col">
+      <div>
+        <h3 class="module-title" style="margin-top:0">Restablecer contraseña</h3>
+        <p class="module-desc">Desde la misma ficha del empleado, botón "Restablecer contraseña" — genera una nueva contraseña temporal y anula la anterior de inmediato.</p>
+      </div>
+      <div>
+        <h3 class="module-title" style="margin-top:0">Desactivar acceso</h3>
+        <p class="module-desc">Botón "Desactivar acceso" — el empleado no podrá iniciar sesión mientras esté desactivado, sin borrar su historial ni su ficha.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 3. ESTADOS DE UN PEDIDO ============ -->
+  <section class="chapter" id="estados">
+    <div class="chapter-eyebrow">Capítulo 3</div>
+    <h2 class="chapter-title">Estados de un pedido</h2>
+    <p class="chapter-lede">
+      Todo pedido — se haya creado desde Pedidos o desde la pantalla de mesero — sigue el
+      mismo recorrido de estados. Entenderlo ayuda a interpretar cualquier pantalla del sistema.
+    </p>
+    <table class="ref">
+      <tr><th>Estado</th><th>Significado</th><th>Quién lo mueve normalmente</th></tr>
+      <tr><td><span class="badge pending">Pendiente</span></td><td>El pedido se creó pero aún no se confirmó a cocina.</td><td>Cajero / Mesero</td></tr>
+      <tr><td><span class="badge confirmed">Confirmado</span></td><td>Confirmado — entra a la cola de cocina.</td><td>Cajero / Mesero (automático en la pantalla táctil)</td></tr>
+      <tr><td><span class="badge preparing">En preparación</span></td><td>Cocina ya empezó a prepararlo.</td><td>Cocina</td></tr>
+      <tr><td><span class="badge ready">Listo</span></td><td>Cocina terminó — listo para servir/entregar.</td><td>Cocina</td></tr>
+      <tr><td><span class="badge delivered">Entregado</span></td><td>El cliente ya lo recibió. Estado final.</td><td>Mesero / Cajero</td></tr>
+      <tr><td><span class="badge cancelled">Cancelado</span></td><td>El pedido se anuló. Estado final, puede ocurrir en casi cualquier punto.</td><td>Cualquiera con permiso de anular</td></tr>
+    </table>
+    <div class="note">Un pedido nunca puede "retroceder" de estado — solo avanza hacia adelante o se cancela.</div>
+  </section>
+
+  <!-- ============ 4. OPERACIÓN DIARIA ============ -->
+  <section class="chapter" id="operacion">
+    <div class="chapter-eyebrow">Capítulo 4</div>
+    <h2 class="chapter-title">Operación diaria</h2>
+    <p class="chapter-lede">Los tres módulos que se usan a cada minuto durante un turno normal.</p>
+
+    <h3 class="module-title" id="m-pedidos">Pedidos <span class="path">/pedidos</span></h3>
+    <p class="module-desc">Gestiona la operación de pedidos en tiempo real, desde la creación hasta la entrega.</p>
+    <ul class="actions">
+      <li><strong>Vista kanban o tabla:</strong> alterna entre ver los pedidos como tarjetas por columna de estado, o como lista/tabla clásica.</li>
+      <li><strong>Nuevo pedido:</strong> elige productos, cliente (opcional), tipo (en mesa / para recoger / domicilio) y mesa.</li>
+      <li><strong>Avanzar o cancelar</strong> un pedido desde su ficha de detalle.</li>
+      <li><strong>Registrar pagos</strong> contra el total del pedido (efectivo, tarjeta, transferencia, Nequi, Daviplata).</li>
+      <li>Botón <strong>"Abrir en modo tablet"</strong>: enlace directo a la pantalla táctil de mesero (capítulo 6).</li>
+    </ul>
+
+    <h3 class="module-title" id="m-cocina">Cocina <span class="path">/cocina</span></h3>
+    <p class="module-desc">Cola de pedidos confirmados y en preparación, con temporizador por pedido.</p>
+    <ul class="actions">
+      <li>Muestra solo pedidos <span class="badge confirmed">Confirmado</span> y <span class="badge preparing">En preparación</span>, ordenados por antigüedad.</li>
+      <li>Un pedido que lleva más de 15 minutos sin avanzar se marca visualmente como <strong>retrasado</strong>.</li>
+      <li>Botones "Iniciar preparación" y "Marcar como listo" avanzan el estado.</li>
+      <li>Botón <strong>"Pantalla completa"</strong> para dejarla fija en un monitor de cocina, y <strong>"Abrir en modo tablet"</strong> para la versión táctil con gestos (capítulo 6).</li>
+    </ul>
+
+    <h3 class="module-title" id="m-caja">Caja <span class="path">/caja</span></h3>
+    <p class="module-desc">Apertura y cierre de caja, con seguimiento de todos los movimientos de efectivo del turno.</p>
+    <ul class="actions">
+      <li><strong>Abrir caja</strong> al iniciar el turno, indicando el monto inicial en efectivo.</li>
+      <li>Las <strong>ventas</strong> se registran solas en la caja a medida que se cobran pedidos.</li>
+      <li><strong>Registrar movimiento:</strong> ingresos o egresos manuales (ej. compra de insumos menores, retiro de efectivo).</li>
+      <li><strong>Cerrar caja</strong> al final del turno — el sistema compara el efectivo esperado contra el contado.</li>
+    </ul>
+  </section>
+
+  <!-- ============ 5. CATÁLOGO ============ -->
+  <section class="chapter" id="catalogo">
+    <div class="chapter-eyebrow">Capítulo 5</div>
+    <h2 class="chapter-title">Catálogo e inventario</h2>
+    <p class="chapter-lede">Qué se vende, qué insumos hay disponibles, y de dónde se compran.</p>
+
+    <h3 class="module-title" id="m-productos">Productos <span class="path">/productos</span></h3>
+    <p class="module-desc">Gestiona el catálogo de productos del menú: nombre, categoría, precio de venta, imagen y si está activo o no.</p>
+    <ul class="actions">
+      <li>Organiza los productos en <strong>categorías</strong> (las mismas que se ven como pestañas en la pantalla de mesero).</li>
+      <li>Un producto <strong>inactivo</strong> deja de aparecer para la venta sin necesidad de borrarlo.</li>
+    </ul>
+
+    <h3 class="module-title" id="m-inventario">Inventario <span class="path">/inventario</span></h3>
+    <p class="module-desc">Catálogo de insumos y control de stock.</p>
+    <ul class="actions">
+      <li>Consulta existencias actuales por insumo y por sucursal.</li>
+      <li>Ajusta, cuenta y transfiere inventario entre sucursales.</li>
+    </ul>
+
+    <h3 class="module-title" id="m-compras">Compras <span class="path">/compras</span></h3>
+    <p class="module-desc">Sugerencias de compra basadas en inventario y seguimiento de órdenes de compra a proveedores.</p>
+
+    <h3 class="module-title" id="m-proveedores">Proveedores <span class="path">/proveedores</span></h3>
+    <p class="module-desc">Directorio de proveedores del negocio: datos de contacto y qué le compras a cada uno.</p>
+  </section>
+
+  <!-- ============ 6. CLIENTES ============ -->
+  <section class="chapter" id="clientes">
+    <div class="chapter-eyebrow">Capítulo 6</div>
+    <h2 class="chapter-title">Clientes</h2>
+
+    <h3 class="module-title" id="m-clientes">Clientes <span class="path">/clientes</span></h3>
+    <p class="module-desc">Base de clientes registrados en el negocio: datos de contacto e historial de pedidos.</p>
+
+    <h3 class="module-title" id="m-fidelizacion">Fidelización <span class="path">/fidelizacion</span></h3>
+    <p class="module-desc">Programa de puntos, niveles y recompensas para clientes frecuentes.</p>
+  </section>
+
+  <!-- ============ 7. GESTIÓN DEL NEGOCIO ============ -->
+  <section class="chapter" id="negocio">
+    <div class="chapter-eyebrow">Capítulo 7</div>
+    <h2 class="chapter-title">Gestión del negocio</h2>
+
+    <h3 class="module-title" id="m-finanzas">Finanzas <span class="path">/finanzas</span></h3>
+    <p class="module-desc">Ventas, gastos y utilidad estimada del negocio.</p>
+
+    <h3 class="module-title" id="m-personal">Personal <span class="path">/personal</span></h3>
+    <p class="module-desc">Equipo de trabajo y turnos semanales — además de la gestión de credenciales de acceso explicada en el capítulo 2.</p>
+    <ul class="actions">
+      <li>Ficha de cada empleado: datos de contacto, cargo, fecha de ingreso.</li>
+      <li><strong>Horario semanal:</strong> define los turnos por día para cada empleado.</li>
+    </ul>
+
+    <h3 class="module-title">Roles y permisos <span class="path">/roles-permisos</span></h3>
+    <p class="module-desc">Ver capítulo 2 — crear roles y asignar permisos.</p>
+
+    <h3 class="module-title" id="m-analitica">Analítica <span class="path">/analitica</span></h3>
+    <p class="module-desc">Reportes operativos y comerciales de Golden Bites: ventas por período, productos más vendidos, y otros indicadores del negocio.</p>
+
+    <h3 class="module-title" id="m-marketing">Marketing <span class="path">/marketing</span></h3>
+    <p class="module-desc">Campañas, contenido, cupones e influencers.</p>
+  </section>
+
+  <!-- ============ 8. CONTROL OPERATIVO ============ -->
+  <section class="chapter" id="control">
+    <div class="chapter-eyebrow">Capítulo 8</div>
+    <h2 class="chapter-title">Control operativo</h2>
+
+    <h3 class="module-title" id="m-checklists">Checklists <span class="path">/checklists</span></h3>
+    <p class="module-desc">Rutinas de apertura y cierre con evidencia de cumplimiento.</p>
+
+    <h3 class="module-title" id="m-mermas">Mermas <span class="path">/mermas</span></h3>
+    <p class="module-desc">Registro y control de pérdidas de insumos (vencimiento, daño, error de preparación, etc.).</p>
+
+    <h3 class="module-title" id="m-mantenimiento">Mantenimiento <span class="path">/mantenimiento</span></h3>
+    <p class="module-desc">Control de equipos, garantías e intervenciones técnicas.</p>
+
+    <h3 class="module-title" id="m-documentos">Documentos <span class="path">/documentos</span></h3>
+    <p class="module-desc">Documentos legales, sanitarios y de cumplimiento del negocio.</p>
+  </section>
+
+  <!-- ============ 9. CONFIGURACIÓN ============ -->
+  <section class="chapter" id="config">
+    <div class="chapter-eyebrow">Capítulo 9</div>
+    <h2 class="chapter-title">Configuración</h2>
+    <p class="chapter-lede">Parámetros generales del negocio y del sistema: métodos de pago habilitados, canales de venta, categorías de producto y estados de pedido disponibles.</p>
+  </section>
+
+  <!-- ============ 10. MODO TABLET ============ -->
+  <section class="chapter" id="tablet">
+    <div class="chapter-eyebrow">Capítulo 10</div>
+    <h2 class="chapter-title">Modo Tablet: Mesero y Cocina</h2>
+    <p class="chapter-lede">
+      Dos pantallas independientes, pensadas para dejarse abiertas en una tablet dedicada
+      durante todo el turno. No muestran el menú lateral ni el resto del panel — son de uso
+      exclusivo para tomar pedidos o gestionar comandas de forma rápida y táctil.
+    </p>
+
+    <div class="note">
+      <strong>Cómo abrirlas:</strong> desde "Pedidos" o "Cocina" en el panel de escritorio hay
+      un botón <strong>"Abrir en modo tablet ↗"</strong>. También se puede ir directo a las
+      URLs <code>/tablet/mesero</code> y <code>/tablet/cocina</code>. Ambas piden inicio de
+      sesión — cada mesero o cocinero debe tener su propio usuario (capítulo 2).
+    </div>
+
+    <h3 class="module-title" id="t-mesero">Pantalla de mesero <span class="path">/tablet/mesero</span></h3>
+    <p class="module-desc">Pensada para tomar pedidos rápido, con botones grandes para uso táctil.</p>
+    <ol class="steps">
+      <li><strong class="lead">Elige la categoría</strong> en las pestañas de arriba y toca los productos para agregarlos al carrito de la derecha.</li>
+      <li><strong class="lead">Ajusta cantidades</strong> con los botones + / − de cada línea del carrito.</li>
+      <li><strong class="lead">Elige la mesa</strong> tocando su número, o escríbela si no está en la lista (ej. "Terraza 2").</li>
+      <li><strong class="lead">Pulsa "Enviar a cocina".</strong> El pedido queda confirmado automáticamente — no hace falta un paso extra.</li>
+      <li>El pedido aparece en <strong>"Mis pedidos"</strong>, arriba del carrito, con su estado actual.</li>
+      <li><strong class="lead">Toca un pedido</strong> en esa lista para ver su detalle completo (productos, notas, total).</li>
+      <li>Cuando cocina lo marca <span class="badge ready">Listo</span>, aparece un <strong>aviso en pantalla</strong> avisando cuál mesa ya puede recibir su pedido.</li>
+      <li>Abre ese pedido y pulsa <strong>"Marcar como entregado"</strong> una vez el cliente lo recibió — así se cierra el ciclo del pedido.</li>
+    </ol>
+
+    <h3 class="module-title" id="t-cocina">Pantalla de comandas de cocina <span class="path">/tablet/cocina</span></h3>
+    <p class="module-desc">Muestra los tickets de cocina en tarjetas grandes, con gestos de deslizar en vez de botones.</p>
+    <ul class="actions">
+      <li>Se abre <strong>a pantalla completa</strong> automáticamente al entrar.</li>
+      <li><strong>Desliza una tarjeta hacia la izquierda</strong> para avanzarla al siguiente estado — de "Confirmado" a "En preparación", y de ahí a "Listo".</li>
+      <li>Hay que deslizar un tramo completo (no un roce accidental) — la tarjeta muestra un color verde de fondo mientras se arrastra, confirmando el gesto antes de soltarla.</li>
+      <li>Al marcarse como <span class="badge ready">Listo</span>, el pedido desaparece de esta pantalla y el mesero recibe el aviso en la suya.</li>
+    </ul>
+  </section>
+
+  <!-- ============ 11. FAQ ============ -->
+  <section class="chapter" id="faq">
+    <div class="chapter-eyebrow">Capítulo 11</div>
+    <h2 class="chapter-title">Preguntas frecuentes</h2>
+
+    <h3 class="module-title" style="margin-top:0">Un empleado no ve un módulo que debería ver</h3>
+    <p class="module-desc">Revisa su rol en "Roles y permisos" y confirma que tenga el permiso correspondiente marcado. El menú lateral solo muestra lo que el rol realmente permite usar.</p>
+
+    <h3 class="module-title">Un empleado no puede iniciar sesión</h3>
+    <p class="module-desc">Verifica en su ficha de "Personal" que el acceso esté "Activo" (no desactivado), y que esté usando la contraseña temporal más reciente — cada vez que se restablece, la anterior deja de funcionar de inmediato.</p>
+
+    <h3 class="module-title">El indicador de conexión aparece en rojo</h3>
+    <p class="module-desc">Significa que el panel no logra comunicarse con el servidor en este momento. Revisa la conexión a internet del dispositivo; los datos no se pierden, pero no se podrán guardar cambios hasta que vuelva la conexión.</p>
+
+    <h3 class="module-title">¿Puedo usar el modo tablet en un celular?</h3>
+    <p class="module-desc">Sí, funciona en cualquier navegador — está optimizado para pantallas de tablet apaisadas (horizontales), pero es utilizable en cualquier dispositivo con navegador.</p>
+  </section>
+
+  <div class="footer-note">Golden Bites Admin — Manual de Usuario</div>
+
+</div>
+</body>
+</html>

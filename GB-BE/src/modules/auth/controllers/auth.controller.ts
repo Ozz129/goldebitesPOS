@@ -1,0 +1,94 @@
+import {
+  Body,
+  Controller,
+  Headers,
+  HttpCode,
+  HttpStatus,
+  Ip,
+  Post,
+} from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { CurrentBusiness } from '../../../common/decorators/current-business.decorator';
+import { CurrentUser } from '../../../common/decorators/current-user.decorator';
+import { Public } from '../../../common/decorators/public.decorator';
+import { RawResponse } from '../../../common/decorators/raw-response.decorator';
+import { ChangePasswordDto } from '../dto/change-password.dto';
+import { ForgotPasswordDto } from '../dto/forgot-password.dto';
+import { LoginDto } from '../dto/login.dto';
+import { RefreshTokenDto } from '../dto/refresh-token.dto';
+import { ResetPasswordDto } from '../dto/reset-password.dto';
+import { AuthService, RequestMetadata } from '../services/auth.service';
+
+@ApiTags('Auth')
+@Controller('auth')
+export class AuthController {
+  constructor(private readonly authService: AuthService) {}
+
+  @Public()
+  @Post('login')
+  @ApiOperation({ summary: 'Authenticate with email and password' })
+  login(
+    @Body() dto: LoginDto,
+    @Ip() ip: string,
+    @Headers('user-agent') userAgent?: string,
+  ) {
+    return this.authService.login(dto, this.meta(ip, userAgent));
+  }
+
+  @Public()
+  @Post('refresh')
+  @ApiOperation({
+    summary: 'Exchange a refresh token for a new access/refresh token pair',
+  })
+  refresh(
+    @Body() dto: RefreshTokenDto,
+    @Ip() ip: string,
+    @Headers('user-agent') userAgent?: string,
+  ) {
+    return this.authService.refresh(dto.refreshToken, this.meta(ip, userAgent));
+  }
+
+  @Public()
+  @Post('logout')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @RawResponse()
+  @ApiOperation({ summary: 'Revoke a refresh token' })
+  async logout(@Body() dto: RefreshTokenDto) {
+    await this.authService.logout(dto.refreshToken);
+  }
+
+  @Post('change-password')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: "Change the current user's password" })
+  async changePassword(
+    @CurrentUser('userId') userId: string,
+    @CurrentBusiness() businessId: string,
+    @Body() dto: ChangePasswordDto,
+  ) {
+    await this.authService.changePassword(userId, businessId, dto);
+    return { message: 'Password updated successfully' };
+  }
+
+  @Public()
+  @Post('forgot-password')
+  @ApiOperation({ summary: 'Request a password reset link' })
+  async forgotPassword(@Body() dto: ForgotPasswordDto) {
+    await this.authService.forgotPassword(dto);
+    return {
+      message:
+        'If an account exists for this email, password reset instructions have been sent',
+    };
+  }
+
+  @Public()
+  @Post('reset-password')
+  @ApiOperation({ summary: 'Reset a password using a reset token' })
+  async resetPassword(@Body() dto: ResetPasswordDto) {
+    await this.authService.resetPassword(dto);
+    return { message: 'Password reset successfully' };
+  }
+
+  private meta(ip: string, userAgent?: string): RequestMetadata {
+    return { ipAddress: ip, userAgent };
+  }
+}

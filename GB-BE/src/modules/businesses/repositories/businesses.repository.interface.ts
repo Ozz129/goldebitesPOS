@@ -1,0 +1,37 @@
+import { DbClient } from '../../../database/types/database.types';
+import { BusinessRow } from '../domain/business.interface';
+import {
+  CreateBusinessData,
+  UpdateBusinessData,
+} from '../domain/business.types';
+
+export interface IBusinessesRepository {
+  create(data: CreateBusinessData, client?: DbClient): Promise<BusinessRow>;
+  findById(id: string, client?: DbClient): Promise<BusinessRow | null>;
+  update(
+    id: string,
+    data: UpdateBusinessData,
+    client?: DbClient,
+  ): Promise<BusinessRow | null>;
+  setActive(
+    id: string,
+    isActive: boolean,
+    client?: DbClient,
+  ): Promise<BusinessRow | null>;
+  updateTaxRate(
+    id: string,
+    taxRate: number,
+    client?: DbClient,
+  ): Promise<BusinessRow | null>;
+  updateLoyaltyConfig(
+    id: string,
+    data: {
+      pointsPerThousand?: number;
+      birthdayBonusEnabled?: boolean;
+      birthdayBonusPoints?: number;
+    },
+    client?: DbClient,
+  ): Promise<BusinessRow | null>;
+}
+
+export const BUSINESSES_REPOSITORY = Symbol('BUSINESSES_REPOSITORY');

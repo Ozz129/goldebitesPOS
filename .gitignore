@@ -1,0 +1,20 @@
+# This is a monorepo: GB/ (frontend) and GB-BE/ (backend) each keep their own
+# .gitignore for stack-specific build output. These are repo-wide catch-alls.
+
+# Claude Code local project state (per-machine settings, not for version control)
+.claude/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea
+
+# Safety net: never commit an env file with real secrets, from any directory
+.env
+.env.*
+!.env.example
+!**/.env.example

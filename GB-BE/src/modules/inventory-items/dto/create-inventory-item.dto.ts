@@ -1,0 +1,46 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Min,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
+
+export class CreateInventoryItemDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsUUID()
+  categoryId?: string;
+
+  @ApiProperty({ minLength: 2, maxLength: 150 })
+  @IsString()
+  @MinLength(2)
+  @MaxLength(150)
+  name: string;
+
+  @ApiPropertyOptional({ maxLength: 60 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(60)
+  sku?: string;
+
+  @ApiProperty({ maxLength: 30, example: 'kg' })
+  @IsString()
+  @MaxLength(30)
+  unit: string;
+
+  @ApiPropertyOptional({ default: 0, minimum: 0 })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  minimumStock?: number;
+
+  @ApiPropertyOptional({ default: 0, minimum: 0 })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  currentCost?: number;
+}

@@ -1,0 +1,22 @@
+import {
+  InventoryItem,
+  InventoryItemRow,
+} from '../domain/inventory-item.interface';
+
+export class InventoryItemMapper {
+  static toDomain(row: InventoryItemRow): InventoryItem {
+    return {
+      id: row.id,
+      businessId: row.business_id,
+      categoryId: row.category_id,
+      name: row.name,
+      sku: row.sku,
+      unit: row.unit,
+      minimumStock: parseFloat(row.minimum_stock),
+      currentCost: parseFloat(row.current_cost),
+      isActive: row.is_active,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    };
+  }
+}

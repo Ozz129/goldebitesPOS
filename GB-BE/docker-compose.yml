@@ -1,0 +1,57 @@
+services:
+  backend:
+    build:
+      context: .
+      target: production
+    ports:
+      - '3000:3000'
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      API_PREFIX: api/v1
+      CORS_ORIGIN: '*'
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: golden_bites
+      DB_USER: golden_bites
+      DB_PASSWORD: golden_bites
+      DB_POOL_MAX: 10
+      DB_IDLE_TIMEOUT_MS: 30000
+      DB_CONNECTION_TIMEOUT_MS: 5000
+      JWT_ACCESS_SECRET: change-me-access-secret
+      JWT_ACCESS_EXPIRES_IN: 15m
+      JWT_REFRESH_SECRET: change-me-refresh-secret
+      JWT_REFRESH_EXPIRES_IN: 7d
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: golden_bites
+      POSTGRES_USER: golden_bites
+      POSTGRES_PASSWORD: golden_bites
+    ports:
+      - '5432:5432'
+    volumes:
+      - golden_bites_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U golden_bites -d golden_bites']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - '6379:6379'
+    volumes:
+      - golden_bites_redis_data:/data
+    restart: unless-stopped
+
+volumes:
+  golden_bites_pg_data:
+  golden_bites_redis_data:

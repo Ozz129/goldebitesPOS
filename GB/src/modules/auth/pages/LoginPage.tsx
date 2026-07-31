@@ -1,0 +1,95 @@
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useLocation, useNavigate } from 'react-router-dom';
+import Box from '@mui/material/Box';
+import Paper from '@mui/material/Paper';
+import Stack from '@mui/material/Stack';
+import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
+import Alert from '@mui/material/Alert';
+import { useLogin } from '../hooks/use-login';
+import { loginSchema, type LoginFormValues } from '../schemas/login.schema';
+import { normalizeApiError } from '../../../lib/api/api-error';
+import { brand } from '../../../theme/palette';
+
+export default function LoginPage() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const login = useLogin();
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormValues>({ resolver: zodResolver(loginSchema) });
+
+  const redirectTo = (location.state as { from?: string } | null)?.from ?? '/';
+
+  const onSubmit = (values: LoginFormValues) => {
+    login.mutate(values, {
+      onSuccess: () => navigate(redirectTo, { replace: true }),
+    });
+  };
+
+  const apiError = login.error ? normalizeApiError(login.error) : null;
+
+  return (
+    <Box
+      sx={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        bgcolor: brand.black,
+        px: 2,
+      }}
+    >
+      <Paper sx={{ p: 4, width: '100%', maxWidth: 400 }} elevation={4}>
+        <Stack spacing={3} component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
+          <Box sx={{ textAlign: 'center' }}>
+            <Typography variant="h5" sx={{ fontWeight: 800, color: brand.gold }}>
+              Golden Bites
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Inicia sesión para continuar
+            </Typography>
+          </Box>
+
+          {apiError && <Alert severity="error">{apiError.message}</Alert>}
+
+          <TextField
+            label="Correo electrónico"
+            type="email"
+            autoComplete="email"
+            autoFocus
+            fullWidth
+            {...register('email')}
+            error={Boolean(errors.email)}
+            helperText={errors.email?.message}
+          />
+
+          <TextField
+            label="Contraseña"
+            type="password"
+            autoComplete="current-password"
+            fullWidth
+            {...register('password')}
+            error={Boolean(errors.password)}
+            helperText={errors.password?.message}
+          />
+
+          <Button
+            type="submit"
+            variant="contained"
+            size="large"
+            fullWidth
+            disabled={login.isPending}
+          >
+            {login.isPending ? 'Ingresando...' : 'Ingresar'}
+          </Button>
+        </Stack>
+      </Paper>
+    </Box>
+  );
+}

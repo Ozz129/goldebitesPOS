@@ -6,6 +6,7 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  IsUUID,
   Max,
   Min,
   validateSync,
@@ -97,6 +98,14 @@ class EnvironmentVariables {
   @IsString()
   @IsOptional()
   JWT_REFRESH_EXPIRES_IN: string = '7d';
+
+  @IsUUID()
+  @IsNotEmpty()
+  CAR_SERVICE_BUSINESS_ID: string;
+
+  @IsUUID()
+  @IsNotEmpty()
+  CAR_SERVICE_BRANCH_ID: string;
 }
 
 export function validate(config: Record<string, unknown>) {

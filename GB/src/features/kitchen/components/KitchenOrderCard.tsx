@@ -53,7 +53,7 @@ export default function KitchenOrderCard({ order, onStartPreparation, onMarkRead
 
         {order.tableNumber && (
           <Typography variant="caption" color="text.secondary">
-            Mesa {order.tableNumber}
+            {order.orderType === 'CAR_SERVICE' ? 'Vehículo' : 'Mesa'} {order.tableNumber}
           </Typography>
         )}
 

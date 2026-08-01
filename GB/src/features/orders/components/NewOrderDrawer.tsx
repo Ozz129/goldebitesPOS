@@ -107,11 +107,17 @@ export default function NewOrderDrawer({ open, onClose, onSubmit }: NewOrderDraw
           )}
         />
 
-        {orderType === 'DINE_IN' && (
+        {(orderType === 'DINE_IN' || orderType === 'CAR_SERVICE') && (
           <Controller
             name="tableNumber"
             control={control}
-            render={({ field }) => <TextField {...field} label="Número de mesa" fullWidth />}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                label={orderType === 'CAR_SERVICE' ? 'Placa del vehículo' : 'Número de mesa'}
+                fullWidth
+              />
+            )}
           />
         )}
 

@@ -52,6 +52,7 @@ export const ORDER_TYPE_LABELS: Record<OrderType, string> = {
   DINE_IN: 'En mesa',
   TAKEAWAY: 'Para recoger',
   DELIVERY: 'Domicilio',
+  CAR_SERVICE: 'Servicio en carro',
 };
 
 export const PAYMENT_STATUS_LABELS: Record<OrderPaymentStatus, string> = {

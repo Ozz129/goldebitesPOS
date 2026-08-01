@@ -58,7 +58,7 @@ export default function WaiterOrderDetailDrawer({ orderId, onClose }: WaiterOrde
       open={Boolean(orderId)}
       onClose={onClose}
       title={`Pedido #${order.orderNumber}`}
-      subtitle={`Mesa ${order.tableNumber ?? '—'} · ${ORDER_TYPE_LABELS[order.orderType]}`}
+      subtitle={`${order.orderType === 'CAR_SERVICE' ? 'Vehículo' : 'Mesa'} ${order.tableNumber ?? '—'} · ${ORDER_TYPE_LABELS[order.orderType]}`}
       headerExtra={<StatusChip label={ORDER_STATUS_LABELS[order.status]} tone={ORDER_STATUS_TONE[order.status]} />}
       footer={
         order.status === 'READY' ? (

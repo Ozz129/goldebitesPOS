@@ -47,6 +47,7 @@ import { RecipesModule } from './modules/recipes/recipes.module';
 import { RolesModule } from './modules/roles/roles.module';
 import { SettingsModule } from './modules/settings/settings.module';
 import { SuppliersModule } from './modules/suppliers/suppliers.module';
+import { TabletKioskModule } from './modules/tablet-kiosk/tablet-kiosk.module';
 import { UsersModule } from './modules/users/users.module';
 import { WasteModule } from './modules/waste/waste.module';
 
@@ -100,6 +101,7 @@ import { WasteModule } from './modules/waste/waste.module';
     MarketingModule,
     DocumentsModule,
     FinancesModule,
+    TabletKioskModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

@@ -1,4 +1,4 @@
-export type OrderType = 'DINE_IN' | 'TAKEAWAY' | 'DELIVERY';
+export type OrderType = 'DINE_IN' | 'TAKEAWAY' | 'DELIVERY' | 'CAR_SERVICE';
 
 export type OrderStatus =
   | 'PENDING'

@@ -122,7 +122,7 @@ export default function SwipeableTicketCard({ order, onSuccess, onError }: Swipe
 
           {order.tableNumber && (
             <Typography variant="body2" color="text.secondary">
-              Mesa {order.tableNumber}
+              {order.orderType === 'CAR_SERVICE' ? 'Vehículo' : 'Mesa'} {order.tableNumber}
             </Typography>
           )}
 

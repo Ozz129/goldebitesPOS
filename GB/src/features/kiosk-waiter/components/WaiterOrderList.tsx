@@ -19,6 +19,10 @@ const pulse = keyframes`
   50% { background-color: rgba(76, 175, 109, 0.18); }
 `;
 
+function identifierLabel(order: Order): string {
+  return order.orderType === 'CAR_SERVICE' ? 'Vehículo' : 'Mesa';
+}
+
 export default function WaiterOrderList({ orders, onSelect }: WaiterOrderListProps) {
   if (orders.length === 0) {
     return (
@@ -49,7 +53,7 @@ export default function WaiterOrderList({ orders, onSelect }: WaiterOrderListPro
         >
           <Box sx={{ minWidth: 0 }}>
             <Typography variant="body1" sx={{ fontWeight: 700 }} noWrap>
-              #{order.orderNumber} · Mesa {order.tableNumber ?? '—'}
+              #{order.orderNumber} · {identifierLabel(order)} {order.tableNumber ?? '—'}
             </Typography>
             <OrderTimer createdAt={order.createdAt} />
           </Box>

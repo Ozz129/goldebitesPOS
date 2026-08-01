@@ -2,6 +2,7 @@ export enum OrderType {
   DINE_IN = 'DINE_IN',
   TAKEAWAY = 'TAKEAWAY',
   DELIVERY = 'DELIVERY',
+  CAR_SERVICE = 'CAR_SERVICE',
 }
 
 export enum OrderStatus {

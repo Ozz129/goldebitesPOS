@@ -4,7 +4,7 @@ import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import ToggleButton from '@mui/material/ToggleButton';
-import { Plus, LayoutGrid, List as ListIcon, Tablet } from 'lucide-react';
+import { Plus, LayoutGrid, List as ListIcon, Tablet, Car } from 'lucide-react';
 import { useSnackbar } from 'notistack';
 import PageHeader from '../../../components/common/PageHeader';
 import FilterBar from '../../../components/common/FilterBar';
@@ -173,6 +173,16 @@ export default function OrdersPage() {
               startIcon={<Tablet size={16} />}
             >
               Abrir en modo tablet ↗
+            </Button>
+            <Button
+              variant="outlined"
+              component="a"
+              href={KIOSK_PATHS.carService}
+              target="_blank"
+              rel="noopener noreferrer"
+              startIcon={<Car size={16} />}
+            >
+              Abrir Car Service ↗
             </Button>
             <Can permission="orders.create">
               <Button variant="contained" startIcon={<Plus size={16} />} onClick={() => setNewOrderOpen(true)}>

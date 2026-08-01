@@ -8,6 +8,8 @@ function validConfig(overrides: Record<string, unknown> = {}) {
     DB_USER: 'golden_bites',
     JWT_ACCESS_SECRET: 'access-secret',
     JWT_REFRESH_SECRET: 'refresh-secret',
+    CAR_SERVICE_BUSINESS_ID: '11111111-1111-4111-a111-111111111111',
+    CAR_SERVICE_BRANCH_ID: '22222222-2222-4222-a222-222222222222',
     ...overrides,
   };
 }

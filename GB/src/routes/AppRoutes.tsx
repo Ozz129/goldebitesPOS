@@ -33,6 +33,7 @@ const SettingsPage = lazy(() => import('../features/settings/pages/SettingsPage'
 const RolesPage = lazy(() => import('../features/roles/pages/RolesPage'));
 const WaiterKioskPage = lazy(() => import('../features/kiosk-waiter/pages/WaiterKioskPage'));
 const KitchenKioskPage = lazy(() => import('../features/kiosk-kitchen/pages/KitchenKioskPage'));
+const CarServiceKioskPage = lazy(() => import('../features/kiosk-car-service/pages/CarServiceKioskPage'));
 
 function Loadable({ children }: { children: React.ReactNode }) {
   return <Suspense fallback={<LoadingSkeleton variant="page" />}>{children}</Suspense>;
@@ -271,6 +272,16 @@ export default function AppRoutes() {
             element={
               <Loadable>
                 <KitchenKioskPage />
+              </Loadable>
+            }
+          />
+        </Route>
+        <Route element={<ProtectedRoute permission={KIOSK_PERMISSIONS.carService} />}>
+          <Route
+            path={KIOSK_PATHS.carService}
+            element={
+              <Loadable>
+                <CarServiceKioskPage />
               </Loadable>
             }
           />

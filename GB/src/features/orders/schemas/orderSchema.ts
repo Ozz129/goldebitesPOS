@@ -10,7 +10,7 @@ export const newOrderItemSchema = z.object({
 export const newOrderSchema = z
   .object({
     customerId: z.string().optional(),
-    orderType: z.enum(['DINE_IN', 'TAKEAWAY', 'DELIVERY']),
+    orderType: z.enum(['DINE_IN', 'TAKEAWAY', 'DELIVERY', 'CAR_SERVICE']),
     tableNumber: z.string().optional(),
     deliveryAddress: z.string().optional(),
     deliveryInstructions: z.string().optional(),

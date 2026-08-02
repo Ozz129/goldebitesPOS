@@ -15,6 +15,7 @@ async function bootstrap(): Promise<void> {
   const configService = app.get(ConfigService);
   const appConfig = configService.getOrThrow<AppConfig>('app');
 
+  app.set('trust proxy', 1);
   app.use(helmet());
   app.use(compression());
   app.enableCors({
@@ -36,26 +37,29 @@ async function bootstrap(): Promise<void> {
     }),
   );
 
-  const swaggerConfig = new DocumentBuilder()
-    .setTitle('Golden Bites API')
-    .setDescription('Restaurant management backend for Golden Bites')
-    .setVersion('1.0')
-    .addBearerAuth()
-    .build();
+  if (process.env.NODE_ENV !== 'production') {
+    const swaggerConfig = new DocumentBuilder()
+      .setTitle('Golden Bites API')
+      .setDescription('Restaurant management backend for Golden Bites')
+      .setVersion('1.0')
+      .addBearerAuth()
+      .build();
 
-  const document = SwaggerModule.createDocument(app, swaggerConfig);
-  SwaggerModule.setup('api/docs', app, document, {
-    swaggerOptions: { persistAuthorization: true },
-  });
+    const document = SwaggerModule.createDocument(app, swaggerConfig);
+    SwaggerModule.setup('api/docs', app, document, {
+      swaggerOptions: { persistAuthorization: true },
+    });
+
+    Logger.log(
+      `Swagger docs available at http://localhost:${appConfig.port}/api/docs`,
+      'Bootstrap',
+    );
+  }
 
   await app.listen(appConfig.port);
 
   Logger.log(
     `Golden Bites API running on http://localhost:${appConfig.port}/${appConfig.apiPrefix}`,
-    'Bootstrap',
-  );
-  Logger.log(
-    `Swagger docs available at http://localhost:${appConfig.port}/api/docs`,
     'Bootstrap',
   );
 }

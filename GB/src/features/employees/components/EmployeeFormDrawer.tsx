@@ -3,7 +3,10 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
+import MenuItem from '@mui/material/MenuItem';
 import FormDrawer from '../../../components/common/FormDrawer';
+import { useRoles } from '../../../modules/roles/hooks/use-roles';
+import { getRoleLabel } from '../../../modules/roles/role-labels';
 import { employeeSchema, type EmployeeFormValues } from '../schemas/employeeSchema';
 import type { Employee } from '../../../modules/employees/types/employee.types';
 
@@ -20,7 +23,7 @@ const emptyValues: EmployeeFormValues = {
   lastName: '',
   phone: '',
   email: '',
-  position: '',
+  roleId: '',
   hireDate: '',
   notes: '',
 };
@@ -32,6 +35,7 @@ export default function EmployeeFormDrawer({
   onSubmit,
   initialEmployee,
 }: EmployeeFormDrawerProps) {
+  const { data: roles } = useRoles();
   const {
     control,
     handleSubmit,
@@ -51,7 +55,7 @@ export default function EmployeeFormDrawer({
               lastName: initialEmployee.lastName,
               phone: initialEmployee.phone ?? '',
               email: initialEmployee.email ?? '',
-              position: initialEmployee.position ?? '',
+              roleId: initialEmployee.roleId ?? '',
               hireDate: initialEmployee.hireDate ?? '',
               notes: initialEmployee.notes ?? '',
             }
@@ -103,9 +107,18 @@ export default function EmployeeFormDrawer({
         </Stack>
 
         <Controller
-          name="position"
+          name="roleId"
           control={control}
-          render={({ field }) => <TextField {...field} label="Cargo" fullWidth />}
+          render={({ field }) => (
+            <TextField {...field} select label="Cargo" fullWidth>
+              <MenuItem value="">Sin cargo asignado</MenuItem>
+              {(roles ?? []).map((role) => (
+                <MenuItem key={role.id} value={role.id}>
+                  {getRoleLabel(role.name)}
+                </MenuItem>
+              ))}
+            </TextField>
+          )}
         />
 
         <Stack direction="row" spacing={2}>

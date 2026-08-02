@@ -15,6 +15,8 @@ import DateDisplay from '../../../components/common/DateDisplay';
 import { Can } from '../../../modules/auth/components/can';
 import { useEmployee } from '../../../modules/employees/hooks/use-employee';
 import { useSetEmployeeShifts } from '../../../modules/employees/hooks/use-set-employee-shifts';
+import { useRoles } from '../../../modules/roles/hooks/use-roles';
+import { getRoleLabel } from '../../../modules/roles/role-labels';
 import { normalizeApiError } from '../../../lib/api/api-error';
 import { EMPLOYEE_STATUS_LABELS, EMPLOYEE_STATUS_TONE, WEEKDAY_LABELS } from '../../../modules/employees/employee-status';
 import type { Employee, ShiftInput } from '../../../modules/employees/types/employee.types';
@@ -50,6 +52,8 @@ export default function EmployeeDetailDrawer({
 }: EmployeeDetailDrawerProps) {
   const { enqueueSnackbar } = useSnackbar();
   const { data: employee } = useEmployee(employeeId);
+  const { data: roles } = useRoles();
+  const roleLabel = roles?.find((role) => role.id === employee?.roleId)?.name;
   const setShifts = useSetEmployeeShifts();
 
   const [rows, setRows] = useState<DayRow[] | null>(null);
@@ -88,7 +92,7 @@ export default function EmployeeDetailDrawer({
       open={Boolean(employeeId)}
       onClose={onClose}
       title={fullName}
-      subtitle={employee.position ?? undefined}
+      subtitle={roleLabel ? getRoleLabel(roleLabel) : undefined}
       headerExtra={
         <StatusChip label={EMPLOYEE_STATUS_LABELS[employee.status]} tone={EMPLOYEE_STATUS_TONE[employee.status]} />
       }

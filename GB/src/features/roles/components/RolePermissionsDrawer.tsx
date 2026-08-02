@@ -13,10 +13,8 @@ import { useRole } from '../../../modules/roles/hooks/use-role';
 import { useSetRolePermissions } from '../../../modules/roles/hooks/use-set-role-permissions';
 import { usePermissionCatalog } from '../../../modules/permissions/hooks/use-permission-catalog';
 import { normalizeApiError } from '../../../lib/api/api-error';
-
-function moduleLabel(module: string): string {
-  return module.charAt(0).toUpperCase() + module.slice(1).replace(/_/g, ' ');
-}
+import { getRoleLabel } from '../../../modules/roles/role-labels';
+import { getPermissionModuleLabel } from '../../../modules/roles/permission-module-labels';
 
 interface RolePermissionsDrawerProps {
   roleId: string | null;
@@ -66,7 +64,7 @@ export default function RolePermissionsDrawer({ roleId, onClose, onEdit }: RoleP
     <DetailDrawer
       open={Boolean(roleId)}
       onClose={onClose}
-      title={role.name}
+      title={getRoleLabel(role.name)}
       subtitle={role.description ?? undefined}
       width={560}
       footer={
@@ -101,7 +99,7 @@ export default function RolePermissionsDrawer({ roleId, onClose, onEdit }: RoleP
           <Box key={module}>
             {idx > 0 && <Divider sx={{ mb: 2 }} />}
             <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 0.5 }}>
-              {moduleLabel(module)}
+              {getPermissionModuleLabel(module)}
             </Typography>
             <Stack spacing={0}>
               {permissions.map((perm) => (

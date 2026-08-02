@@ -16,17 +16,7 @@ import { useLogout } from '../../modules/auth/hooks/use-logout';
 import { useUiStore } from '../../store/uiStore';
 import { initialsFromName } from '../../utils/format';
 import { brand } from '../../theme/palette';
-
-/** Etiquetas en español solo para los roles de sistema sembrados por negocio; un rol personalizado se muestra tal cual (`role.name` real). */
-const SYSTEM_ROLE_LABELS: Record<string, string> = {
-  SUPER_ADMIN: 'Super administrador',
-  OWNER: 'Propietario',
-  MANAGER: 'Gerente',
-  CASHIER: 'Cajero',
-  KITCHEN: 'Cocina',
-  INVENTORY: 'Inventario',
-  EMPLOYEE: 'Empleado',
-};
+import { getRoleLabel } from '../../modules/roles/role-labels';
 
 export default function UserMenu() {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
@@ -42,7 +32,7 @@ export default function UserMenu() {
   if (!user) return null;
 
   const fullName = `${user.firstName} ${user.lastName}`.trim();
-  const roleLabel = SYSTEM_ROLE_LABELS[user.roleName] ?? user.roleName;
+  const roleLabel = getRoleLabel(user.roleName);
 
   const handleLogout = () => {
     close();

@@ -61,13 +61,13 @@ async function runSqlSeeds(): Promise<void> {
   }
 }
 
-/** Idempotent: inserts any permission codes missing from the catalog. */
+/** Idempotent: inserts missing permission codes and keeps module/description in sync with PERMISSIONS. */
 async function seedPermissionsCatalog(db: DatabaseService): Promise<void> {
   for (const permission of PERMISSIONS) {
     await db.query(
       `INSERT INTO permissions (code, module, description)
        VALUES ($1, $2, $3)
-       ON CONFLICT (code) DO NOTHING`,
+       ON CONFLICT (code) DO UPDATE SET module = EXCLUDED.module, description = EXCLUDED.description`,
       [permission.code, permission.module, permission.description],
     );
   }

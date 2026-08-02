@@ -18,6 +18,8 @@ import { useEmployees } from '../../../modules/employees/hooks/use-employees';
 import { useCreateEmployee } from '../../../modules/employees/hooks/use-create-employee';
 import { useUpdateEmployee } from '../../../modules/employees/hooks/use-update-employee';
 import { useDeleteEmployee } from '../../../modules/employees/hooks/use-delete-employee';
+import { useRoles } from '../../../modules/roles/hooks/use-roles';
+import { getRoleLabel } from '../../../modules/roles/role-labels';
 import { normalizeApiError } from '../../../lib/api/api-error';
 import { EMPLOYEE_STATUS_LABELS, EMPLOYEE_STATUS_TONE } from '../../../modules/employees/employee-status';
 import type { Employee, EmployeeStatus } from '../../../modules/employees/types/employee.types';
@@ -45,11 +47,16 @@ export default function EmployeesPage() {
   );
 
   const { data, isLoading, isError, refetch } = useEmployees(filters);
+  const { data: roles } = useRoles();
   const createEmployee = useCreateEmployee();
   const updateEmployee = useUpdateEmployee();
   const deleteEmployee = useDeleteEmployee();
 
   const employees = data?.data ?? [];
+  const roleNameById = useMemo(
+    () => new Map((roles ?? []).map((role) => [role.id, getRoleLabel(role.name)])),
+    [roles],
+  );
 
   const handleSubmit = (values: EmployeeFormValues) => {
     const payload = {
@@ -57,7 +64,7 @@ export default function EmployeesPage() {
       lastName: values.lastName,
       phone: values.phone || undefined,
       email: values.email || undefined,
-      position: values.position || undefined,
+      roleId: values.roleId || undefined,
       hireDate: values.hireDate || undefined,
       notes: values.notes || undefined,
     };
@@ -99,7 +106,11 @@ export default function EmployeesPage() {
       header: 'Nombre',
       cell: ({ row }) => `${row.original.firstName} ${row.original.lastName}`,
     },
-    { id: 'position', header: 'Cargo', cell: ({ row }) => row.original.position ?? '—' },
+    {
+      id: 'position',
+      header: 'Cargo',
+      cell: ({ row }) => (row.original.roleId ? (roleNameById.get(row.original.roleId) ?? '—') : '—'),
+    },
     {
       id: 'status',
       header: 'Estado',

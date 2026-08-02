@@ -6,7 +6,7 @@ export const employeeSchema = z.object({
   lastName: z.string().min(1, 'Ingresa un apellido').max(100),
   phone: z.string().max(30).optional(),
   email: z.string().email('Ingresa un correo válido').max(150).optional().or(z.literal('')),
-  position: z.string().max(100).optional(),
+  roleId: z.string().optional(),
   hireDate: z.string().optional(),
   notes: z.string().max(2000).optional(),
 });

@@ -11,222 +11,233 @@ export const PERMISSIONS: PermissionDefinition[] = [
   {
     code: 'dashboard.read',
     module: 'dashboard',
-    description: 'View the dashboard summary',
+    description: 'Ver el resumen del panel principal',
   },
 
-  { code: 'orders.read', module: 'orders', description: 'View orders' },
-  { code: 'orders.create', module: 'orders', description: 'Create orders' },
-  { code: 'orders.update', module: 'orders', description: 'Update orders' },
-  { code: 'orders.cancel', module: 'orders', description: 'Cancel orders' },
+  { code: 'orders.read', module: 'orders', description: 'Ver pedidos' },
+  { code: 'orders.create', module: 'orders', description: 'Crear pedidos' },
+  { code: 'orders.update', module: 'orders', description: 'Actualizar pedidos' },
+  { code: 'orders.cancel', module: 'orders', description: 'Cancelar pedidos' },
 
   {
     code: 'kitchen.read',
     module: 'kitchen',
-    description: 'View the kitchen display',
+    description: 'Ver la pantalla de cocina',
   },
   {
     code: 'kitchen.update_status',
     module: 'kitchen',
-    description: 'Update order preparation status',
+    description: 'Actualizar el estado de preparación de los pedidos',
   },
 
   {
     code: 'inventory.read',
     module: 'inventory',
-    description: 'View inventory and stock',
+    description: 'Ver inventario y existencias',
   },
   {
     code: 'inventory.adjust',
     module: 'inventory',
-    description: 'Adjust inventory stock',
+    description: 'Ajustar existencias de inventario',
   },
   {
     code: 'inventory.transfer',
     module: 'inventory',
-    description: 'Transfer inventory between locations',
+    description: 'Transferir inventario entre ubicaciones',
   },
   {
     code: 'inventory.manage',
     module: 'inventory',
     description:
-      'Create, update and deactivate inventory items (insumos catalog)',
+      'Crear, actualizar y desactivar ítems de inventario (catálogo de insumos)',
   },
   {
     code: 'inventory.count',
     module: 'inventory',
-    description: 'Start, record and complete physical inventory counts',
+    description: 'Iniciar, registrar y completar conteos físicos de inventario',
   },
 
-  { code: 'products.read', module: 'products', description: 'View products' },
+  { code: 'products.read', module: 'products', description: 'Ver productos' },
   {
     code: 'products.create',
     module: 'products',
-    description: 'Create products',
+    description: 'Crear productos',
   },
   {
     code: 'products.update',
     module: 'products',
-    description: 'Update products',
+    description: 'Actualizar productos',
   },
 
-  { code: 'cash.open', module: 'cash', description: 'Open a cash session' },
-  { code: 'cash.close', module: 'cash', description: 'Close a cash session' },
+  { code: 'cash.open', module: 'cash', description: 'Abrir una sesión de caja' },
+  { code: 'cash.close', module: 'cash', description: 'Cerrar una sesión de caja' },
   {
     code: 'cash.withdraw',
     module: 'cash',
-    description: 'Withdraw cash from a session',
+    description: 'Retirar efectivo de una sesión de caja',
   },
 
   {
     code: 'purchases.read',
     module: 'purchases',
-    description: 'View purchase orders',
+    description: 'Ver órdenes de compra',
   },
   {
     code: 'purchases.create',
     module: 'purchases',
-    description: 'Create purchase orders',
+    description: 'Crear órdenes de compra',
   },
   {
     code: 'purchases.approve',
     module: 'purchases',
-    description: 'Approve purchase orders',
+    description: 'Aprobar órdenes de compra',
   },
   {
     code: 'purchases.receive',
     module: 'purchases',
-    description: 'Record goods receipts against a purchase order',
+    description: 'Registrar recepciones de mercancía contra una orden de compra',
   },
   {
     code: 'purchases.cancel',
     module: 'purchases',
-    description: 'Cancel a purchase order',
+    description: 'Cancelar una orden de compra',
   },
   {
     code: 'suppliers.read',
     module: 'purchases',
-    description: 'View suppliers',
+    description: 'Ver proveedores',
   },
   {
     code: 'suppliers.manage',
     module: 'purchases',
-    description: 'Create, update and deactivate suppliers',
+    description: 'Crear, actualizar y desactivar proveedores',
   },
 
-  { code: 'users.manage', module: 'users', description: 'Manage users' },
+  { code: 'users.manage', module: 'users', description: 'Administrar usuarios' },
   {
     code: 'roles.manage',
     module: 'users',
-    description: 'Manage roles and their permissions',
+    description: 'Administrar roles y sus permisos',
   },
 
   {
     code: 'businesses.manage',
     module: 'settings',
-    description: 'Manage business configuration',
+    description: 'Administrar la configuración del negocio',
   },
   {
     code: 'branches.manage',
     module: 'settings',
-    description: 'Manage branches',
+    description: 'Administrar sedes',
   },
   {
     code: 'settings.manage',
     module: 'settings',
-    description: 'Manage general settings',
+    description: 'Administrar la configuración general',
   },
 
   {
     code: 'analytics.read',
     module: 'analytics',
-    description: 'View analytics and reports',
+    description: 'Ver analítica y reportes',
   },
 
   {
     code: 'employees.read',
     module: 'employees',
-    description: 'View employees',
+    description: 'Ver personal',
   },
   {
     code: 'employees.manage',
     module: 'employees',
-    description: 'Create, update and manage employees and their shifts',
+    description: 'Crear, actualizar y administrar al personal y sus turnos',
   },
 
   {
     code: 'checklists.read',
     module: 'checklists',
-    description: 'View checklist templates and runs',
+    description: 'Ver plantillas y ejecuciones de checklists',
   },
   {
     code: 'checklists.manage',
     module: 'checklists',
-    description: 'Create and update checklist templates',
+    description: 'Crear y actualizar plantillas de checklists',
   },
   {
     code: 'checklists.execute',
     module: 'checklists',
-    description: 'Start and complete checklist runs',
+    description: 'Iniciar y completar ejecuciones de checklists',
   },
 
   {
     code: 'maintenance.read',
     module: 'maintenance',
-    description: 'View equipment and maintenance history',
+    description: 'Ver equipos e historial de mantenimiento',
   },
   {
     code: 'maintenance.manage',
     module: 'maintenance',
-    description: 'Create/update equipment and record interventions',
+    description: 'Crear/actualizar equipos y registrar intervenciones',
   },
 
   {
     code: 'loyalty.read',
     module: 'loyalty',
-    description: 'View loyalty points, tiers and rewards',
+    description: 'Ver puntos, niveles y recompensas de fidelización',
   },
   {
     code: 'loyalty.manage',
     module: 'loyalty',
-    description: 'Manage loyalty configuration and rewards catalog',
+    description: 'Administrar la configuración de fidelización y el catálogo de recompensas',
   },
   {
     code: 'loyalty.redeem',
     module: 'loyalty',
-    description: 'Adjust customer points and redeem rewards',
+    description: 'Ajustar puntos de clientes y canjear recompensas',
   },
 
   {
     code: 'marketing.read',
     module: 'marketing',
-    description: 'View marketing campaigns, coupons and content calendar',
+    description: 'Ver campañas de marketing, cupones y calendario de contenido',
   },
   {
     code: 'marketing.manage',
     module: 'marketing',
-    description: 'Create and update marketing campaigns, coupons and content',
+    description: 'Crear y actualizar campañas de marketing, cupones y contenido',
   },
 
   {
     code: 'documents.read',
     module: 'documents',
-    description: 'View compliance documents',
+    description: 'Ver documentos de cumplimiento',
   },
   {
     code: 'documents.manage',
     module: 'documents',
-    description: 'Create and update compliance documents',
+    description: 'Crear y actualizar documentos de cumplimiento',
+  },
+
+  {
+    code: 'document_scans.read',
+    module: 'document_scans',
+    description: 'Ver escaneos de facturas y recibos',
+  },
+  {
+    code: 'document_scans.manage',
+    module: 'document_scans',
+    description: 'Subir y eliminar escaneos de facturas y recibos',
   },
 
   {
     code: 'finances.read',
     module: 'finances',
-    description: 'View expenses and financial reports',
+    description: 'Ver gastos y reportes financieros',
   },
   {
     code: 'finances.manage',
     module: 'finances',
-    description: 'Record and update expenses',
+    description: 'Registrar y actualizar gastos',
   },
 ];
 
@@ -277,6 +288,8 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<SystemRoleName, string[]> = {
     'marketing.manage',
     'documents.read',
     'documents.manage',
+    'document_scans.read',
+    'document_scans.manage',
     'finances.read',
     'finances.manage',
   ],

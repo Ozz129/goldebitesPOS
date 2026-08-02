@@ -9,6 +9,7 @@ import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
 import Typography from '@mui/material/Typography';
 import { useRoles } from '../../../modules/roles/hooks/use-roles';
+import { getRoleLabel } from '../../../modules/roles/role-labels';
 
 interface GenerateCredentialsDialogProps {
   open: boolean;
@@ -78,7 +79,7 @@ export default function GenerateCredentialsDialog({
           >
             {(roles ?? []).map((role) => (
               <MenuItem key={role.id} value={role.id}>
-                {role.name}
+                {getRoleLabel(role.name)}
               </MenuItem>
             ))}
           </TextField>

@@ -11,6 +11,7 @@ import { useRoles } from '../../../modules/roles/hooks/use-roles';
 import { useCreateRole } from '../../../modules/roles/hooks/use-create-role';
 import { useUpdateRole } from '../../../modules/roles/hooks/use-update-role';
 import { normalizeApiError } from '../../../lib/api/api-error';
+import { getRoleLabel } from '../../../modules/roles/role-labels';
 import type { Role } from '../../../modules/roles/types/role.types';
 import type { RoleFormValues } from '../schemas/roleSchema';
 import RoleFormDrawer from '../components/RoleFormDrawer';
@@ -50,7 +51,7 @@ export default function RolesPage() {
   };
 
   const columns: ColumnDef<Role, unknown>[] = [
-    { accessorKey: 'name', header: 'Rol' },
+    { id: 'name', header: 'Rol', cell: ({ row }) => getRoleLabel(row.original.name) },
     { id: 'description', header: 'Descripción', cell: ({ row }) => row.original.description ?? '—' },
   ];
 

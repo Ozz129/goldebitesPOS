@@ -23,8 +23,14 @@ export const documentScansApi = {
     if (payload.documentDate) formData.append('documentDate', payload.documentDate);
     if (payload.notes) formData.append('notes', payload.notes);
 
-    // axios detects FormData and sets the multipart Content-Type + boundary itself.
-    const { data } = await apiClient.post<ApiResponse<DocumentScan>>('/document-scans', formData);
+    // apiClient sets a default 'application/json' Content-Type on the instance, which
+    // takes precedence over axios's usual auto-detection of FormData — without this
+    // override the request goes out as JSON with no multipart boundary and the backend
+    // rejects it. Explicitly clearing it here lets the browser generate the correct
+    // 'multipart/form-data; boundary=...' header itself.
+    const { data } = await apiClient.post<ApiResponse<DocumentScan>>('/document-scans', formData, {
+      headers: { 'Content-Type': undefined },
+    });
     return data.data;
   },
 

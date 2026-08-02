@@ -7,6 +7,9 @@ export interface InventoryItem {
   unit: string;
   minimumStock: number;
   currentCost: number;
+  serialNumber: string | null;
+  brand: string | null;
+  model: string | null;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -21,6 +24,9 @@ export interface InventoryItemRow {
   unit: string;
   minimum_stock: string;
   current_cost: string;
+  serial_number: string | null;
+  brand: string | null;
+  model: string | null;
   is_active: boolean;
   created_at: Date;
   updated_at: Date;

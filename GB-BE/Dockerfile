@@ -14,6 +14,7 @@ COPY package*.json ./
 RUN npm ci --omit=dev
 COPY --from=builder /app/dist ./dist
 COPY database ./database
+RUN mkdir -p uploads/document-scans && chown -R node:node uploads
 EXPOSE 3000
 USER node
 CMD ["node", "dist/main.js"]

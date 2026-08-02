@@ -6,6 +6,9 @@ export interface CreateInventoryItemData {
   unit: string;
   minimumStock?: number;
   currentCost?: number;
+  serialNumber?: string;
+  brand?: string;
+  model?: string;
 }
 
 export interface UpdateInventoryItemData {
@@ -15,6 +18,9 @@ export interface UpdateInventoryItemData {
   unit?: string;
   minimumStock?: number;
   currentCost?: number;
+  serialNumber?: string;
+  brand?: string;
+  model?: string;
 }
 
 export interface InventoryItemQuery {

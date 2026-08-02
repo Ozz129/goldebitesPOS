@@ -8,6 +8,9 @@ export const inventoryItemSchema = z.object({
   unit: z.string().min(1, 'Ingresa una unidad de medida').max(30),
   minimumStock: z.coerce.number().min(0).optional(),
   currentCost: z.coerce.number().min(0).optional(),
+  serialNumber: z.string().max(100).optional(),
+  brand: z.string().max(100).optional(),
+  model: z.string().max(100).optional(),
 });
 
 export type InventoryItemFormValues = z.infer<typeof inventoryItemSchema>;

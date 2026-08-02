@@ -7,6 +7,9 @@ export interface InventoryItem {
   unit: string;
   minimumStock: number;
   currentCost: number;
+  serialNumber: string | null;
+  brand: string | null;
+  model: string | null;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -19,6 +22,9 @@ export interface CreateInventoryItemPayload {
   unit: string;
   minimumStock?: number;
   currentCost?: number;
+  serialNumber?: string;
+  brand?: string;
+  model?: string;
 }
 
 export type UpdateInventoryItemPayload = Partial<CreateInventoryItemPayload>;

@@ -116,6 +116,38 @@ export default function InventoryDetailDrawer({
           </Box>
         </Stack>
 
+        {(item.brand || item.model || item.serialNumber) && (
+          <>
+            <Divider />
+            <Stack direction="row" spacing={2}>
+              {item.brand && (
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant="caption" color="text.secondary">
+                    Marca
+                  </Typography>
+                  <Typography variant="body2">{item.brand}</Typography>
+                </Box>
+              )}
+              {item.model && (
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant="caption" color="text.secondary">
+                    Modelo
+                  </Typography>
+                  <Typography variant="body2">{item.model}</Typography>
+                </Box>
+              )}
+              {item.serialNumber && (
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant="caption" color="text.secondary">
+                    Serial
+                  </Typography>
+                  <Typography variant="body2">{item.serialNumber}</Typography>
+                </Box>
+              )}
+            </Stack>
+          </>
+        )}
+
         <Divider />
 
         <Box>

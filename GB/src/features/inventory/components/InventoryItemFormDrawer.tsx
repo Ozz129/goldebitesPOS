@@ -23,6 +23,9 @@ const emptyValues: InventoryItemFormValues = {
   unit: '',
   minimumStock: 0,
   currentCost: 0,
+  serialNumber: '',
+  brand: '',
+  model: '',
 };
 
 export default function InventoryItemFormDrawer({
@@ -55,6 +58,9 @@ export default function InventoryItemFormDrawer({
               unit: initialItem.unit,
               minimumStock: initialItem.minimumStock,
               currentCost: initialItem.currentCost,
+              serialNumber: initialItem.serialNumber ?? '',
+              brand: initialItem.brand ?? '',
+              model: initialItem.model ?? '',
             }
           : emptyValues,
       );
@@ -140,6 +146,25 @@ export default function InventoryItemFormDrawer({
             )}
           />
         </Stack>
+
+        <Stack direction="row" spacing={2}>
+          <Controller
+            name="brand"
+            control={control}
+            render={({ field }) => <TextField {...field} label="Marca" fullWidth />}
+          />
+          <Controller
+            name="model"
+            control={control}
+            render={({ field }) => <TextField {...field} label="Modelo" fullWidth />}
+          />
+        </Stack>
+
+        <Controller
+          name="serialNumber"
+          control={control}
+          render={({ field }) => <TextField {...field} label="Número de serial" fullWidth />}
+        />
       </Stack>
     </FormDrawer>
   );

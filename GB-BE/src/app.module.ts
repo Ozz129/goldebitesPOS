@@ -22,6 +22,7 @@ import { CashSessionsModule } from './modules/cash-sessions/cash-sessions.module
 import { ChecklistsModule } from './modules/checklists/checklists.module';
 import { CustomersModule } from './modules/customers/customers.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { DocumentScansModule } from './modules/document-scans/document-scans.module';
 import { DocumentsModule } from './modules/documents/documents.module';
 import { EmployeesModule } from './modules/employees/employees.module';
 import { FinancesModule } from './modules/finances/finances.module';
@@ -100,6 +101,7 @@ import { WasteModule } from './modules/waste/waste.module';
     LoyaltyModule,
     MarketingModule,
     DocumentsModule,
+    DocumentScansModule,
     FinancesModule,
     TabletKioskModule,
   ],

@@ -27,6 +27,7 @@ const ChecklistsPage = lazy(() => import('../features/checklists/pages/Checklist
 const WastePage = lazy(() => import('../features/waste/pages/WastePage'));
 const MaintenancePage = lazy(() => import('../features/maintenance/pages/MaintenancePage'));
 const DocumentsPage = lazy(() => import('../features/documents/pages/DocumentsPage'));
+const DocumentScansPage = lazy(() => import('../features/document-scans/pages/DocumentScansPage'));
 const MarketingPage = lazy(() => import('../features/marketing/pages/MarketingPage'));
 const AnalyticsPage = lazy(() => import('../features/analytics/pages/AnalyticsPage'));
 const SettingsPage = lazy(() => import('../features/settings/pages/SettingsPage'));
@@ -208,6 +209,16 @@ export default function AppRoutes() {
               element={
                 <Loadable>
                   <DocumentsPage />
+                </Loadable>
+              }
+            />
+          </Route>
+          <Route element={<ProtectedRoute permission={MODULE_PERMISSIONS.documentScans} />}>
+            <Route
+              path={MODULE_PATHS.documentScans}
+              element={
+                <Loadable>
+                  <DocumentScansPage />
                 </Loadable>
               }
             />

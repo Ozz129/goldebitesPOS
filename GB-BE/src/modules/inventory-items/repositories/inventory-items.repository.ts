@@ -10,7 +10,7 @@ import {
 } from '../domain/inventory-item.types';
 import { IInventoryItemsRepository } from './inventory-items.repository.interface';
 
-const SELECT_COLUMNS = `id, business_id, category_id, name, sku, unit, minimum_stock, current_cost, is_active, created_at, updated_at, deleted_at`;
+const SELECT_COLUMNS = `id, business_id, category_id, name, sku, unit, minimum_stock, current_cost, serial_number, brand, model, is_active, created_at, updated_at, deleted_at`;
 
 interface CountRow {
   count: string;
@@ -25,8 +25,8 @@ export class InventoryItemsRepository implements IInventoryItemsRepository {
     client?: DbClient,
   ): Promise<InventoryItemRow> {
     const result = await this.db.query<InventoryItemRow>(
-      `INSERT INTO inventory_items (business_id, category_id, name, sku, unit, minimum_stock, current_cost)
-       VALUES ($1, $2, $3, $4, $5, COALESCE($6::numeric, 0), COALESCE($7::numeric, 0))
+      `INSERT INTO inventory_items (business_id, category_id, name, sku, unit, minimum_stock, current_cost, serial_number, brand, model)
+       VALUES ($1, $2, $3, $4, $5, COALESCE($6::numeric, 0), COALESCE($7::numeric, 0), $8, $9, $10)
        RETURNING ${SELECT_COLUMNS}`,
       [
         data.businessId,
@@ -36,6 +36,9 @@ export class InventoryItemsRepository implements IInventoryItemsRepository {
         data.unit,
         data.minimumStock ?? null,
         data.currentCost ?? null,
+        data.serialNumber ?? null,
+        data.brand ?? null,
+        data.model ?? null,
       ],
       client,
     );
@@ -116,7 +119,10 @@ export class InventoryItemsRepository implements IInventoryItemsRepository {
            sku = COALESCE($5, sku),
            unit = COALESCE($6, unit),
            minimum_stock = COALESCE($7, minimum_stock),
-           current_cost = COALESCE($8, current_cost)
+           current_cost = COALESCE($8, current_cost),
+           serial_number = COALESCE($9, serial_number),
+           brand = COALESCE($10, brand),
+           model = COALESCE($11, model)
        WHERE id = $1 AND business_id = $2 AND deleted_at IS NULL
        RETURNING ${SELECT_COLUMNS}`,
       [
@@ -128,6 +134,9 @@ export class InventoryItemsRepository implements IInventoryItemsRepository {
         data.unit ?? null,
         data.minimumStock ?? null,
         data.currentCost ?? null,
+        data.serialNumber ?? null,
+        data.brand ?? null,
+        data.model ?? null,
       ],
       client,
     );

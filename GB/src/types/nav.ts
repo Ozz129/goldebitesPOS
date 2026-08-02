@@ -18,6 +18,7 @@ export type ModuleKey =
   | 'waste'
   | 'maintenance'
   | 'documents'
+  | 'documentScans'
   | 'marketing'
   | 'analytics'
   | 'settings'

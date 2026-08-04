@@ -24,7 +24,10 @@ export class FeaturesGuard implements CanActivate {
 
     const { user } = context.switchToHttp().getRequest<RequestWithUser>();
 
-    if (!user || !user.enabledFeatures.includes(requiredFeature)) {
+    // A token issued before this guard existed has no enabledFeatures claim
+    // at all — treat that the same as "not enabled" rather than throwing,
+    // until the holder's next login/refresh mints a token with the field.
+    if (!user || !user.enabledFeatures?.includes(requiredFeature)) {
       throw new UnauthorizedOperationException(
         `This business does not have the "${requiredFeature}" module enabled`,
       );

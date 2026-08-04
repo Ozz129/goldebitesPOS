@@ -7,8 +7,10 @@ import databaseConfig from './config/database.config';
 import { validate } from './config/env.validation';
 import { DatabaseModule } from './database/database.module';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
+import { FeaturesGuard } from './common/guards/features.guard';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { PermissionsGuard } from './common/guards/permissions.guard';
+import { PlatformAdminGuard } from './common/guards/platform-admin.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
@@ -17,6 +19,7 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { BranchesModule } from './modules/branches/branches.module';
+import { BusinessFeaturesModule } from './modules/business-features/business-features.module';
 import { BusinessesModule } from './modules/businesses/businesses.module';
 import { CashSessionsModule } from './modules/cash-sessions/cash-sessions.module';
 import { ChecklistsModule } from './modules/checklists/checklists.module';
@@ -41,6 +44,7 @@ import { MarketingModule } from './modules/marketing/marketing.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { PermissionsModule } from './modules/permissions/permissions.module';
+import { PlatformAdminModule } from './modules/platform-admin/platform-admin.module';
 import { ProductCategoriesModule } from './modules/product-categories/product-categories.module';
 import { ProductsModule } from './modules/products/products.module';
 import { PurchasesModule } from './modules/purchases/purchases.module';
@@ -102,6 +106,8 @@ import { WasteModule } from './modules/waste/waste.module';
     MarketingModule,
     DocumentsModule,
     DocumentScansModule,
+    BusinessFeaturesModule,
+    PlatformAdminModule,
     FinancesModule,
     TabletKioskModule,
   ],
@@ -110,6 +116,8 @@ import { WasteModule } from './modules/waste/waste.module';
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
     { provide: APP_GUARD, useClass: PermissionsGuard },
+    { provide: APP_GUARD, useClass: FeaturesGuard },
+    { provide: APP_GUARD, useClass: PlatformAdminGuard },
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },
     { provide: APP_INTERCEPTOR, useClass: LoggingInterceptor },
     { provide: APP_INTERCEPTOR, useClass: ResponseInterceptor },

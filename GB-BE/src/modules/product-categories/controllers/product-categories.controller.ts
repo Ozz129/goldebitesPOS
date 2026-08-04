@@ -16,9 +16,11 @@ import { ProductCategoryQueryDto } from '../dto/product-category-query.dto';
 import { SetProductCategoryStatusDto } from '../dto/set-product-category-status.dto';
 import { UpdateProductCategoryDto } from '../dto/update-product-category.dto';
 import { ProductCategoriesService } from '../services/product-categories.service';
+import { RequiresFeature } from '../../../common/decorators/requires-feature.decorator';
 
 @ApiTags('Product Categories')
 @ApiBearerAuth()
+@RequiresFeature('products')
 @Controller('product-categories')
 export class ProductCategoriesController {
   constructor(private readonly categoriesService: ProductCategoriesService) {}

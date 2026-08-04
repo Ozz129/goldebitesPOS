@@ -9,9 +9,11 @@ import { CreateCashMovementDto } from '../dto/create-cash-movement.dto';
 import { CurrentCashSessionQueryDto } from '../dto/current-cash-session-query.dto';
 import { OpenCashSessionDto } from '../dto/open-cash-session.dto';
 import { CashSessionsService } from '../services/cash-sessions.service';
+import { RequiresFeature } from '../../../common/decorators/requires-feature.decorator';
 
 @ApiTags('Cash Sessions')
 @ApiBearerAuth()
+@RequiresFeature('cash-register')
 @Controller('cash-sessions')
 export class CashSessionsController {
   constructor(private readonly cashSessionsService: CashSessionsService) {}

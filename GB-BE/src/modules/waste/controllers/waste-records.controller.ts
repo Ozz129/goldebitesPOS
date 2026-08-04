@@ -6,9 +6,11 @@ import { Permissions } from '../../../common/decorators/permissions.decorator';
 import { CreateWasteRecordDto } from '../dto/create-waste-record.dto';
 import { WasteRecordQueryDto } from '../dto/waste-record-query.dto';
 import { WasteRecordsService } from '../services/waste-records.service';
+import { RequiresFeature } from '../../../common/decorators/requires-feature.decorator';
 
 @ApiTags('Waste')
 @ApiBearerAuth()
+@RequiresFeature('waste')
 @Controller('waste')
 export class WasteRecordsController {
   constructor(private readonly wasteRecordsService: WasteRecordsService) {}

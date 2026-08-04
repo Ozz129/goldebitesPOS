@@ -19,9 +19,11 @@ import { CreateInfluencerDto } from '../dto/create-influencer.dto';
 import { InfluencerQueryDto } from '../dto/influencer-query.dto';
 import { UpdateInfluencerDto } from '../dto/update-influencer.dto';
 import { InfluencersService } from '../services/influencers.service';
+import { RequiresFeature } from '../../../common/decorators/requires-feature.decorator';
 
 @ApiTags('Marketing')
 @ApiBearerAuth()
+@RequiresFeature('marketing')
 @Controller('marketing-influencers')
 export class InfluencersController {
   constructor(private readonly influencersService: InfluencersService) {}

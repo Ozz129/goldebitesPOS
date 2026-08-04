@@ -21,9 +21,11 @@ import { EquipmentQueryDto } from '../dto/equipment-query.dto';
 import { SetEquipmentStatusDto } from '../dto/set-equipment-status.dto';
 import { UpdateEquipmentDto } from '../dto/update-equipment.dto';
 import { EquipmentService } from '../services/equipment.service';
+import { RequiresFeature } from '../../../common/decorators/requires-feature.decorator';
 
 @ApiTags('Maintenance')
 @ApiBearerAuth()
+@RequiresFeature('maintenance')
 @Controller('equipment')
 export class EquipmentController {
   constructor(private readonly equipmentService: EquipmentService) {}

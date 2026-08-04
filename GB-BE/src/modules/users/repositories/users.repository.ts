@@ -12,7 +12,7 @@ import {
 import { IUsersRepository } from './users.repository.interface';
 
 const SELECT_COLUMNS = `id, business_id, branch_id, role_id, first_name, last_name, email,
-  password_hash, phone, status, last_login_at, created_at, updated_at, deleted_at`;
+  password_hash, phone, status, is_platform_admin, last_login_at, created_at, updated_at, deleted_at`;
 
 interface CountRow {
   count: string;

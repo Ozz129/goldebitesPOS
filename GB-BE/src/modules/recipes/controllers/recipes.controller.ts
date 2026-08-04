@@ -19,9 +19,11 @@ import { CreateRecipeDto } from '../dto/create-recipe.dto';
 import { SetRecipeItemsDto } from '../dto/set-recipe-items.dto';
 import { UpdateRecipeDto } from '../dto/update-recipe.dto';
 import { RecipesService } from '../services/recipes.service';
+import { RequiresFeature } from '../../../common/decorators/requires-feature.decorator';
 
 @ApiTags('Recipes')
 @ApiBearerAuth()
+@RequiresFeature('products')
 @Controller('products/:productId/recipe')
 export class RecipesController {
   constructor(private readonly recipesService: RecipesService) {}

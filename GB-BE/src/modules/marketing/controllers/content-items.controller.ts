@@ -19,9 +19,11 @@ import { ContentItemQueryDto } from '../dto/content-item-query.dto';
 import { CreateContentItemDto } from '../dto/create-content-item.dto';
 import { UpdateContentItemDto } from '../dto/update-content-item.dto';
 import { ContentItemsService } from '../services/content-items.service';
+import { RequiresFeature } from '../../../common/decorators/requires-feature.decorator';
 
 @ApiTags('Marketing')
 @ApiBearerAuth()
+@RequiresFeature('marketing')
 @Controller('marketing-content-items')
 export class ContentItemsController {
   constructor(private readonly contentItemsService: ContentItemsService) {}

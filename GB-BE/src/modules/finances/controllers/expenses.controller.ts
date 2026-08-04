@@ -20,9 +20,11 @@ import { ExpenseQueryDto } from '../dto/expense-query.dto';
 import { ExpenseSummaryQueryDto } from '../dto/expense-summary-query.dto';
 import { UpdateExpenseDto } from '../dto/update-expense.dto';
 import { ExpensesService } from '../services/expenses.service';
+import { RequiresFeature } from '../../../common/decorators/requires-feature.decorator';
 
 @ApiTags('Finances')
 @ApiBearerAuth()
+@RequiresFeature('finances')
 @Controller('expenses')
 export class ExpensesController {
   constructor(private readonly expensesService: ExpensesService) {}

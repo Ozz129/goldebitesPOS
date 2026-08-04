@@ -7,9 +7,11 @@ import { MovementQueryDto } from '../dto/movement-query.dto';
 import { RedeemRewardDto } from '../dto/redeem-reward.dto';
 import { UpdateLoyaltyConfigDto } from '../dto/update-loyalty-config.dto';
 import { LoyaltyService } from '../services/loyalty.service';
+import { RequiresFeature } from '../../../common/decorators/requires-feature.decorator';
 
 @ApiTags('Loyalty')
 @ApiBearerAuth()
+@RequiresFeature('loyalty')
 @Controller('loyalty')
 export class LoyaltyController {
   constructor(private readonly loyaltyService: LoyaltyService) {}

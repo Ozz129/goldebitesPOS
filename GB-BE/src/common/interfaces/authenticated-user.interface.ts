@@ -9,4 +9,6 @@ export interface AuthenticatedUser {
   roleId: string;
   roleName: string;
   permissions: string[];
+  isPlatformAdmin: boolean;
+  enabledFeatures: string[];
 }

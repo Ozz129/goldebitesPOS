@@ -20,9 +20,11 @@ import { CreateCustomerDto } from '../dto/create-customer.dto';
 import { CustomerQueryDto } from '../dto/customer-query.dto';
 import { UpdateCustomerDto } from '../dto/update-customer.dto';
 import { CustomersService } from '../services/customers.service';
+import { RequiresFeature } from '../../../common/decorators/requires-feature.decorator';
 
 @ApiTags('Customers')
 @ApiBearerAuth()
+@RequiresFeature('customers')
 @Controller('customers')
 export class CustomersController {
   constructor(private readonly customersService: CustomersService) {}

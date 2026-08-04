@@ -20,9 +20,11 @@ import { ProductQueryDto } from '../dto/product-query.dto';
 import { SetProductStatusDto } from '../dto/set-product-status.dto';
 import { UpdateProductDto } from '../dto/update-product.dto';
 import { ProductsService } from '../services/products.service';
+import { RequiresFeature } from '../../../common/decorators/requires-feature.decorator';
 
 @ApiTags('Products')
 @ApiBearerAuth()
+@RequiresFeature('products')
 @Controller('products')
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}

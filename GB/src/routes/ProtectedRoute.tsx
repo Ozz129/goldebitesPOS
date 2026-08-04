@@ -4,15 +4,17 @@ import { usePermissions } from '../modules/auth/hooks/use-permissions';
 interface ProtectedRouteProps {
   /** Permiso(s) requeridos del catálogo real del backend. Un array significa "cualquiera de estos". */
   permission: string | string[];
+  /** Clave del módulo activable (ver FEATURE_MODULES en el backend); si se omite, no se exige ninguna feature. */
+  module?: string;
 }
 
-export default function ProtectedRoute({ permission }: ProtectedRouteProps) {
-  const { hasPermission, hasAnyPermission } = usePermissions();
+export default function ProtectedRoute({ permission, module }: ProtectedRouteProps) {
+  const { hasPermission, hasAnyPermission, hasFeature } = usePermissions();
   const location = useLocation();
 
-  const allowed = Array.isArray(permission)
-    ? hasAnyPermission(permission)
-    : hasPermission(permission);
+  const allowed =
+    (Array.isArray(permission) ? hasAnyPermission(permission) : hasPermission(permission)) &&
+    (module ? hasFeature(module) : true);
 
   if (!allowed) {
     return <Navigate to="/sin-acceso" replace state={{ from: location.pathname }} />;

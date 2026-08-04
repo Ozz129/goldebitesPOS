@@ -6,9 +6,11 @@ import { Permissions } from '../../../common/decorators/permissions.decorator';
 import { CreateGoodsReceiptDto } from '../dto/create-goods-receipt.dto';
 import { GoodsReceiptQueryDto } from '../dto/goods-receipt-query.dto';
 import { GoodsReceiptsService } from '../services/goods-receipts.service';
+import { RequiresFeature } from '../../../common/decorators/requires-feature.decorator';
 
 @ApiTags('Purchases')
 @ApiBearerAuth()
+@RequiresFeature('purchases')
 @Controller('goods-receipts')
 export class GoodsReceiptsController {
   constructor(private readonly goodsReceiptsService: GoodsReceiptsService) {}

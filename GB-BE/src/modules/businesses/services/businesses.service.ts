@@ -51,6 +51,11 @@ export class BusinessesService {
     return BusinessMapper.toDomain(row);
   }
 
+  async findAll(): Promise<Business[]> {
+    const rows = await this.businessesRepository.findAll();
+    return rows.map((row) => BusinessMapper.toDomain(row));
+  }
+
   async findById(id: string): Promise<Business> {
     const row = await this.getOrFail(id);
     return BusinessMapper.toDomain(row);

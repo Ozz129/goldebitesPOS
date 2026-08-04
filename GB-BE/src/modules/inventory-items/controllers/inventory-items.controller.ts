@@ -20,9 +20,11 @@ import { InventoryItemQueryDto } from '../dto/inventory-item-query.dto';
 import { SetInventoryItemStatusDto } from '../dto/set-inventory-item-status.dto';
 import { UpdateInventoryItemDto } from '../dto/update-inventory-item.dto';
 import { InventoryItemsService } from '../services/inventory-items.service';
+import { RequiresFeature } from '../../../common/decorators/requires-feature.decorator';
 
 @ApiTags('Inventory Items')
 @ApiBearerAuth()
+@RequiresFeature('inventory')
 @Controller('inventory-items')
 export class InventoryItemsController {
   constructor(private readonly inventoryItemsService: InventoryItemsService) {}

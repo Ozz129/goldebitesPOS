@@ -36,6 +36,13 @@ export class BusinessesRepository implements IBusinessesRepository {
     return result.rows[0];
   }
 
+  async findAll(): Promise<BusinessRow[]> {
+    const result = await this.db.query<BusinessRow>(
+      `SELECT ${SELECT_COLUMNS} FROM businesses ORDER BY created_at`,
+    );
+    return result.rows;
+  }
+
   async findById(id: string, client?: DbClient): Promise<BusinessRow | null> {
     const result = await this.db.query<BusinessRow>(
       `SELECT ${SELECT_COLUMNS} FROM businesses WHERE id = $1`,

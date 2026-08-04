@@ -16,9 +16,11 @@ import { InventoryItemCategoryQueryDto } from '../dto/inventory-item-category-qu
 import { SetInventoryItemCategoryStatusDto } from '../dto/set-inventory-item-category-status.dto';
 import { UpdateInventoryItemCategoryDto } from '../dto/update-inventory-item-category.dto';
 import { InventoryItemCategoriesService } from '../services/inventory-item-categories.service';
+import { RequiresFeature } from '../../../common/decorators/requires-feature.decorator';
 
 @ApiTags('Inventory Item Categories')
 @ApiBearerAuth()
+@RequiresFeature('inventory')
 @Controller('inventory-item-categories')
 export class InventoryItemCategoriesController {
   constructor(

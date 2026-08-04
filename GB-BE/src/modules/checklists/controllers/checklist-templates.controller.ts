@@ -22,9 +22,11 @@ import { SetChecklistTemplateItemsDto } from '../dto/set-checklist-template-item
 import { SetChecklistTemplateStatusDto } from '../dto/set-checklist-template-status.dto';
 import { UpdateChecklistTemplateDto } from '../dto/update-checklist-template.dto';
 import { ChecklistTemplatesService } from '../services/checklist-templates.service';
+import { RequiresFeature } from '../../../common/decorators/requires-feature.decorator';
 
 @ApiTags('Checklists')
 @ApiBearerAuth()
+@RequiresFeature('checklists')
 @Controller('checklist-templates')
 export class ChecklistTemplatesController {
   constructor(private readonly templatesService: ChecklistTemplatesService) {}

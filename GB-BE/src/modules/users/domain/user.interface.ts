@@ -28,6 +28,7 @@ export interface UserRow {
   password_hash: string;
   phone: string | null;
   status: UserStatus;
+  is_platform_admin: boolean;
   last_login_at: Date | null;
   created_at: Date;
   updated_at: Date;

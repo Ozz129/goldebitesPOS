@@ -13,6 +13,7 @@ import { parseDurationMs } from '../../../common/utils/duration.util';
 import { AppConfig } from '../../../config/app.config';
 import { TransactionService } from '../../../database/transaction.service';
 import { AuditService } from '../../audit/services/audit.service';
+import { BusinessFeaturesService } from '../../business-features/services/business-features.service';
 import { RolesService } from '../../roles/services/roles.service';
 import { UserRow } from '../../users/domain/user.interface';
 import { UserStatus } from '../../users/domain/user.types';
@@ -48,6 +49,7 @@ export class AuthService {
   constructor(
     private readonly usersService: UsersService,
     private readonly rolesService: RolesService,
+    private readonly businessFeaturesService: BusinessFeaturesService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly transactionService: TransactionService,
@@ -280,6 +282,9 @@ export class AuthService {
       user.business_id,
       user.role_id,
     );
+    const enabledFeatures = await this.businessFeaturesService.getEnabledKeys(
+      user.business_id,
+    );
 
     const payload: JwtPayload = {
       sub: user.id,
@@ -288,6 +293,8 @@ export class AuthService {
       roleId: user.role_id,
       roleName: role.name,
       permissions: role.permissions,
+      isPlatformAdmin: user.is_platform_admin,
+      enabledFeatures,
     };
 
     const appConfig = this.configService.getOrThrow<AppConfig>('app');

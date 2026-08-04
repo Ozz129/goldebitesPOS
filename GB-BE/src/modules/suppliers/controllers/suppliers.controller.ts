@@ -16,9 +16,11 @@ import { SetSupplierStatusDto } from '../dto/set-supplier-status.dto';
 import { SupplierQueryDto } from '../dto/supplier-query.dto';
 import { UpdateSupplierDto } from '../dto/update-supplier.dto';
 import { SuppliersService } from '../services/suppliers.service';
+import { RequiresFeature } from '../../../common/decorators/requires-feature.decorator';
 
 @ApiTags('Suppliers')
 @ApiBearerAuth()
+@RequiresFeature('suppliers')
 @Controller('suppliers')
 export class SuppliersController {
   constructor(private readonly suppliersService: SuppliersService) {}

@@ -20,9 +20,11 @@ import { RewardQueryDto } from '../dto/reward-query.dto';
 import { SetRewardStatusDto } from '../dto/set-reward-status.dto';
 import { UpdateRewardDto } from '../dto/update-reward.dto';
 import { LoyaltyRewardsService } from '../services/loyalty-rewards.service';
+import { RequiresFeature } from '../../../common/decorators/requires-feature.decorator';
 
 @ApiTags('Loyalty')
 @ApiBearerAuth()
+@RequiresFeature('loyalty')
 @Controller('loyalty-rewards')
 export class LoyaltyRewardsController {
   constructor(private readonly rewardsService: LoyaltyRewardsService) {}

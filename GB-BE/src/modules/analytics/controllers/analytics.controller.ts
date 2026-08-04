@@ -5,9 +5,11 @@ import { Permissions } from '../../../common/decorators/permissions.decorator';
 import { AnalyticsQueryDto } from '../dto/analytics-query.dto';
 import { TopProductsQueryDto } from '../dto/top-products-query.dto';
 import { AnalyticsService } from '../services/analytics.service';
+import { RequiresFeature } from '../../../common/decorators/requires-feature.decorator';
 
 @ApiTags('Analytics')
 @ApiBearerAuth()
+@RequiresFeature('analytics')
 @Controller('analytics')
 export class AnalyticsController {
   constructor(private readonly analyticsService: AnalyticsService) {}

@@ -3,6 +3,7 @@ import { Routes, Route } from 'react-router-dom';
 import AppLayout from '../components/layout/AppLayout';
 import LoadingSkeleton from '../components/common/LoadingSkeleton';
 import ProtectedRoute from './ProtectedRoute';
+import PlatformAdminRoute from './PlatformAdminRoute';
 import AuthProtectedRoute from '../modules/auth/components/protected-route';
 import ForbiddenPage from './ForbiddenPage';
 import NotFoundPage from './NotFoundPage';
@@ -32,6 +33,7 @@ const MarketingPage = lazy(() => import('../features/marketing/pages/MarketingPa
 const AnalyticsPage = lazy(() => import('../features/analytics/pages/AnalyticsPage'));
 const SettingsPage = lazy(() => import('../features/settings/pages/SettingsPage'));
 const RolesPage = lazy(() => import('../features/roles/pages/RolesPage'));
+const PlatformAdminPage = lazy(() => import('../features/platform-admin/pages/PlatformAdminPage'));
 const WaiterKioskPage = lazy(() => import('../features/kiosk-waiter/pages/WaiterKioskPage'));
 const KitchenKioskPage = lazy(() => import('../features/kiosk-kitchen/pages/KitchenKioskPage'));
 const CarServiceKioskPage = lazy(() => import('../features/kiosk-car-service/pages/CarServiceKioskPage'));
@@ -63,7 +65,7 @@ export default function AppRoutes() {
               }
             />
           </Route>
-          <Route element={<ProtectedRoute permission={MODULE_PERMISSIONS.orders} />}>
+          <Route element={<ProtectedRoute permission={MODULE_PERMISSIONS.orders} module="orders" />}>
             <Route
               path={MODULE_PATHS.orders}
               element={
@@ -73,7 +75,7 @@ export default function AppRoutes() {
               }
             />
           </Route>
-          <Route element={<ProtectedRoute permission={MODULE_PERMISSIONS.kitchen} />}>
+          <Route element={<ProtectedRoute permission={MODULE_PERMISSIONS.kitchen} module="kitchen" />}>
             <Route
               path={MODULE_PATHS.kitchen}
               element={
@@ -83,7 +85,7 @@ export default function AppRoutes() {
               }
             />
           </Route>
-          <Route element={<ProtectedRoute permission={MODULE_PERMISSIONS['cash-register']} />}>
+          <Route element={<ProtectedRoute permission={MODULE_PERMISSIONS['cash-register']} module="cash-register" />}>
             <Route
               path={MODULE_PATHS['cash-register']}
               element={
@@ -93,7 +95,7 @@ export default function AppRoutes() {
               }
             />
           </Route>
-          <Route element={<ProtectedRoute permission={MODULE_PERMISSIONS.products} />}>
+          <Route element={<ProtectedRoute permission={MODULE_PERMISSIONS.products} module="products" />}>
             <Route
               path={MODULE_PATHS.products}
               element={
@@ -103,7 +105,7 @@ export default function AppRoutes() {
               }
             />
           </Route>
-          <Route element={<ProtectedRoute permission={MODULE_PERMISSIONS.inventory} />}>
+          <Route element={<ProtectedRoute permission={MODULE_PERMISSIONS.inventory} module="inventory" />}>
             <Route
               path={MODULE_PATHS.inventory}
               element={
@@ -113,7 +115,7 @@ export default function AppRoutes() {
               }
             />
           </Route>
-          <Route element={<ProtectedRoute permission={MODULE_PERMISSIONS.purchases} />}>
+          <Route element={<ProtectedRoute permission={MODULE_PERMISSIONS.purchases} module="purchases" />}>
             <Route
               path={MODULE_PATHS.purchases}
               element={
@@ -123,7 +125,7 @@ export default function AppRoutes() {
               }
             />
           </Route>
-          <Route element={<ProtectedRoute permission={MODULE_PERMISSIONS.suppliers} />}>
+          <Route element={<ProtectedRoute permission={MODULE_PERMISSIONS.suppliers} module="suppliers" />}>
             <Route
               path={MODULE_PATHS.suppliers}
               element={
@@ -133,7 +135,7 @@ export default function AppRoutes() {
               }
             />
           </Route>
-          <Route element={<ProtectedRoute permission={MODULE_PERMISSIONS.customers} />}>
+          <Route element={<ProtectedRoute permission={MODULE_PERMISSIONS.customers} module="customers" />}>
             <Route
               path={MODULE_PATHS.customers}
               element={
@@ -143,7 +145,7 @@ export default function AppRoutes() {
               }
             />
           </Route>
-          <Route element={<ProtectedRoute permission={MODULE_PERMISSIONS.loyalty} />}>
+          <Route element={<ProtectedRoute permission={MODULE_PERMISSIONS.loyalty} module="loyalty" />}>
             <Route
               path={MODULE_PATHS.loyalty}
               element={
@@ -153,7 +155,7 @@ export default function AppRoutes() {
               }
             />
           </Route>
-          <Route element={<ProtectedRoute permission={MODULE_PERMISSIONS.finances} />}>
+          <Route element={<ProtectedRoute permission={MODULE_PERMISSIONS.finances} module="finances" />}>
             <Route
               path={MODULE_PATHS.finances}
               element={
@@ -163,7 +165,7 @@ export default function AppRoutes() {
               }
             />
           </Route>
-          <Route element={<ProtectedRoute permission={MODULE_PERMISSIONS.employees} />}>
+          <Route element={<ProtectedRoute permission={MODULE_PERMISSIONS.employees} module="employees" />}>
             <Route
               path={MODULE_PATHS.employees}
               element={
@@ -173,7 +175,7 @@ export default function AppRoutes() {
               }
             />
           </Route>
-          <Route element={<ProtectedRoute permission={MODULE_PERMISSIONS.checklists} />}>
+          <Route element={<ProtectedRoute permission={MODULE_PERMISSIONS.checklists} module="checklists" />}>
             <Route
               path={MODULE_PATHS.checklists}
               element={
@@ -183,7 +185,7 @@ export default function AppRoutes() {
               }
             />
           </Route>
-          <Route element={<ProtectedRoute permission={MODULE_PERMISSIONS.waste} />}>
+          <Route element={<ProtectedRoute permission={MODULE_PERMISSIONS.waste} module="waste" />}>
             <Route
               path={MODULE_PATHS.waste}
               element={
@@ -193,7 +195,7 @@ export default function AppRoutes() {
               }
             />
           </Route>
-          <Route element={<ProtectedRoute permission={MODULE_PERMISSIONS.maintenance} />}>
+          <Route element={<ProtectedRoute permission={MODULE_PERMISSIONS.maintenance} module="maintenance" />}>
             <Route
               path={MODULE_PATHS.maintenance}
               element={
@@ -203,7 +205,7 @@ export default function AppRoutes() {
               }
             />
           </Route>
-          <Route element={<ProtectedRoute permission={MODULE_PERMISSIONS.documents} />}>
+          <Route element={<ProtectedRoute permission={MODULE_PERMISSIONS.documents} module="documents" />}>
             <Route
               path={MODULE_PATHS.documents}
               element={
@@ -213,7 +215,7 @@ export default function AppRoutes() {
               }
             />
           </Route>
-          <Route element={<ProtectedRoute permission={MODULE_PERMISSIONS.documentScans} />}>
+          <Route element={<ProtectedRoute permission={MODULE_PERMISSIONS.documentScans} module="documentScans" />}>
             <Route
               path={MODULE_PATHS.documentScans}
               element={
@@ -223,7 +225,7 @@ export default function AppRoutes() {
               }
             />
           </Route>
-          <Route element={<ProtectedRoute permission={MODULE_PERMISSIONS.marketing} />}>
+          <Route element={<ProtectedRoute permission={MODULE_PERMISSIONS.marketing} module="marketing" />}>
             <Route
               path={MODULE_PATHS.marketing}
               element={
@@ -233,7 +235,7 @@ export default function AppRoutes() {
               }
             />
           </Route>
-          <Route element={<ProtectedRoute permission={MODULE_PERMISSIONS.analytics} />}>
+          <Route element={<ProtectedRoute permission={MODULE_PERMISSIONS.analytics} module="analytics" />}>
             <Route
               path={MODULE_PATHS.analytics}
               element={
@@ -253,12 +255,22 @@ export default function AppRoutes() {
               }
             />
           </Route>
-          <Route element={<ProtectedRoute permission={MODULE_PERMISSIONS.roles} />}>
+          <Route element={<ProtectedRoute permission={MODULE_PERMISSIONS.roles} module="roles" />}>
             <Route
               path={MODULE_PATHS.roles}
               element={
                 <Loadable>
                   <RolesPage />
+                </Loadable>
+              }
+            />
+          </Route>
+          <Route element={<PlatformAdminRoute />}>
+            <Route
+              path="/plataforma"
+              element={
+                <Loadable>
+                  <PlatformAdminPage />
                 </Loadable>
               }
             />

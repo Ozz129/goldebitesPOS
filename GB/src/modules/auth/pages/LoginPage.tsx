@@ -11,6 +11,7 @@ import Alert from '@mui/material/Alert';
 import { useLogin } from '../hooks/use-login';
 import { loginSchema, type LoginFormValues } from '../schemas/login.schema';
 import { normalizeApiError } from '../../../lib/api/api-error';
+import { decodeAccessToken } from '../utils/decode-access-token';
 import { brand } from '../../../theme/palette';
 
 export default function LoginPage() {
@@ -28,7 +29,13 @@ export default function LoginPage() {
 
   const onSubmit = (values: LoginFormValues) => {
     login.mutate(values, {
-      onSuccess: () => navigate(redirectTo, { replace: true }),
+      onSuccess: (data) => {
+        // Un admin de plataforma no tiene "operación diaria" que ver — su
+        // destino es siempre el panel de plataforma, sin importar de dónde
+        // vino el redirect.
+        const isPlatformAdmin = decodeAccessToken(data.accessToken)?.isPlatformAdmin ?? false;
+        navigate(isPlatformAdmin ? '/plataforma' : redirectTo, { replace: true });
+      },
     });
   };
 

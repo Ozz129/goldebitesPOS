@@ -8,9 +8,11 @@ import { LowStockQueryDto } from '../dto/low-stock-query.dto';
 import { MovementQueryDto } from '../dto/movement-query.dto';
 import { StockQueryDto } from '../dto/stock-query.dto';
 import { InventoryMovementsService } from '../services/inventory-movements.service';
+import { RequiresFeature } from '../../../common/decorators/requires-feature.decorator';
 
 @ApiTags('Inventory')
 @ApiBearerAuth()
+@RequiresFeature('inventory')
 @Controller('inventory')
 export class InventoryMovementsController {
   constructor(private readonly movementsService: InventoryMovementsService) {}

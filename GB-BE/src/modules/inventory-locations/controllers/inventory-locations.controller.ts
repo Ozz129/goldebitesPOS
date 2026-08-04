@@ -16,9 +16,11 @@ import { InventoryLocationQueryDto } from '../dto/inventory-location-query.dto';
 import { SetInventoryLocationStatusDto } from '../dto/set-inventory-location-status.dto';
 import { UpdateInventoryLocationDto } from '../dto/update-inventory-location.dto';
 import { InventoryLocationsService } from '../services/inventory-locations.service';
+import { RequiresFeature } from '../../../common/decorators/requires-feature.decorator';
 
 @ApiTags('Inventory Locations')
 @ApiBearerAuth()
+@RequiresFeature('inventory')
 @Controller('branches/:branchId/inventory-locations')
 export class InventoryLocationsController {
   constructor(private readonly locationsService: InventoryLocationsService) {}

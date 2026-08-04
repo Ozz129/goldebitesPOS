@@ -14,6 +14,7 @@ describe('AuthService', () => {
     hashPassword: jest.Mock;
   };
   let rolesService: { findOne: jest.Mock };
+  let businessFeaturesService: { getEnabledKeys: jest.Mock };
   let jwtService: { sign: jest.Mock };
   let configService: { getOrThrow: jest.Mock };
   let transactionService: { execute: jest.Mock };
@@ -53,6 +54,7 @@ describe('AuthService', () => {
       password_hash: 'hashed',
       phone: null,
       status: UserStatus.ACTIVE,
+      is_platform_admin: false,
       last_login_at: null,
       created_at: new Date(),
       updated_at: new Date(),
@@ -75,6 +77,9 @@ describe('AuthService', () => {
       findOne: jest
         .fn()
         .mockResolvedValue({ name: 'OWNER', permissions: ['orders.read'] }),
+    };
+    businessFeaturesService = {
+      getEnabledKeys: jest.fn().mockResolvedValue([]),
     };
     jwtService = { sign: jest.fn().mockReturnValue('signed.jwt.token') };
     configService = { getOrThrow: jest.fn().mockReturnValue(appConfig) };
@@ -100,6 +105,7 @@ describe('AuthService', () => {
     service = new AuthService(
       usersService as never,
       rolesService as never,
+      businessFeaturesService as never,
       jwtService as never,
       configService as never,
       transactionService as never,

@@ -39,6 +39,7 @@ describe('UsersService', () => {
       password_hash: '$2b$10$hash',
       phone: null,
       status: UserStatus.ACTIVE,
+      is_platform_admin: false,
       last_login_at: null,
       created_at: new Date(),
       updated_at: new Date(),

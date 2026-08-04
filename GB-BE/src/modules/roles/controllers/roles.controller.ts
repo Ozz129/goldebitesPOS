@@ -2,6 +2,7 @@ import { Body, Controller, Get, Param, Patch, Post, Put } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CurrentBusiness } from '../../../common/decorators/current-business.decorator';
 import { Permissions } from '../../../common/decorators/permissions.decorator';
+import { RequiresFeature } from '../../../common/decorators/requires-feature.decorator';
 import { CreateRoleDto } from '../dto/create-role.dto';
 import { SetRolePermissionsDto } from '../dto/set-role-permissions.dto';
 import { UpdateRoleDto } from '../dto/update-role.dto';
@@ -9,6 +10,7 @@ import { RolesService } from '../services/roles.service';
 
 @ApiTags('Roles')
 @ApiBearerAuth()
+@RequiresFeature('roles')
 @Controller('roles')
 export class RolesController {
   constructor(private readonly rolesService: RolesService) {}

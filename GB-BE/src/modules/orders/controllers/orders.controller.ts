@@ -17,9 +17,11 @@ import { OrderQueryDto } from '../dto/order-query.dto';
 import { ReplaceOrderItemsDto } from '../dto/replace-order-items.dto';
 import { UpdateOrderStatusDto } from '../dto/update-order-status.dto';
 import { OrdersService } from '../services/orders.service';
+import { RequiresFeature } from '../../../common/decorators/requires-feature.decorator';
 
 @ApiTags('Orders')
 @ApiBearerAuth()
+@RequiresFeature('orders')
 @Controller('orders')
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}

@@ -9,7 +9,8 @@ import { brand } from '../../theme/palette';
 import type { NavLeaf } from '../../types/nav';
 
 interface SidebarItemProps {
-  item: NavLeaf;
+  /** `module` is intentionally omitted — this component never reads it, only Sidebar's permission/feature gating does. */
+  item: Omit<NavLeaf, 'module'>;
   collapsed: boolean;
   active: boolean;
   onNavigate?: () => void;

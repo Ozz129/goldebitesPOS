@@ -15,6 +15,7 @@ import { CurrentBusiness } from '../../../common/decorators/current-business.dec
 import { RawResponse } from '../../../common/decorators/raw-response.decorator';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { Permissions } from '../../../common/decorators/permissions.decorator';
+import { RequiresFeature } from '../../../common/decorators/requires-feature.decorator';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { SetUserStatusDto } from '../dto/set-user-status.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
@@ -29,6 +30,7 @@ export class UsersController {
 
   @Post()
   @Permissions('users.manage')
+  @RequiresFeature('roles')
   @ApiOperation({ summary: 'Create a user in the current business' })
   create(
     @CurrentBusiness() businessId: string,
@@ -40,6 +42,7 @@ export class UsersController {
 
   @Get()
   @Permissions('users.manage')
+  @RequiresFeature('roles')
   @ApiOperation({ summary: 'List users in the current business' })
   findAll(@CurrentBusiness() businessId: string, @Query() query: UserQueryDto) {
     return this.usersService.findAll({
@@ -64,6 +67,7 @@ export class UsersController {
 
   @Get(':id')
   @Permissions('users.manage')
+  @RequiresFeature('roles')
   @ApiOperation({ summary: 'Get a single user' })
   findOne(@CurrentBusiness() businessId: string, @Param('id') id: string) {
     return this.usersService.findOne(businessId, id);
@@ -71,6 +75,7 @@ export class UsersController {
 
   @Patch(':id')
   @Permissions('users.manage')
+  @RequiresFeature('roles')
   @ApiOperation({ summary: 'Update a user' })
   update(
     @CurrentBusiness() businessId: string,
@@ -83,6 +88,7 @@ export class UsersController {
 
   @Patch(':id/status')
   @Permissions('users.manage')
+  @RequiresFeature('roles')
   @ApiOperation({ summary: 'Change a user status (ACTIVE/INACTIVE/BLOCKED)' })
   setStatus(
     @CurrentBusiness() businessId: string,
@@ -95,6 +101,7 @@ export class UsersController {
 
   @Delete(':id')
   @Permissions('users.manage')
+  @RequiresFeature('roles')
   @HttpCode(HttpStatus.NO_CONTENT)
   @RawResponse()
   @ApiOperation({ summary: 'Soft delete a user' })

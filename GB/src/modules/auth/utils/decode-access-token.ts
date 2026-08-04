@@ -15,6 +15,8 @@ export interface AccessTokenPayload {
   roleId: string;
   roleName: string;
   permissions: string[];
+  isPlatformAdmin: boolean;
+  enabledFeatures: string[];
 }
 
 export function decodeAccessToken(token: string): AccessTokenPayload | null {

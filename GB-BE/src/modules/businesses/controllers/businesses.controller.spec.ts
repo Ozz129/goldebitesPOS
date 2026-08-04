@@ -3,30 +3,18 @@ import { BusinessesService } from '../services/businesses.service';
 
 describe('BusinessesController', () => {
   let service: jest.Mocked<
-    Pick<BusinessesService, 'create' | 'findById' | 'update' | 'setActive'>
+    Pick<BusinessesService, 'findById' | 'update' | 'setActive'>
   >;
   let controller: BusinessesController;
 
   beforeEach(() => {
     service = {
-      create: jest.fn(),
       findById: jest.fn(),
       update: jest.fn(),
       setActive: jest.fn(),
     };
     controller = new BusinessesController(
       service as unknown as BusinessesService,
-    );
-  });
-
-  it('create() delegates to the service with the acting user id', async () => {
-    service.create.mockResolvedValue({ id: 'b1' } as never);
-
-    await controller.create('actor-1', { name: 'Golden Bites' });
-
-    expect(service.create).toHaveBeenCalledWith(
-      { name: 'Golden Bites' },
-      'actor-1',
     );
   });
 

@@ -19,9 +19,11 @@ import { CampaignQueryDto } from '../dto/campaign-query.dto';
 import { CreateCampaignDto } from '../dto/create-campaign.dto';
 import { UpdateCampaignDto } from '../dto/update-campaign.dto';
 import { CampaignsService } from '../services/campaigns.service';
+import { RequiresFeature } from '../../../common/decorators/requires-feature.decorator';
 
 @ApiTags('Marketing')
 @ApiBearerAuth()
+@RequiresFeature('marketing')
 @Controller('marketing-campaigns')
 export class CampaignsController {
   constructor(private readonly campaignsService: CampaignsService) {}

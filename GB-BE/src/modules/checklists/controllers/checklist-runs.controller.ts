@@ -8,9 +8,11 @@ import { CompleteChecklistRunDto } from '../dto/complete-checklist-run.dto';
 import { StartChecklistRunDto } from '../dto/start-checklist-run.dto';
 import { UpdateRunItemResultsDto } from '../dto/update-run-item-results.dto';
 import { ChecklistRunsService } from '../services/checklist-runs.service';
+import { RequiresFeature } from '../../../common/decorators/requires-feature.decorator';
 
 @ApiTags('Checklists')
 @ApiBearerAuth()
+@RequiresFeature('checklists')
 @Controller('checklist-runs')
 export class ChecklistRunsController {
   constructor(private readonly runsService: ChecklistRunsService) {}

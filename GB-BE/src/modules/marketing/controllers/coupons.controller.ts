@@ -20,9 +20,11 @@ import { CreateCouponDto } from '../dto/create-coupon.dto';
 import { SetCouponStatusDto } from '../dto/set-coupon-status.dto';
 import { UpdateCouponDto } from '../dto/update-coupon.dto';
 import { CouponsService } from '../services/coupons.service';
+import { RequiresFeature } from '../../../common/decorators/requires-feature.decorator';
 
 @ApiTags('Marketing')
 @ApiBearerAuth()
+@RequiresFeature('marketing')
 @Controller('marketing-coupons')
 export class CouponsController {
   constructor(private readonly couponsService: CouponsService) {}

@@ -5,6 +5,7 @@ import { BusinessesService } from './businesses.service';
 describe('BusinessesService', () => {
   let businessesRepository: {
     create: jest.Mock;
+    findAll: jest.Mock;
     findById: jest.Mock;
     update: jest.Mock;
     setActive: jest.Mock;
@@ -40,6 +41,7 @@ describe('BusinessesService', () => {
   beforeEach(() => {
     businessesRepository = {
       create: jest.fn(),
+      findAll: jest.fn(),
       findById: jest.fn(),
       update: jest.fn(),
       setActive: jest.fn(),

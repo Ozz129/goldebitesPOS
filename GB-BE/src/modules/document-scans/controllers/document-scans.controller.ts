@@ -33,6 +33,7 @@ import {
   DOCUMENT_SCANS_UPLOADS_DIR,
   ensureDocumentScansUploadsDir,
 } from '../storage/document-scan-storage.util';
+import { RequiresFeature } from '../../../common/decorators/requires-feature.decorator';
 
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'application/pdf'];
 const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
@@ -41,6 +42,7 @@ ensureDocumentScansUploadsDir();
 
 @ApiTags('Document Scans')
 @ApiBearerAuth()
+@RequiresFeature('documentScans')
 @Controller('document-scans')
 export class DocumentScansController {
   constructor(private readonly documentScansService: DocumentScansService) {}

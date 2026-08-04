@@ -6,9 +6,11 @@ import { Permissions } from '../../../common/decorators/permissions.decorator';
 import { KitchenQueueQueryDto } from '../dto/kitchen-queue-query.dto';
 import { UpdateKitchenStatusDto } from '../dto/update-kitchen-status.dto';
 import { KitchenService } from '../services/kitchen.service';
+import { RequiresFeature } from '../../../common/decorators/requires-feature.decorator';
 
 @ApiTags('Kitchen')
 @ApiBearerAuth()
+@RequiresFeature('kitchen')
 @Controller('kitchen')
 export class KitchenController {
   constructor(private readonly kitchenService: KitchenService) {}

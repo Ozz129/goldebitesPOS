@@ -22,6 +22,8 @@ function createUser(
     roleId: 'r1',
     roleName: 'CASHIER',
     permissions: [],
+    isPlatformAdmin: false,
+    enabledFeatures: [],
     ...overrides,
   };
 }

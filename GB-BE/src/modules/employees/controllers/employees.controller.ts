@@ -24,9 +24,11 @@ import { SetEmployeeShiftsDto } from '../dto/set-employee-shifts.dto';
 import { SetEmployeeStatusDto } from '../dto/set-employee-status.dto';
 import { UpdateEmployeeDto } from '../dto/update-employee.dto';
 import { EmployeesService } from '../services/employees.service';
+import { RequiresFeature } from '../../../common/decorators/requires-feature.decorator';
 
 @ApiTags('Employees')
 @ApiBearerAuth()
+@RequiresFeature('employees')
 @Controller('employees')
 export class EmployeesController {
   constructor(private readonly employeesService: EmployeesService) {}

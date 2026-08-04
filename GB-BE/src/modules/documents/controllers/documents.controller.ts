@@ -19,9 +19,11 @@ import { CreateDocumentDto } from '../dto/create-document.dto';
 import { DocumentQueryDto } from '../dto/document-query.dto';
 import { UpdateDocumentDto } from '../dto/update-document.dto';
 import { DocumentsService } from '../services/documents.service';
+import { RequiresFeature } from '../../../common/decorators/requires-feature.decorator';
 
 @ApiTags('Documents')
 @ApiBearerAuth()
+@RequiresFeature('documents')
 @Controller('compliance-documents')
 export class DocumentsController {
   constructor(private readonly documentsService: DocumentsService) {}

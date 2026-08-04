@@ -7,6 +7,7 @@ import {
 
 export interface IBusinessesRepository {
   create(data: CreateBusinessData, client?: DbClient): Promise<BusinessRow>;
+  findAll(): Promise<BusinessRow[]>;
   findById(id: string, client?: DbClient): Promise<BusinessRow | null>;
   update(
     id: string,

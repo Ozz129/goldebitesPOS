@@ -5,7 +5,7 @@ import Typography from '@mui/material/Typography';
 import List from '@mui/material/List';
 import Tooltip from '@mui/material/Tooltip';
 import IconButton from '@mui/material/IconButton';
-import { ChevronsLeft, ChevronsRight, Crown } from 'lucide-react';
+import { ChevronsLeft, ChevronsRight, Crown, Building2 } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { alpha } from '@mui/material/styles';
 import { MODULE_PERMISSIONS, NAV_ENTRIES } from '../../routes/navConfig';
@@ -56,13 +56,16 @@ function BrandHeader({ collapsed }: { collapsed: boolean }) {
 }
 
 function SidebarContent({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: () => void }) {
-  const { hasPermission, hasAnyPermission } = usePermissions();
+  const { hasPermission, hasAnyPermission, hasFeature, isPlatformAdmin } = usePermissions();
   const location = useLocation();
   const toggleCollapsed = useUiStore((s) => s.toggleSidebarCollapsed);
 
   const can = (module: keyof typeof MODULE_PERMISSIONS): boolean => {
     const required = MODULE_PERMISSIONS[module];
-    return Array.isArray(required) ? hasAnyPermission(required) : hasPermission(required);
+    const hasRequiredPermission = Array.isArray(required)
+      ? hasAnyPermission(required)
+      : hasPermission(required);
+    return hasRequiredPermission && hasFeature(module);
   };
 
   return (
@@ -70,7 +73,27 @@ function SidebarContent({ collapsed, onNavigate }: { collapsed: boolean; onNavig
       <BrandHeader collapsed={collapsed} />
       <Box sx={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', px: collapsed ? 1 : 1.5 }}>
         <List component="nav" disablePadding sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-          {NAV_ENTRIES.map((entry) => {
+          {isPlatformAdmin && (
+            <Box sx={{ mb: 1 }}>
+              {!collapsed && (
+                <Typography
+                  variant="overline"
+                  color="text.secondary"
+                  sx={{ pl: 1.5, display: 'block', fontSize: '0.68rem' }}
+                >
+                  Plataforma
+                </Typography>
+              )}
+              <SidebarItem
+                item={{ kind: 'item', label: 'Administración de plataforma', path: '/plataforma', icon: Building2 }}
+                collapsed={collapsed}
+                active={location.pathname === '/plataforma'}
+                onNavigate={onNavigate}
+              />
+            </Box>
+          )}
+          {/* Un admin de plataforma no opera un negocio — nada de la navegación de POS aplica, solo la sección de Plataforma de arriba. */}
+          {!isPlatformAdmin && NAV_ENTRIES.map((entry) => {
             if (entry.kind === 'item') {
               if (!can(entry.module)) return null;
               return (

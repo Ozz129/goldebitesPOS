@@ -8,6 +8,7 @@ export class PaymentMapper {
       paymentMethod: row.payment_method,
       amount: parseFloat(row.amount),
       reference: row.reference,
+      payerLabel: row.payer_label,
       status: row.status,
       paidAt: row.paid_at,
       createdBy: row.created_by,

@@ -49,6 +49,7 @@ describe('PaymentsService', () => {
       payment_method: PaymentMethod.CASH,
       amount: '10000.00',
       reference: null,
+      payer_label: null,
       status: 'PAID',
       paid_at: new Date(),
       created_by: null,

@@ -6,6 +6,7 @@ export interface Payment {
   paymentMethod: PaymentMethod;
   amount: number;
   reference: string | null;
+  payerLabel: string | null;
   status: string;
   paidAt: string;
   createdBy: string | null;
@@ -16,4 +17,5 @@ export interface CreatePaymentPayload {
   paymentMethod: PaymentMethod;
   amount: number;
   reference?: string;
+  payerLabel?: string;
 }

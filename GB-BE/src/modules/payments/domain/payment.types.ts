@@ -5,4 +5,5 @@ export interface CreatePaymentData {
   paymentMethod: PaymentMethod;
   amount: number;
   reference?: string;
+  payerLabel?: string;
 }

@@ -12,7 +12,7 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogActions from '@mui/material/DialogActions';
 import { useSnackbar } from 'notistack';
-import { MapPin, ArrowRight, Ban, CreditCard } from 'lucide-react';
+import { MapPin, ArrowRight, Ban, CreditCard, Users } from 'lucide-react';
 import DetailDrawer from '../../../components/common/DetailDrawer';
 import StatusChip from '../../../components/common/StatusChip';
 import CurrencyDisplay from '../../../components/common/CurrencyDisplay';
@@ -24,6 +24,7 @@ import { useCreatePayment } from '../../../modules/orders/hooks/use-create-payme
 import { normalizeApiError } from '../../../lib/api/api-error';
 import LoadingSkeleton from '../../../components/common/LoadingSkeleton';
 import OrderTimer from './OrderTimer';
+import SplitBillDialog from './SplitBillDialog';
 import {
   nextStatusFor,
   ORDER_STATUS_LABELS,
@@ -56,6 +57,7 @@ export default function OrderDetailDrawer({
   const [cancelReason, setCancelReason] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('CASH');
   const [paymentAmount, setPaymentAmount] = useState('');
+  const [splitBillOpen, setSplitBillOpen] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
 
   const { data: order, isLoading } = useOrder(orderId);
@@ -240,7 +242,15 @@ export default function OrderDetailDrawer({
             <Stack spacing={1}>
               {payments.map((payment) => (
                 <Stack key={payment.id} direction="row" sx={{ justifyContent: 'space-between' }}>
-                  <Typography variant="body2">{PAYMENT_METHOD_LABELS[payment.paymentMethod]}</Typography>
+                  <Typography variant="body2">
+                    {PAYMENT_METHOD_LABELS[payment.paymentMethod]}
+                    {payment.payerLabel && (
+                      <Typography component="span" variant="caption" color="text.secondary">
+                        {' '}
+                        · {payment.payerLabel}
+                      </Typography>
+                    )}
+                  </Typography>
                   <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                     <CurrencyDisplay value={payment.amount} variant="body2" />
                     <DateDisplay value={payment.paidAt} mode="time" variant="caption" color="text.secondary" />
@@ -256,7 +266,15 @@ export default function OrderDetailDrawer({
 
             {canRegisterPayment && (
               <Can permission="orders.update">
-                <Stack direction="row" spacing={1} sx={{ mt: 1.5, alignItems: 'center' }}>
+                <Button
+                  size="small"
+                  startIcon={<Users size={15} />}
+                  onClick={() => setSplitBillOpen(true)}
+                  sx={{ mt: 1.5 }}
+                >
+                  Dividir cuenta
+                </Button>
+                <Stack direction="row" spacing={1} sx={{ mt: 1, alignItems: 'center' }}>
                   <TextField
                     select
                     size="small"
@@ -331,6 +349,14 @@ export default function OrderDetailDrawer({
           </Button>
         </DialogActions>
       </Dialog>
+
+      <SplitBillDialog
+        open={splitBillOpen}
+        orderId={order.id}
+        balanceDue={balanceDue}
+        onClose={() => setSplitBillOpen(false)}
+        onDone={() => setSplitBillOpen(false)}
+      />
     </>
   );
 }

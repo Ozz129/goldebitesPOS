@@ -5,7 +5,7 @@ import { PaymentRow } from '../domain/payment.interface';
 import { CreatePaymentData } from '../domain/payment.types';
 import { IPaymentsRepository } from './payments.repository.interface';
 
-const SELECT_COLUMNS = `id, order_id, payment_method, amount, reference, status, paid_at, created_by, created_at`;
+const SELECT_COLUMNS = `id, order_id, payment_method, amount, reference, payer_label, status, paid_at, created_by, created_at`;
 
 interface TotalRow {
   total: string | null;
@@ -21,14 +21,15 @@ export class PaymentsRepository implements IPaymentsRepository {
     client?: DbClient,
   ): Promise<PaymentRow> {
     const result = await this.db.query<PaymentRow>(
-      `INSERT INTO payments (order_id, payment_method, amount, reference, created_by)
-       VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO payments (order_id, payment_method, amount, reference, payer_label, created_by)
+       VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING ${SELECT_COLUMNS}`,
       [
         data.orderId,
         data.paymentMethod,
         data.amount,
         data.reference ?? null,
+        data.payerLabel ?? null,
         createdBy ?? null,
       ],
       client,

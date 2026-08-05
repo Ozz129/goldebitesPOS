@@ -57,7 +57,7 @@ export default function InventoryDetailDrawer({
       open={Boolean(item)}
       onClose={onClose}
       title={item.name}
-      subtitle={[item.sku ? `SKU: ${item.sku}` : null, categoryName].filter(Boolean).join(' · ') || undefined}
+      subtitle={[item.sku ? `Referencia: ${item.sku}` : null, categoryName].filter(Boolean).join(' · ') || undefined}
       headerExtra={
         <StatusChip label={item.isActive ? 'Activo' : 'Inactivo'} tone={item.isActive ? 'success' : 'neutral'} />
       }

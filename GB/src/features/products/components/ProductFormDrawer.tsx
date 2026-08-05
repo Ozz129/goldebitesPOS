@@ -131,7 +131,7 @@ export default function ProductFormDrawer({
             render={({ field }) => (
               <TextField
                 {...field}
-                label="SKU"
+                label="Referencia"
                 fullWidth
                 error={Boolean(errors.sku)}
                 helperText={errors.sku?.message}

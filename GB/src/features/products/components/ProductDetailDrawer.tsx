@@ -35,7 +35,7 @@ export default function ProductDetailDrawer({
       open={Boolean(product)}
       onClose={onClose}
       title={product.name}
-      subtitle={product.sku ? `SKU: ${product.sku}` : undefined}
+      subtitle={product.sku ? `Referencia: ${product.sku}` : undefined}
       footer={
         <Stack direction="row" spacing={1.5} sx={{ justifyContent: 'flex-end' }}>
           <Can permission="products.update">

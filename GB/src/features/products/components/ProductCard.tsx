@@ -50,7 +50,7 @@ export default function ProductCard({
           </Typography>
           {product.sku && (
             <Typography variant="caption" color="text.secondary">
-              SKU: {product.sku}
+              Referencia: {product.sku}
             </Typography>
           )}
           <Typography

@@ -168,7 +168,7 @@ export default function InventoryPage() {
           </Typography>
           {row.original.sku && (
             <Typography variant="caption" color="text.secondary">
-              SKU: {row.original.sku}
+              Referencia: {row.original.sku}
             </Typography>
           )}
         </Stack>

@@ -113,7 +113,7 @@ export default function InventoryItemFormDrawer({
           <Controller
             name="sku"
             control={control}
-            render={({ field }) => <TextField {...field} label="SKU" fullWidth />}
+            render={({ field }) => <TextField {...field} label="Referencia" fullWidth />}
           />
           <Controller
             name="unit"

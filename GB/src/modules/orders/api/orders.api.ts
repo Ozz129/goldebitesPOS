@@ -21,6 +21,14 @@ export const ordersApi = {
     return data.data;
   },
 
+  /** Orders left open (not DELIVERED/CANCELLED) from before today's business-local date. */
+  async getBacklog(branchId?: string): Promise<Order[]> {
+    const { data } = await apiClient.get<ApiResponse<Order[]>>('/orders/backlog', {
+      params: branchId ? { branchId } : undefined,
+    });
+    return data.data;
+  },
+
   async createOrder(payload: CreateOrderPayload): Promise<OrderWithItems> {
     const { data } = await apiClient.post<ApiResponse<OrderWithItems>>('/orders', payload);
     return data.data;

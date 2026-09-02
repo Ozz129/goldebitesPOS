@@ -108,6 +108,12 @@ export class BusinessesService {
     return parseFloat(row.tax_rate);
   }
 
+  /** Used by OrdersModule to compute the business-local calendar day for daily order numbers. */
+  async getTimezone(businessId: string): Promise<string> {
+    const row = await this.getOrFail(businessId);
+    return row.timezone;
+  }
+
   async updateTaxRate(
     id: string,
     taxRate: number,

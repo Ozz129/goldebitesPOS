@@ -14,6 +14,7 @@ const LoginPage = lazy(() => import('../modules/auth/pages/LoginPage'));
 
 const DashboardPage = lazy(() => import('../features/dashboard/pages/DashboardPage'));
 const OrdersPage = lazy(() => import('../features/orders/pages/OrdersPage'));
+const OrdersBacklogPage = lazy(() => import('../features/orders/pages/OrdersBacklogPage'));
 const KitchenPage = lazy(() => import('../features/kitchen/pages/KitchenPage'));
 const CashRegisterPage = lazy(() => import('../features/cash-register/pages/CashRegisterPage'));
 const ProductsPage = lazy(() => import('../features/products/pages/ProductsPage'));
@@ -71,6 +72,16 @@ export default function AppRoutes() {
               element={
                 <Loadable>
                   <OrdersPage />
+                </Loadable>
+              }
+            />
+          </Route>
+          <Route element={<ProtectedRoute permission={MODULE_PERMISSIONS.ordersBacklog} module="orders" />}>
+            <Route
+              path={MODULE_PATHS.ordersBacklog}
+              element={
+                <Loadable>
+                  <OrdersBacklogPage />
                 </Loadable>
               }
             />

@@ -3,6 +3,7 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import Button from '@mui/material/Button';
+import Chip from '@mui/material/Chip';
 import Divider from '@mui/material/Divider';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import ToggleButton from '@mui/material/ToggleButton';
@@ -17,13 +18,17 @@ export interface CartLine {
   name: string;
   unitPrice: number;
   quantity: number;
+  sauces: string[];
 }
+
+const SAUCE_OPTIONS = ['Mielmostaza', 'De la Casa', 'BBQ', 'Miel Picante'];
 
 interface CartPanelProps {
   cart: CartLine[];
   onIncrement: (productId: string) => void;
   onDecrement: (productId: string) => void;
   onRemove: (productId: string) => void;
+  onToggleSauce: (productId: string, sauce: string) => void;
   tableNumber: string;
   onTableNumberChange: (value: string) => void;
   orderType: OrderType;
@@ -39,6 +44,7 @@ export default function CartPanel({
   onIncrement,
   onDecrement,
   onRemove,
+  onToggleSauce,
   tableNumber,
   onTableNumberChange,
   orderType,
@@ -85,60 +91,85 @@ export default function CartPanel({
             <Box
               key={line.productId}
               sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1,
                 px: 1.5,
-                py: 1,
+                py: 1.25,
                 borderBottom: '1px solid',
                 borderColor: 'divider',
               }}
             >
-              <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Typography variant="body2" sx={{ fontWeight: 600 }} noWrap>
-                  {line.name}
+              <Stack direction="row" sx={{ alignItems: 'center', gap: 1 }}>
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                    {line.name}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {formatCOP(line.unitPrice)} c/u
+                  </Typography>
+                </Box>
+                <IconButton size="small" onClick={() => onDecrement(line.productId)}>
+                  <Minus size={16} />
+                </IconButton>
+                <Typography sx={{ minWidth: 20, textAlign: 'center', fontWeight: 700 }}>
+                  {line.quantity}
                 </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  {formatCOP(line.unitPrice)} c/u
-                </Typography>
-              </Box>
-              <IconButton size="small" onClick={() => onDecrement(line.productId)}>
-                <Minus size={16} />
-              </IconButton>
-              <Typography sx={{ minWidth: 20, textAlign: 'center', fontWeight: 700 }}>
-                {line.quantity}
-              </Typography>
-              <IconButton size="small" onClick={() => onIncrement(line.productId)}>
-                <Plus size={16} />
-              </IconButton>
-              <IconButton size="small" color="error" onClick={() => onRemove(line.productId)}>
-                <Trash2 size={16} />
-              </IconButton>
+                <IconButton size="small" onClick={() => onIncrement(line.productId)}>
+                  <Plus size={16} />
+                </IconButton>
+                <IconButton size="small" color="error" onClick={() => onRemove(line.productId)}>
+                  <Trash2 size={16} />
+                </IconButton>
+              </Stack>
+
+              <Stack direction="row" spacing={0.75} useFlexGap sx={{ mt: 0.75, flexWrap: 'wrap' }}>
+                {SAUCE_OPTIONS.map((sauce) => {
+                  const selected = line.sauces.includes(sauce);
+                  return (
+                    <Chip
+                      key={sauce}
+                      label={sauce}
+                      size="small"
+                      clickable
+                      onClick={() => onToggleSauce(line.productId, sauce)}
+                      color={selected ? 'primary' : 'default'}
+                      variant={selected ? 'filled' : 'outlined'}
+                      sx={{ fontWeight: 600 }}
+                    />
+                  );
+                })}
+              </Stack>
             </Box>
           ))
         )}
       </Stack>
 
-      <Divider />
+      <Divider sx={{ borderBottomWidth: 2 }} />
 
-      <Box sx={{ p: 1.5 }}>
+      <Box sx={{ p: 2 }}>
         <Stack direction="row" sx={{ justifyContent: 'space-between', mb: 1.5 }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+          <Typography variant="h6" sx={{ fontWeight: 700 }}>
             Total
           </Typography>
-          <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
+          <Typography variant="h6" sx={{ fontWeight: 800 }}>
             {formatCOP(total)}
           </Typography>
         </Stack>
         <Button
           variant="contained"
+          color="primary"
           fullWidth
           size="large"
-          startIcon={<Send size={18} />}
+          startIcon={<Send size={22} />}
           disabled={!canSubmit}
           loading={submitting}
           onClick={onSubmit}
-          sx={{ py: 1.5, fontSize: '1rem' }}
+          sx={{
+            py: 2,
+            fontSize: '1.15rem',
+            fontWeight: 800,
+            borderRadius: 2,
+            boxShadow: 3,
+            textTransform: 'none',
+          }}
         >
           Enviar a cocina
         </Button>

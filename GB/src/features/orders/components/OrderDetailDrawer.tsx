@@ -12,7 +12,7 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogActions from '@mui/material/DialogActions';
 import { useSnackbar } from 'notistack';
-import { MapPin, ArrowRight, Ban, CreditCard, Users } from 'lucide-react';
+import { MapPin, ArrowRight, Ban, CreditCard, Users, Printer } from 'lucide-react';
 import DetailDrawer from '../../../components/common/DetailDrawer';
 import StatusChip from '../../../components/common/StatusChip';
 import CurrencyDisplay from '../../../components/common/CurrencyDisplay';
@@ -21,6 +21,7 @@ import { Can } from '../../../modules/auth/components/can';
 import { useOrder } from '../../../modules/orders/hooks/use-order';
 import { useOrderPayments } from '../../../modules/orders/hooks/use-order-payments';
 import { useCreatePayment } from '../../../modules/orders/hooks/use-create-payment';
+import { usePrintKitchenTicket } from '../../../modules/orders/hooks/use-print-kitchen-ticket';
 import { normalizeApiError } from '../../../lib/api/api-error';
 import LoadingSkeleton from '../../../components/common/LoadingSkeleton';
 import OrderTimer from './OrderTimer';
@@ -63,6 +64,7 @@ export default function OrderDetailDrawer({
   const { data: order, isLoading } = useOrder(orderId);
   const { data: payments = [] } = useOrderPayments(orderId);
   const createPayment = useCreatePayment();
+  const printTicket = usePrintKitchenTicket();
 
   if (!orderId) return null;
 
@@ -132,6 +134,16 @@ export default function OrderDetailDrawer({
             <OrderTimer createdAt={order.createdAt} />
             {delayed && <StatusChip label="Pedido retrasado" tone="error" />}
           </Stack>
+
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<Printer size={16} />}
+            onClick={() => printTicket(order)}
+            sx={{ alignSelf: 'flex-start' }}
+          >
+            Imprimir comanda
+          </Button>
 
           <Box>
             <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>

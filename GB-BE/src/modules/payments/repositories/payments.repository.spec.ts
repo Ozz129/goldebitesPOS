@@ -36,8 +36,8 @@ describe('PaymentsRepository (integration)', () => {
     );
 
     const order = await pool.query<{ id: string }>(
-      `INSERT INTO orders (business_id, branch_id, order_type) VALUES ($1, $2, 'DINE_IN') RETURNING id`,
-      [businessId, branch.rows[0].id],
+      `INSERT INTO orders (business_id, branch_id, order_type, order_number) VALUES ($1, $2, 'DINE_IN', $3) RETURNING id`,
+      [businessId, branch.rows[0].id, `TEST-${randomUUID().slice(0, 8)}`],
     );
     orderId = order.rows[0].id;
   });
@@ -68,10 +68,10 @@ describe('PaymentsRepository (integration)', () => {
 
   it('getTotalPaid() returns 0 for an order with no payments', async () => {
     const order = await pool.query<{ id: string }>(
-      `INSERT INTO orders (business_id, branch_id, order_type)
-       SELECT business_id, branch_id, 'DINE_IN' FROM orders WHERE id = $1
+      `INSERT INTO orders (business_id, branch_id, order_type, order_number)
+       SELECT business_id, branch_id, 'DINE_IN', $2 FROM orders WHERE id = $1
        RETURNING id`,
-      [orderId],
+      [orderId, `TEST-${randomUUID().slice(0, 8)}`],
     );
 
     expect(await repository.getTotalPaid(order.rows[0].id)).toBe(0);

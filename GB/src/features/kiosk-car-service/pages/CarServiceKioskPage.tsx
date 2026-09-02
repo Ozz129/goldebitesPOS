@@ -24,7 +24,7 @@ import MockPaymentGatewayDialog from '../components/MockPaymentGatewayDialog';
 
 interface PayingOrder {
   id: string;
-  orderNumber: number;
+  orderNumber: string;
   totalAmount: number;
 }
 
@@ -40,7 +40,7 @@ export default function CarServiceKioskPage() {
   const [cart, setCart] = useState<CartLine[]>([]);
   const [vehicleTag, setVehicleTag] = useState('');
   const [payingOrder, setPayingOrder] = useState<PayingOrder | null>(null);
-  const [lastOrderNumber, setLastOrderNumber] = useState<number | null>(null);
+  const [lastOrderNumber, setLastOrderNumber] = useState<string | null>(null);
 
   const createOrder = useCreateOrder();
   const updateStatus = useUpdateOrderStatus();
@@ -80,7 +80,10 @@ export default function CarServiceKioskPage() {
           line.productId === product.id ? { ...line, quantity: line.quantity + 1 } : line,
         );
       }
-      return [...prev, { productId: product.id, name: product.name, unitPrice: product.salePrice, quantity: 1 }];
+      return [
+        ...prev,
+        { productId: product.id, name: product.name, unitPrice: product.salePrice, quantity: 1, sauces: [] },
+      ];
     });
   }
 

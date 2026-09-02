@@ -93,6 +93,9 @@ export class OrdersService {
 
     const computedItems = await this.computeItems(data.businessId, items);
     const taxRate = await this.businessesService.getTaxRate(data.businessId);
+    const timezone = await this.businessesService.getTimezone(
+      data.businessId,
+    );
     const totals = this.computeTotals(
       computedItems,
       data.discountAmount ?? 0,
@@ -104,6 +107,7 @@ export class OrdersService {
       const created = await this.ordersRepository.create(
         data,
         actorUserId,
+        timezone,
         client,
       );
       await this.ordersRepository.addItems(created.id, computedItems, client);
@@ -171,6 +175,17 @@ export class OrdersService {
   /** Used by DashboardService: orders still in the pipeline (not DELIVERED/CANCELLED). */
   async getActiveCount(businessId: string, branchId?: string): Promise<number> {
     return this.ordersRepository.getActiveCount(businessId, branchId);
+  }
+
+  /** Orders left open from before the business's current local calendar day. */
+  async getBacklog(businessId: string, branchId?: string): Promise<Order[]> {
+    const timezone = await this.businessesService.getTimezone(businessId);
+    const rows = await this.ordersRepository.findBacklog(
+      businessId,
+      timezone,
+      branchId,
+    );
+    return rows.map((row) => OrderMapper.toDomain(row));
   }
 
   /** Used by DashboardService: completed (DELIVERED) sales within a date range. */

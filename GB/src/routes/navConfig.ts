@@ -1,6 +1,7 @@
 import {
   LayoutDashboard,
   ClipboardList,
+  History,
   ChefHat,
   Wallet,
   UtensilsCrossed,
@@ -26,6 +27,7 @@ import type { ModuleKey, NavEntry } from '../types/nav';
 export const MODULE_PATHS = {
   dashboard: '/',
   orders: '/pedidos',
+  ordersBacklog: '/pedidos-atrasados',
   kitchen: '/cocina',
   'cash-register': '/caja',
   products: '/productos',
@@ -58,6 +60,7 @@ export const MODULE_PATHS = {
 export const MODULE_PERMISSIONS: Record<ModuleKey, string | string[]> = {
   dashboard: 'dashboard.read',
   orders: 'orders.read',
+  ordersBacklog: 'orders.read',
   kitchen: 'kitchen.read',
   'cash-register': 'cash.open',
   products: 'products.read',
@@ -92,6 +95,13 @@ export const NAV_ENTRIES: NavEntry[] = [
     label: 'Operación diaria',
     items: [
       { kind: 'item', module: 'orders', label: 'Pedidos', path: MODULE_PATHS.orders, icon: ClipboardList },
+      {
+        kind: 'item',
+        module: 'ordersBacklog',
+        label: 'Pedidos atrasados',
+        path: MODULE_PATHS.ordersBacklog,
+        icon: History,
+      },
       { kind: 'item', module: 'kitchen', label: 'Cocina', path: MODULE_PATHS.kitchen, icon: ChefHat },
       {
         kind: 'item',

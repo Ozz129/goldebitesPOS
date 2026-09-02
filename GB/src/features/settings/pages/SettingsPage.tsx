@@ -20,6 +20,7 @@ import { useUpdateBusiness } from '../../../modules/businesses/hooks/use-update-
 import { useUpdateTaxRate } from '../../../modules/settings/hooks/use-update-tax-rate';
 import { useBranches } from '../../../modules/branches/hooks/use-branches';
 import { useProductCategories } from '../../../modules/product-categories/hooks/use-product-categories';
+import { useCreateProductCategory } from '../../../modules/product-categories/hooks/use-create-product-category';
 import { normalizeApiError } from '../../../lib/api/api-error';
 import { useSettingsStore } from '../../../store/settingsStore';
 import { useUiStore } from '../../../store/uiStore';
@@ -41,6 +42,8 @@ export default function SettingsPage() {
   const branches = branchesData?.data ?? [];
   const { data: categoriesData } = useProductCategories({ limit: 100 });
   const categories = categoriesData?.data ?? [];
+  const createCategory = useCreateProductCategory();
+  const [newCategoryName, setNewCategoryName] = useState('');
 
   const [businessForm, setBusinessForm] = useState({
     name: '',
@@ -242,7 +245,7 @@ export default function SettingsPage() {
               <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
                 Categorías de productos
               </Typography>
-              <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: "wrap" }}>
+              <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: "wrap", mb: 1.5 }}>
                 {categories.map((cat) => (
                   <Chip key={cat.id} label={cat.name} variant="outlined" size="small" />
                 ))}
@@ -252,6 +255,37 @@ export default function SettingsPage() {
                   </Typography>
                 )}
               </Stack>
+              <Can permission="products.create">
+                <Stack direction="row" spacing={1} sx={{ maxWidth: 360 }}>
+                  <TextField
+                    size="small"
+                    label="Nueva categoría"
+                    value={newCategoryName}
+                    onChange={(e) => setNewCategoryName(e.target.value)}
+                    fullWidth
+                  />
+                  <Button
+                    variant="outlined"
+                    loading={createCategory.isPending}
+                    disabled={!newCategoryName.trim()}
+                    onClick={() => {
+                      createCategory.mutate(
+                        { name: newCategoryName.trim() },
+                        {
+                          onSuccess: () => {
+                            enqueueSnackbar('Categoría creada', { variant: 'success' });
+                            setNewCategoryName('');
+                          },
+                          onError: (error) =>
+                            enqueueSnackbar(normalizeApiError(error).message, { variant: 'error' }),
+                        },
+                      );
+                    }}
+                  >
+                    Añadir
+                  </Button>
+                </Stack>
+              </Can>
             </Box>
           </Stack>
         </AccordionDetails>

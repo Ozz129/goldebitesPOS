@@ -17,6 +17,7 @@ describe('OrdersService', () => {
     findById: jest.Mock;
     findAll: jest.Mock;
     findActiveForKitchen: jest.Mock;
+    findBacklog: jest.Mock;
     addItems: jest.Mock;
     replaceItems: jest.Mock;
     findItems: jest.Mock;
@@ -41,7 +42,7 @@ describe('OrdersService', () => {
     recordMovement: jest.Mock;
     getMovementsByReference: jest.Mock;
   };
-  let businessesService: { getTaxRate: jest.Mock };
+  let businessesService: { getTaxRate: jest.Mock; getTimezone: jest.Mock };
   let loyaltyService: { awardPointsForOrder: jest.Mock };
   let transactionService: { execute: jest.Mock };
   let auditService: { record: jest.Mock };
@@ -104,6 +105,7 @@ describe('OrdersService', () => {
       findById: jest.fn(),
       findAll: jest.fn().mockResolvedValue({ rows: [], total: 0 }),
       findActiveForKitchen: jest.fn().mockResolvedValue([]),
+      findBacklog: jest.fn().mockResolvedValue([]),
       addItems: jest.fn(),
       replaceItems: jest.fn(),
       findItems: jest.fn().mockResolvedValue([]),
@@ -140,7 +142,10 @@ describe('OrdersService', () => {
       recordMovement: jest.fn().mockResolvedValue({}),
       getMovementsByReference: jest.fn().mockResolvedValue([]),
     };
-    businessesService = { getTaxRate: jest.fn().mockResolvedValue(0) };
+    businessesService = {
+      getTaxRate: jest.fn().mockResolvedValue(0),
+      getTimezone: jest.fn().mockResolvedValue('America/Bogota'),
+    };
     loyaltyService = { awardPointsForOrder: jest.fn() };
     transactionService = {
       execute: jest.fn((work: (client: unknown) => Promise<unknown>) =>

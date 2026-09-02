@@ -91,6 +91,9 @@ describe('OrdersRepository (integration)', () => {
       [businessId],
     );
     await pool.query('DELETE FROM orders WHERE business_id = $1', [businessId]);
+    await pool.query('DELETE FROM daily_order_counters WHERE business_id = $1', [
+      businessId,
+    ]);
     await pool.query('DELETE FROM products WHERE business_id = $1', [
       businessId,
     ]);
@@ -101,14 +104,30 @@ describe('OrdersRepository (integration)', () => {
     await pool.end();
   });
 
-  it('create() assigns a sequential order_number and defaults to PENDING', async () => {
+  it('create() assigns a daily MMDD-NN order_number and defaults to PENDING', async () => {
     const order = await repository.create(
       { businessId, branchId, orderType: OrderType.DINE_IN },
       undefined,
     );
 
     expect(order.status).toBe(OrderStatus.PENDING);
-    expect(Number(order.order_number)).toBeGreaterThan(0);
+    expect(order.order_number).toMatch(/^\d{4}-\d{2,}$/);
+  });
+
+  it('create() increments the daily counter per business and resets per calendar day', async () => {
+    const first = await repository.create(
+      { businessId, branchId, orderType: OrderType.DINE_IN },
+      undefined,
+    );
+    const second = await repository.create(
+      { businessId, branchId, orderType: OrderType.DINE_IN },
+      undefined,
+    );
+
+    const [firstDate, firstSeq] = first.order_number.split('-');
+    const [secondDate, secondSeq] = second.order_number.split('-');
+    expect(secondDate).toBe(firstDate);
+    expect(parseInt(secondSeq, 10)).toBe(parseInt(firstSeq, 10) + 1);
   });
 
   it('addItems() + findItems() persist decimal quantities correctly', async () => {

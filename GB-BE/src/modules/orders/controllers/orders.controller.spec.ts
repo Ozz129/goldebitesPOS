@@ -5,7 +5,12 @@ describe('OrdersController', () => {
   let service: jest.Mocked<
     Pick<
       OrdersService,
-      'create' | 'findAll' | 'findOne' | 'replaceItems' | 'updateStatus'
+      | 'create'
+      | 'findAll'
+      | 'findOne'
+      | 'replaceItems'
+      | 'updateStatus'
+      | 'getBacklog'
     >
   >;
   let controller: OrdersController;
@@ -17,6 +22,7 @@ describe('OrdersController', () => {
       findOne: jest.fn(),
       replaceItems: jest.fn(),
       updateStatus: jest.fn(),
+      getBacklog: jest.fn(),
     };
     controller = new OrdersController(service as unknown as OrdersService);
   });
@@ -57,6 +63,12 @@ describe('OrdersController', () => {
     service.findOne.mockResolvedValue({ id: 'order-1' } as never);
     await controller.findOne('business-1', 'order-1');
     expect(service.findOne).toHaveBeenCalledWith('business-1', 'order-1');
+  });
+
+  it('getBacklog() delegates', async () => {
+    service.getBacklog.mockResolvedValue([{ id: 'order-1' }] as never);
+    await controller.getBacklog('business-1', 'branch-1');
+    expect(service.getBacklog).toHaveBeenCalledWith('business-1', 'branch-1');
   });
 
   it('replaceItems() delegates', async () => {

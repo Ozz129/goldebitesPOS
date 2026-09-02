@@ -4,6 +4,7 @@ import type { ComponentType } from 'react';
 export type ModuleKey =
   | 'dashboard'
   | 'orders'
+  | 'ordersBacklog'
   | 'kitchen'
   | 'cash-register'
   | 'products'

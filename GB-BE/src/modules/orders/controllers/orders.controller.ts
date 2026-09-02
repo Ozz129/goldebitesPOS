@@ -63,6 +63,18 @@ export class OrdersController {
     });
   }
 
+  @Get('backlog')
+  @Permissions('orders.read')
+  @ApiOperation({
+    summary: 'List orders left open from previous business days',
+  })
+  getBacklog(
+    @CurrentBusiness() businessId: string,
+    @Query('branchId') branchId?: string,
+  ) {
+    return this.ordersService.getBacklog(businessId, branchId);
+  }
+
   @Get(':id')
   @Permissions('orders.read')
   @ApiOperation({ summary: 'Get an order with its items' })

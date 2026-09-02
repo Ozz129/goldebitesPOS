@@ -17,7 +17,7 @@ import { normalizeApiError } from '../../../lib/api/api-error';
 
 interface MockPaymentGatewayDialogProps {
   open: boolean;
-  order: { id: string; orderNumber: number; totalAmount: number } | null;
+  order: { id: string; orderNumber: string; totalAmount: number } | null;
   onClose: () => void;
   onPaid: () => void;
 }

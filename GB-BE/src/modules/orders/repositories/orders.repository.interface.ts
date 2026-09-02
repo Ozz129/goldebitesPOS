@@ -18,6 +18,7 @@ export interface IOrdersRepository {
   create(
     data: CreateOrderData,
     createdBy: string | undefined,
+    timezone?: string,
     client?: DbClient,
   ): Promise<OrderRow>;
   findById(
@@ -28,6 +29,12 @@ export interface IOrdersRepository {
   findAll(query: OrderQuery): Promise<{ rows: OrderRow[]; total: number }>;
   findActiveForKitchen(
     businessId: string,
+    branchId?: string,
+  ): Promise<OrderRow[]>;
+  /** Orders left open (not DELIVERED/CANCELLED) from before the business's current local calendar day. */
+  findBacklog(
+    businessId: string,
+    timezone: string,
     branchId?: string,
   ): Promise<OrderRow[]>;
   addItems(

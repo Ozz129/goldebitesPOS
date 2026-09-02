@@ -79,8 +79,26 @@ export default function WaiterKioskPage() {
           line.productId === product.id ? { ...line, quantity: line.quantity + 1 } : line,
         );
       }
-      return [...prev, { productId: product.id, name: product.name, unitPrice: product.salePrice, quantity: 1 }];
+      return [
+        ...prev,
+        { productId: product.id, name: product.name, unitPrice: product.salePrice, quantity: 1, sauces: [] },
+      ];
     });
+  }
+
+  function handleToggleSauce(productId: string, sauce: string) {
+    setCart((prev) =>
+      prev.map((line) =>
+        line.productId === productId
+          ? {
+              ...line,
+              sauces: line.sauces.includes(sauce)
+                ? line.sauces.filter((s) => s !== sauce)
+                : [...line.sauces, sauce],
+            }
+          : line,
+      ),
+    );
   }
 
   function handleIncrement(productId: string) {
@@ -114,7 +132,11 @@ export default function WaiterKioskPage() {
         branchId,
         orderType,
         tableNumber: orderType === 'DINE_IN' ? tableNumber || undefined : undefined,
-        items: cart.map((line) => ({ productId: line.productId, quantity: line.quantity })),
+        items: cart.map((line) => ({
+          productId: line.productId,
+          quantity: line.quantity,
+          notes: line.sauces.length ? `Salsa: ${line.sauces.join(', ')}` : undefined,
+        })),
       },
       {
         onSuccess: (order) => {
@@ -188,6 +210,7 @@ export default function WaiterKioskPage() {
               onIncrement={handleIncrement}
               onDecrement={handleDecrement}
               onRemove={handleRemove}
+              onToggleSauce={handleToggleSauce}
               tableNumber={tableNumber}
               onTableNumberChange={setTableNumber}
               orderType={orderType}

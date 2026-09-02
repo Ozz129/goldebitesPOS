@@ -4,8 +4,13 @@ import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import ToggleButton from '@mui/material/ToggleButton';
-import { Plus, LayoutGrid, List as ListIcon, Tablet, Car } from 'lucide-react';
+import Alert from '@mui/material/Alert';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Switch from '@mui/material/Switch';
+import { Plus, LayoutGrid, List as ListIcon, Tablet, Car, History } from 'lucide-react';
 import { useSnackbar } from 'notistack';
+import { useNavigate } from 'react-router-dom';
+import dayjs from 'dayjs';
 import PageHeader from '../../../components/common/PageHeader';
 import FilterBar from '../../../components/common/FilterBar';
 import SearchInput from '../../../components/common/SearchInput';
@@ -14,8 +19,11 @@ import LoadingSkeleton from '../../../components/common/LoadingSkeleton';
 import { Can } from '../../../modules/auth/components/can';
 import { useAuthStore } from '../../../modules/auth/store/auth.store';
 import { useOrders } from '../../../modules/orders/hooks/use-orders';
+import { useOrdersBacklog } from '../../../modules/orders/hooks/use-orders-backlog';
 import { useCreateOrder } from '../../../modules/orders/hooks/use-create-order';
 import { useUpdateOrderStatus } from '../../../modules/orders/hooks/use-update-order-status';
+import { useAutoPrintKitchenTickets } from '../../../modules/orders/hooks/use-auto-print-kitchen-tickets';
+import { useCurrentBusiness } from '../../../modules/businesses/hooks/use-current-business';
 import { useCustomers } from '../../../modules/customers/hooks/use-customers';
 import { normalizeApiError } from '../../../lib/api/api-error';
 import {
@@ -31,31 +39,67 @@ import OrderDetailDrawer from '../components/OrderDetailDrawer';
 import NewOrderDrawer from '../components/NewOrderDrawer';
 import type { NewOrderFormValues } from '../schemas/orderSchema';
 import { KIOSK_PATHS } from '../../../routes/kioskConfig';
+import { MODULE_PATHS } from '../../../routes/navConfig';
+
+const AUTO_PRINT_STORAGE_KEY = 'gb-pos:orders-auto-print-enabled';
+
+function loadAutoPrintPreference(): boolean {
+  const raw = localStorage.getItem(AUTO_PRINT_STORAGE_KEY);
+  return raw === null ? true : raw === 'true';
+}
 
 export default function OrdersPage() {
   const { enqueueSnackbar } = useSnackbar();
+  const navigate = useNavigate();
 
   const [view, setView] = useState<'tabla' | 'kanban'>('kanban');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<OrderStatus | 'todos'>('todos');
   const [typeFilter, setTypeFilter] = useState<OrderType | 'todos'>('todos');
+  const [todayOnly, setTodayOnly] = useState(true);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [newOrderOpen, setNewOrderOpen] = useState(false);
+  const [autoPrintEnabled, setAutoPrintEnabled] = useState(loadAutoPrintPreference);
+
+  const todayFilters = useMemo(
+    () => ({
+      limit: 100,
+      dateFrom: dayjs().startOf('day').toISOString(),
+      dateTo: dayjs().endOf('day').toISOString(),
+    }),
+    [],
+  );
 
   const filters = useMemo(
     () => ({
       limit: 100,
       status: statusFilter === 'todos' ? undefined : statusFilter,
       orderType: typeFilter === 'todos' ? undefined : typeFilter,
+      dateFrom: todayOnly ? dayjs().startOf('day').toISOString() : undefined,
+      dateTo: todayOnly ? dayjs().endOf('day').toISOString() : undefined,
     }),
-    [statusFilter, typeFilter],
+    [statusFilter, typeFilter, todayOnly],
   );
 
   const { data, isLoading, isError, refetch } = useOrders(filters);
+  const { data: todayOrdersData } = useOrders(todayFilters);
+  const { data: backlog } = useOrdersBacklog();
   const { data: customersData } = useCustomers({ limit: 100 });
+  const { data: business } = useCurrentBusiness();
   const createOrder = useCreateOrder();
   const updateStatus = useUpdateOrderStatus();
   const branchId = useAuthStore((s) => s.user?.branchId);
+
+  const printableOrders = useMemo(
+    () => todayOrdersData?.data.filter((o) => o.status !== 'PENDING' && o.status !== 'CANCELLED'),
+    [todayOrdersData],
+  );
+  useAutoPrintKitchenTickets(printableOrders, business?.name, autoPrintEnabled);
+
+  function handleAutoPrintToggle(checked: boolean) {
+    setAutoPrintEnabled(checked);
+    localStorage.setItem(AUTO_PRINT_STORAGE_KEY, String(checked));
+  }
 
   const customerById = useMemo(
     () => new Map((customersData?.data ?? []).map((c) => [c.id, c])),
@@ -232,7 +276,49 @@ export default function OrdersPage() {
             </MenuItem>
           ))}
         </TextField>
+        <ToggleButtonGroup
+          value={todayOnly ? 'hoy' : 'todos'}
+          exclusive
+          size="small"
+          onChange={(_, value) => value && setTodayOnly(value === 'hoy')}
+        >
+          <ToggleButton value="hoy" sx={{ fontWeight: 700 }}>
+            Solo hoy
+          </ToggleButton>
+          <ToggleButton value="todos" sx={{ fontWeight: 700 }}>
+            Todos los días
+          </ToggleButton>
+        </ToggleButtonGroup>
+        <FormControlLabel
+          sx={{ ml: 1 }}
+          control={
+            <Switch
+              checked={autoPrintEnabled}
+              onChange={(_, checked) => handleAutoPrintToggle(checked)}
+            />
+          }
+          label="Imprimir comandas automáticamente"
+        />
       </FilterBar>
+
+      {Boolean(backlog?.length) && (
+        <Alert
+          severity="warning"
+          sx={{ mb: 2 }}
+          action={
+            <Button
+              color="inherit"
+              size="small"
+              startIcon={<History size={16} />}
+              onClick={() => navigate(MODULE_PATHS.ordersBacklog)}
+            >
+              Ver pedidos atrasados
+            </Button>
+          }
+        >
+          Quedan {backlog!.length} pedido{backlog!.length === 1 ? '' : 's'} de días anteriores sin cerrar.
+        </Alert>
+      )}
 
       {isLoading ? (
         <LoadingSkeleton variant={view === 'kanban' ? 'cards' : 'table'} rows={8} />

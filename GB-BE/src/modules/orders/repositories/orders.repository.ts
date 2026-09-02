@@ -39,12 +39,25 @@ export class OrdersRepository implements IOrdersRepository {
   async create(
     data: CreateOrderData,
     createdBy: string | undefined,
+    timezone: string = 'America/Bogota',
     client?: DbClient,
   ): Promise<OrderRow> {
     const result = await this.db.query<OrderRow>(
-      `INSERT INTO orders (business_id, branch_id, customer_id, created_by, order_type, table_number,
-         delivery_address, delivery_instructions, discount_amount, delivery_fee, notes)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, COALESCE($9::numeric, 0), COALESCE($10::numeric, 0), $11)
+      `WITH cur_date AS (
+         SELECT (now() AT TIME ZONE $12)::date AS d
+       ),
+       counter AS (
+         INSERT INTO daily_order_counters (business_id, order_date, last_number)
+         SELECT $1, d, 1 FROM cur_date
+         ON CONFLICT (business_id, order_date)
+         DO UPDATE SET last_number = daily_order_counters.last_number + 1
+         RETURNING last_number, order_date
+       )
+       INSERT INTO orders (business_id, branch_id, customer_id, created_by, order_type, table_number,
+         delivery_address, delivery_instructions, discount_amount, delivery_fee, notes, order_number)
+       SELECT $1, $2, $3, $4, $5, $6, $7, $8, COALESCE($9::numeric, 0), COALESCE($10::numeric, 0), $11,
+         to_char(counter.order_date, 'MMDD') || '-' || lpad(counter.last_number::text, 2, '0')
+       FROM counter
        RETURNING ${SELECT_COLUMNS}`,
       [
         data.businessId,
@@ -58,6 +71,7 @@ export class OrdersRepository implements IOrdersRepository {
         data.discountAmount ?? null,
         data.deliveryFee ?? null,
         data.notes ?? null,
+        timezone,
       ],
       client,
     );
@@ -150,6 +164,28 @@ export class OrdersRepository implements IOrdersRepository {
     const result = await this.db.query<OrderRow>(
       `SELECT ${SELECT_COLUMNS} FROM orders
        WHERE business_id = $1 AND status IN ('CONFIRMED', 'PREPARING')${branchCondition}
+       ORDER BY created_at ASC`,
+      params,
+    );
+    return result.rows;
+  }
+
+  async findBacklog(
+    businessId: string,
+    timezone: string,
+    branchId?: string,
+  ): Promise<OrderRow[]> {
+    const params: unknown[] = [businessId, timezone];
+    let branchCondition = '';
+    if (branchId) {
+      params.push(branchId);
+      branchCondition = ` AND branch_id = $${params.length}`;
+    }
+    const result = await this.db.query<OrderRow>(
+      `SELECT ${SELECT_COLUMNS} FROM orders
+       WHERE business_id = $1
+         AND status IN ('PENDING', 'CONFIRMED', 'PREPARING', 'READY')
+         AND (created_at AT TIME ZONE $2)::date < (now() AT TIME ZONE $2)::date${branchCondition}
        ORDER BY created_at ASC`,
       params,
     );

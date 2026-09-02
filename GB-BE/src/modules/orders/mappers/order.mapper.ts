@@ -15,7 +15,7 @@ export class OrderMapper {
       branchId: row.branch_id,
       customerId: row.customer_id,
       createdBy: row.created_by,
-      orderNumber: parseInt(row.order_number, 10),
+      orderNumber: row.order_number,
       orderType: row.order_type,
       status: row.status,
       paymentStatus: row.payment_status,

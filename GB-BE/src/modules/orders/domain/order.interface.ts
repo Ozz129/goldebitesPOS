@@ -28,7 +28,7 @@ export interface Order {
   branchId: string;
   customerId: string | null;
   createdBy: string | null;
-  orderNumber: number;
+  orderNumber: string;
   orderType: OrderType;
   status: OrderStatus;
   paymentStatus: OrderPaymentStatus;

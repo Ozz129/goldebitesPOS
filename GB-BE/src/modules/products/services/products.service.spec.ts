@@ -36,6 +36,7 @@ describe('ProductsService', () => {
       image_url: null,
       is_active: true,
       track_inventory: true,
+      uses_sauces: false,
       created_at: new Date(),
       updated_at: new Date(),
       deleted_at: null,

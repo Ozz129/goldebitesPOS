@@ -3,7 +3,7 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Divider from '@mui/material/Divider';
 import Button from '@mui/material/Button';
-import { CheckCircle } from 'lucide-react';
+import { CheckCircle, ClipboardCheck } from 'lucide-react';
 import { useSnackbar } from 'notistack';
 import DetailDrawer from '../../../components/common/DetailDrawer';
 import StatusChip from '../../../components/common/StatusChip';
@@ -45,6 +45,19 @@ export default function WaiterOrderDetailDrawer({ orderId, onClose }: WaiterOrde
     );
   }
 
+  function handleConfirm() {
+    if (!order) return;
+    updateStatus.mutate(
+      { id: order.id, status: 'CONFIRMED' },
+      {
+        onSuccess: () => {
+          enqueueSnackbar(`Pedido #${order.orderNumber} confirmado`, { variant: 'success' });
+        },
+        onError: (error) => enqueueSnackbar(normalizeApiError(error).message, { variant: 'error' }),
+      },
+    );
+  }
+
   if (isLoading || !order) {
     return (
       <DetailDrawer open={Boolean(orderId)} onClose={onClose} title="Cargando pedido...">
@@ -72,6 +85,18 @@ export default function WaiterOrderDetailDrawer({ orderId, onClose }: WaiterOrde
             sx={{ py: 1.5, fontSize: '1rem' }}
           >
             Marcar como entregado
+          </Button>
+        ) : order.status === 'PENDING' ? (
+          <Button
+            variant="contained"
+            fullWidth
+            size="large"
+            startIcon={<ClipboardCheck size={18} />}
+            loading={updateStatus.isPending}
+            onClick={handleConfirm}
+            sx={{ py: 1.5, fontSize: '1rem' }}
+          >
+            Confirmar pedido
           </Button>
         ) : undefined
       }

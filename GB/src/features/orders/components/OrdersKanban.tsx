@@ -5,7 +5,6 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
-import { alpha } from '@mui/material/styles';
 import { ArrowRight } from 'lucide-react';
 import StatusChip from '../../../components/common/StatusChip';
 import CurrencyDisplay from '../../../components/common/CurrencyDisplay';
@@ -13,12 +12,12 @@ import {
   ORDER_STATUS_SEQUENCE,
   ORDER_STATUS_LABELS,
   ORDER_TYPE_LABELS,
+  PAYMENT_STATUS_LABELS,
+  PAYMENT_STATUS_TONE,
   nextStatusFor,
-  isOrderDelayed,
 } from '../../../modules/orders/order-status';
 import type { Order, OrderStatus } from '../../../modules/orders/types/order.types';
-import OrderTimer from './OrderTimer';
-import { statusColors } from '../../../theme/palette';
+import PrintOrderButton from './PrintOrderButton';
 
 interface OrdersKanbanProps {
   orders: Order[];
@@ -46,22 +45,13 @@ export default function OrdersKanban({ orders, onSelect, onAdvance, customerName
             </Stack>
             <Stack spacing={1.25} sx={{ minHeight: 80 }}>
               {columnOrders.map((order) => {
-                const delayed = isOrderDelayed(order.status, order.createdAt);
                 const next = nextStatusFor(order.status);
                 return (
-                  <Card
-                    key={order.id}
-                    sx={{
-                      borderColor: delayed ? alpha(statusColors.error, 0.5) : undefined,
-                    }}
-                  >
+                  <Card key={order.id}>
                     <CardActionArea onClick={() => onSelect(order)} sx={{ p: 1.5 }}>
-                      <Stack direction="row" sx={{ alignItems: 'flex-start', justifyContent: 'space-between' }}>
-                        <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                          #{order.orderNumber}
-                        </Typography>
-                        <OrderTimer createdAt={order.createdAt} compact />
-                      </Stack>
+                      <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                        #{order.orderNumber}
+                      </Typography>
                       <Typography variant="body2" sx={{ mt: 0.5 }} noWrap>
                         {customerName(order)}
                       </Typography>
@@ -69,10 +59,17 @@ export default function OrdersKanban({ orders, onSelect, onAdvance, customerName
                         <StatusChip label={ORDER_TYPE_LABELS[order.orderType]} tone="neutral" />
                         <CurrencyDisplay value={order.totalAmount} variant="caption" sx={{ fontWeight: 700 }} />
                       </Stack>
-                      {delayed && <StatusChip label="Retrasado" tone="error" size="small" />}
+                      <Stack direction="row" sx={{ mt: 0.75 }}>
+                        <StatusChip
+                          label={PAYMENT_STATUS_LABELS[order.paymentStatus]}
+                          tone={PAYMENT_STATUS_TONE[order.paymentStatus]}
+                          size="small"
+                        />
+                      </Stack>
                     </CardActionArea>
-                    {next && (
-                      <Stack direction="row" sx={{ justifyContent: 'flex-end', px: 1, pb: 1 }}>
+                    <Stack direction="row" sx={{ justifyContent: 'flex-end', alignItems: 'center', px: 1, pb: 1 }}>
+                      <PrintOrderButton orderId={order.id} />
+                      {next && (
                         <Tooltip title={`Avanzar a "${ORDER_STATUS_LABELS[next]}"`}>
                           <IconButton
                             size="small"
@@ -85,8 +82,9 @@ export default function OrdersKanban({ orders, onSelect, onAdvance, customerName
                             <ArrowRight size={16} />
                           </IconButton>
                         </Tooltip>
-                      </Stack>
-                    )}
+                      )}
+                    </Stack>
+
                   </Card>
                 );
               })}

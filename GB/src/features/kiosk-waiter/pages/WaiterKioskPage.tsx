@@ -4,7 +4,9 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
-import { LogOut } from 'lucide-react';
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
+import { LogOut, X } from 'lucide-react';
 import { useSnackbar } from 'notistack';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../../modules/auth/store/auth.store';
@@ -36,6 +38,32 @@ export default function WaiterKioskPage() {
   const [tableNumber, setTableNumber] = useState('');
   const [orderType, setOrderType] = useState<OrderType>('DINE_IN');
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    const requestFullscreen = () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      }
+    };
+    const handleFullscreenChange = () => setIsFullscreen(Boolean(document.fullscreenElement));
+
+    requestFullscreen();
+    // Browsers block requestFullscreen without a direct user gesture, so this tab
+    // (opened via "Abrir en modo tablet") retries on the first tap/click on the page.
+    document.addEventListener('click', requestFullscreen, { once: true });
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => {
+      document.removeEventListener('click', requestFullscreen);
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
+  }, []);
+
+  function handleExitFullscreen() {
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(() => {});
+    }
+  }
 
   const createOrder = useCreateOrder();
   const updateStatus = useUpdateOrderStatus();
@@ -81,7 +109,14 @@ export default function WaiterKioskPage() {
       }
       return [
         ...prev,
-        { productId: product.id, name: product.name, unitPrice: product.salePrice, quantity: 1, sauces: [] },
+        {
+          productId: product.id,
+          name: product.name,
+          unitPrice: product.salePrice,
+          quantity: 1,
+          sauces: [],
+          usesSauces: product.usesSauces,
+        },
       ];
     });
   }
@@ -166,14 +201,23 @@ export default function WaiterKioskPage() {
         <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
           {business.data?.name ?? 'Golden Bites'} · Mesero
         </Typography>
-        <Button
-          size="small"
-          color="inherit"
-          startIcon={<LogOut size={16} />}
-          onClick={() => logout.mutate(undefined, { onSettled: () => navigate('/login', { replace: true }) })}
-        >
-          Salir
-        </Button>
+        <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+          {isFullscreen && (
+            <Tooltip title="Salir de pantalla completa">
+              <IconButton size="small" color="inherit" onClick={handleExitFullscreen}>
+                <X size={18} />
+              </IconButton>
+            </Tooltip>
+          )}
+          <Button
+            size="small"
+            color="inherit"
+            startIcon={<LogOut size={16} />}
+            onClick={() => logout.mutate(undefined, { onSettled: () => navigate('/login', { replace: true }) })}
+          >
+            Salir
+          </Button>
+        </Stack>
       </Stack>
 
       <Stack direction="row" sx={{ flex: 1, overflow: 'hidden' }}>

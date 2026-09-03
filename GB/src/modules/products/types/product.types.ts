@@ -11,6 +11,7 @@ export interface Product {
   imageUrl: string | null;
   isActive: boolean;
   trackInventory: boolean;
+  usesSauces: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -23,6 +24,7 @@ export interface CreateProductPayload {
   salePrice?: number;
   imageUrl?: string;
   trackInventory?: boolean;
+  usesSauces?: boolean;
 }
 
 export type UpdateProductPayload = Partial<CreateProductPayload>;

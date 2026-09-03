@@ -67,6 +67,7 @@ export default function ProductsPage() {
       sku: values.sku || undefined,
       salePrice: values.salePrice,
       trackInventory: values.trackInventory,
+      usesSauces: values.usesSauces,
     };
 
     if (editingProduct) {

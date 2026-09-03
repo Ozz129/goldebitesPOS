@@ -65,7 +65,10 @@ export class PaymentsService {
               order.branch_id,
             )
           ).id
-        : undefined;
+        : await this.cashSessionsService.findOpenSessionId(
+            businessId,
+            order.branch_id,
+          );
 
     const row = await this.transactionService.execute(async (client) => {
       const created = await this.paymentsRepository.create(
@@ -80,7 +83,7 @@ export class PaymentsService {
             cashSessionId,
             orderId: order.id,
             movementType: CashMovementType.SALE,
-            paymentMethod: PaymentMethod.CASH,
+            paymentMethod: data.paymentMethod,
             amount: data.amount,
             createdBy: actorUserId,
           },

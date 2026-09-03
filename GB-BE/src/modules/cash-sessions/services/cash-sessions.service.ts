@@ -148,6 +148,18 @@ export class CashSessionsService {
     return CashSessionMapper.toDomain(row);
   }
 
+  /** Used by PaymentsService: the branch's open session, if any, for non-CASH payments (which don't require one). */
+  async findOpenSessionId(
+    businessId: string,
+    branchId: string,
+  ): Promise<string | null> {
+    const row = await this.sessionsRepository.findOpenForBranch(
+      businessId,
+      branchId,
+    );
+    return row?.id ?? null;
+  }
+
   async recordMovement(
     businessId: string,
     cashSessionId: string,

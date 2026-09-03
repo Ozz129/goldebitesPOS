@@ -8,6 +8,7 @@ export const productSchema = z.object({
   sku: z.string().max(60).optional(),
   salePrice: z.coerce.number().min(0, 'El precio no puede ser negativo'),
   trackInventory: z.boolean(),
+  usesSauces: z.boolean(),
 });
 
 export type ProductFormValues = z.infer<typeof productSchema>;

@@ -7,6 +7,7 @@ export interface CreateProductData {
   salePrice?: number;
   imageUrl?: string;
   trackInventory?: boolean;
+  usesSauces?: boolean;
 }
 
 export interface UpdateProductData {
@@ -17,6 +18,7 @@ export interface UpdateProductData {
   salePrice?: number;
   imageUrl?: string;
   trackInventory?: boolean;
+  usesSauces?: boolean;
 }
 
 export interface ProductQuery {

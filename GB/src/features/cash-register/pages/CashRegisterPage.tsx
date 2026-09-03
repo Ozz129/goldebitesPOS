@@ -8,7 +8,7 @@ import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useSnackbar } from 'notistack';
-import { Wallet, PlusCircle, Lock, Banknote, ReceiptText } from 'lucide-react';
+import { Wallet, PlusCircle, Lock, Banknote, CreditCard, Landmark, Smartphone, HandCoins, ReceiptText } from 'lucide-react';
 import PageHeader from '../../../components/common/PageHeader';
 import StatCard from '../../../components/common/StatCard';
 import DataTable from '../../../components/common/DataTable';
@@ -27,6 +27,8 @@ import { useCloseCashSession } from '../../../modules/cash-sessions/hooks/use-cl
 import { useAddCashMovement } from '../../../modules/cash-sessions/hooks/use-add-cash-movement';
 import { normalizeApiError } from '../../../lib/api/api-error';
 import { formatCOP } from '../../../utils/format';
+import { PAYMENT_METHOD_LABELS } from '../../../modules/orders/order-status';
+import type { PaymentMethod } from '../../../modules/orders/types/payment.types';
 import type {
   CashMovement,
   CashMovementType,
@@ -46,6 +48,15 @@ const MOVEMENT_TYPE_LABELS: Record<CashMovementType, string> = {
 };
 
 const POSITIVE_MOVEMENT_TYPES: CashMovementType[] = ['OPENING', 'SALE', 'INCOME'];
+
+const PAYMENT_METHOD_ICONS: Record<PaymentMethod, typeof Banknote> = {
+  CASH: Banknote,
+  CARD: CreditCard,
+  TRANSFER: Landmark,
+  NEQUI: Smartphone,
+  DAVIPLATA: Smartphone,
+  OTHER: HandCoins,
+};
 
 export default function CashRegisterPage() {
   const { enqueueSnackbar } = useSnackbar();
@@ -69,11 +80,18 @@ export default function CashRegisterPage() {
 
   const closedSessions = historyData?.data ?? [];
 
-  const cashSales = useMemo(
+  const sales = useMemo(
     () => (currentSession?.movements ?? []).filter((m) => m.movementType === 'SALE'),
     [currentSession],
   );
-  const totalCashSales = cashSales.reduce((sum, m) => sum + m.amount, 0);
+  const salesByPaymentMethod = useMemo(() => {
+    const totals = {} as Record<PaymentMethod, number>;
+    for (const sale of sales) {
+      if (!sale.paymentMethod) continue;
+      totals[sale.paymentMethod] = (totals[sale.paymentMethod] ?? 0) + sale.amount;
+    }
+    return (Object.entries(totals) as [PaymentMethod, number][]).filter(([, total]) => total > 0);
+  }, [sales]);
   const manualMovements = useMemo(
     () =>
       (currentSession?.movements ?? []).filter((m) =>
@@ -214,15 +232,21 @@ export default function CashRegisterPage() {
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <StatCard label="Base inicial" value={formatCOP(currentSession.openingAmount)} icon={Wallet} />
             </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <StatCard label="Ventas en efectivo" value={formatCOP(totalCashSales)} icon={Banknote} />
-            </Grid>
+            {salesByPaymentMethod.map(([paymentMethod, total]) => (
+              <Grid key={paymentMethod} size={{ xs: 12, sm: 6, md: 3 }}>
+                <StatCard
+                  label={`Ventas en ${PAYMENT_METHOD_LABELS[paymentMethod]}`}
+                  value={formatCOP(total)}
+                  icon={PAYMENT_METHOD_ICONS[paymentMethod]}
+                />
+              </Grid>
+            ))}
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <StatCard
                 label="Ventas del turno"
-                value={String(cashSales.length)}
+                value={String(sales.length)}
                 icon={ReceiptText}
-                helperText="Pagos en efectivo registrados"
+                helperText="Total de pagos registrados"
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>

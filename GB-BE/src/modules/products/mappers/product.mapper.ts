@@ -14,6 +14,7 @@ export class ProductMapper {
       imageUrl: row.image_url,
       isActive: row.is_active,
       trackInventory: row.track_inventory,
+      usesSauces: row.uses_sauces,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     };

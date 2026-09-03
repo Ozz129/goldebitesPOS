@@ -11,10 +11,9 @@ import {
   ORDER_TYPE_LABELS,
   PAYMENT_STATUS_LABELS,
   PAYMENT_STATUS_TONE,
-  isOrderDelayed,
 } from '../../../modules/orders/order-status';
 import type { Order } from '../../../modules/orders/types/order.types';
-import OrderTimer from './OrderTimer';
+import PrintOrderButton from './PrintOrderButton';
 
 interface OrdersTableProps {
   orders: Order[];
@@ -50,21 +49,11 @@ export default function OrdersTable({ orders, onSelect, customerName }: OrdersTa
       id: 'status',
       header: 'Estado',
       cell: ({ row }) => (
-        <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
-          <StatusChip
-            label={ORDER_STATUS_LABELS[row.original.status]}
-            tone={ORDER_STATUS_TONE[row.original.status]}
-          />
-          {isOrderDelayed(row.original.status, row.original.createdAt) && (
-            <StatusChip label="Retrasado" tone="error" />
-          )}
-        </Stack>
+        <StatusChip
+          label={ORDER_STATUS_LABELS[row.original.status]}
+          tone={ORDER_STATUS_TONE[row.original.status]}
+        />
       ),
-    },
-    {
-      id: 'timer',
-      header: 'Tiempo',
-      cell: ({ row }) => <OrderTimer createdAt={row.original.createdAt} compact />,
     },
     {
       id: 'payment',
@@ -80,6 +69,11 @@ export default function OrdersTable({ orders, onSelect, customerName }: OrdersTa
       accessorKey: 'totalAmount',
       header: 'Total',
       cell: ({ getValue }) => <CurrencyDisplay value={getValue<number>()} variant="body2" sx={{ fontWeight: 700 }} />,
+    },
+    {
+      id: 'print',
+      header: '',
+      cell: ({ row }) => <PrintOrderButton orderId={row.original.id} />,
     },
   ];
 

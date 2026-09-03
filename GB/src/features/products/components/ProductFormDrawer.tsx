@@ -6,6 +6,7 @@ import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
+import Checkbox from '@mui/material/Checkbox';
 import FormDrawer from '../../../components/common/FormDrawer';
 import { productSchema, type ProductFormValues } from '../schemas/productSchema';
 import { useProductCategories } from '../../../modules/product-categories/hooks/use-product-categories';
@@ -25,6 +26,7 @@ const emptyValues: ProductFormValues = {
   sku: '',
   salePrice: 0,
   trackInventory: true,
+  usesSauces: false,
 };
 
 export default function ProductFormDrawer({
@@ -57,6 +59,7 @@ export default function ProductFormDrawer({
               sku: initialProduct.sku ?? '',
               salePrice: initialProduct.salePrice,
               trackInventory: initialProduct.trackInventory,
+              usesSauces: initialProduct.usesSauces,
             }
           : emptyValues,
       );
@@ -163,6 +166,19 @@ export default function ProductFormDrawer({
                 <Switch checked={field.value} onChange={(e) => field.onChange(e.target.checked)} />
               }
               label="Controla inventario"
+            />
+          )}
+        />
+
+        <Controller
+          name="usesSauces"
+          control={control}
+          render={({ field }) => (
+            <FormControlLabel
+              control={
+                <Checkbox checked={field.value} onChange={(e) => field.onChange(e.target.checked)} />
+              }
+              label="Permite elegir salsas al pedirlo"
             />
           )}
         />

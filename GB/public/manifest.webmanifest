@@ -1,0 +1,20 @@
+{
+  "name": "Golden Bites — Mesero",
+  "short_name": "GB Mesero",
+  "description": "Vista de mesero en modo tablet para tomar pedidos en Golden Bites.",
+  "start_url": "/tablet/mesero",
+  "scope": "/",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone"],
+  "orientation": "landscape",
+  "background_color": "#0B0B0C",
+  "theme_color": "#0B0B0C",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

@@ -22,6 +22,7 @@ describe('PaymentsService', () => {
   };
   let cashSessionsService: {
     getOpenSessionOrFail: jest.Mock;
+    findOpenSessionId: jest.Mock;
     recordSaleMovement: jest.Mock;
   };
   let transactionService: { execute: jest.Mock };
@@ -70,6 +71,7 @@ describe('PaymentsService', () => {
     };
     cashSessionsService = {
       getOpenSessionOrFail: jest.fn().mockResolvedValue({ id: 'session-1' }),
+      findOpenSessionId: jest.fn().mockResolvedValue('session-1'),
       recordSaleMovement: jest.fn(),
     };
     transactionService = {
@@ -142,6 +144,42 @@ describe('PaymentsService', () => {
       });
 
       expect(cashSessionsService.getOpenSessionOrFail).not.toHaveBeenCalled();
+    });
+
+    it('logs a SALE cash movement for non-cash payments when a session is open, for reporting', async () => {
+      repository.create.mockResolvedValue(
+        makePaymentRow({ payment_method: PaymentMethod.NEQUI }),
+      );
+
+      await service.create(businessId, {
+        orderId: 'order-1',
+        paymentMethod: PaymentMethod.NEQUI,
+        amount: 10000,
+      });
+
+      expect(cashSessionsService.recordSaleMovement).toHaveBeenCalledWith(
+        expect.objectContaining({
+          cashSessionId: 'session-1',
+          movementType: CashMovementType.SALE,
+          paymentMethod: PaymentMethod.NEQUI,
+          amount: 10000,
+        }),
+        expect.anything(),
+      );
+    });
+
+    it('does not log a movement for non-cash payments when no session is open', async () => {
+      cashSessionsService.findOpenSessionId.mockResolvedValue(null);
+      repository.create.mockResolvedValue(
+        makePaymentRow({ payment_method: PaymentMethod.CARD }),
+      );
+
+      await service.create(businessId, {
+        orderId: 'order-1',
+        paymentMethod: PaymentMethod.CARD,
+        amount: 10000,
+      });
+
       expect(cashSessionsService.recordSaleMovement).not.toHaveBeenCalled();
     });
 

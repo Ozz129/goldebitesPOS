@@ -10,6 +10,7 @@ export interface Product {
   imageUrl: string | null;
   isActive: boolean;
   trackInventory: boolean;
+  usesSauces: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -26,6 +27,7 @@ export interface ProductRow {
   image_url: string | null;
   is_active: boolean;
   track_inventory: boolean;
+  uses_sauces: boolean;
   created_at: Date;
   updated_at: Date;
   deleted_at: Date | null;

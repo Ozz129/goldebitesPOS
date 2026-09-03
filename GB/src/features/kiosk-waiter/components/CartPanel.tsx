@@ -19,6 +19,7 @@ export interface CartLine {
   unitPrice: number;
   quantity: number;
   sauces: string[];
+  usesSauces: boolean;
 }
 
 const SAUCE_OPTIONS = ['Mielmostaza', 'De la Casa', 'BBQ', 'Miel Picante'];
@@ -120,23 +121,25 @@ export default function CartPanel({
                 </IconButton>
               </Stack>
 
-              <Stack direction="row" spacing={0.75} useFlexGap sx={{ mt: 0.75, flexWrap: 'wrap' }}>
-                {SAUCE_OPTIONS.map((sauce) => {
-                  const selected = line.sauces.includes(sauce);
-                  return (
-                    <Chip
-                      key={sauce}
-                      label={sauce}
-                      size="small"
-                      clickable
-                      onClick={() => onToggleSauce(line.productId, sauce)}
-                      color={selected ? 'primary' : 'default'}
-                      variant={selected ? 'filled' : 'outlined'}
-                      sx={{ fontWeight: 600 }}
-                    />
-                  );
-                })}
-              </Stack>
+              {line.usesSauces && (
+                <Stack direction="row" spacing={0.75} useFlexGap sx={{ mt: 0.75, flexWrap: 'wrap' }}>
+                  {SAUCE_OPTIONS.map((sauce) => {
+                    const selected = line.sauces.includes(sauce);
+                    return (
+                      <Chip
+                        key={sauce}
+                        label={sauce}
+                        size="small"
+                        clickable
+                        onClick={() => onToggleSauce(line.productId, sauce)}
+                        color={selected ? 'primary' : 'default'}
+                        variant={selected ? 'filled' : 'outlined'}
+                        sx={{ fontWeight: 600 }}
+                      />
+                    );
+                  })}
+                </Stack>
+              )}
             </Box>
           ))
         )}

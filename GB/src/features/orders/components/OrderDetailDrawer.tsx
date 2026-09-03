@@ -12,7 +12,7 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogActions from '@mui/material/DialogActions';
 import { useSnackbar } from 'notistack';
-import { MapPin, ArrowRight, Ban, CreditCard, Users, Printer } from 'lucide-react';
+import { MapPin, ArrowRight, Ban, CreditCard, Users, Printer, Pencil } from 'lucide-react';
 import DetailDrawer from '../../../components/common/DetailDrawer';
 import StatusChip from '../../../components/common/StatusChip';
 import CurrencyDisplay from '../../../components/common/CurrencyDisplay';
@@ -21,11 +21,12 @@ import { Can } from '../../../modules/auth/components/can';
 import { useOrder } from '../../../modules/orders/hooks/use-order';
 import { useOrderPayments } from '../../../modules/orders/hooks/use-order-payments';
 import { useCreatePayment } from '../../../modules/orders/hooks/use-create-payment';
+import { useReplaceOrderItems } from '../../../modules/orders/hooks/use-replace-order-items';
 import { usePrintKitchenTicket } from '../../../modules/orders/hooks/use-print-kitchen-ticket';
 import { normalizeApiError } from '../../../lib/api/api-error';
 import LoadingSkeleton from '../../../components/common/LoadingSkeleton';
-import OrderTimer from './OrderTimer';
 import SplitBillDialog from './SplitBillDialog';
+import EditOrderItemsDrawer from './EditOrderItemsDrawer';
 import {
   nextStatusFor,
   ORDER_STATUS_LABELS,
@@ -34,7 +35,6 @@ import {
   PAYMENT_STATUS_LABELS,
   PAYMENT_STATUS_TONE,
   PAYMENT_METHOD_LABELS,
-  isOrderDelayed,
 } from '../../../modules/orders/order-status';
 import type { Order } from '../../../modules/orders/types/order.types';
 import type { PaymentMethod } from '../../../modules/orders/types/payment.types';
@@ -59,11 +59,13 @@ export default function OrderDetailDrawer({
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('CASH');
   const [paymentAmount, setPaymentAmount] = useState('');
   const [splitBillOpen, setSplitBillOpen] = useState(false);
+  const [editItemsOpen, setEditItemsOpen] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
 
   const { data: order, isLoading } = useOrder(orderId);
   const { data: payments = [] } = useOrderPayments(orderId);
   const createPayment = useCreatePayment();
+  const replaceItems = useReplaceOrderItems();
   const printTicket = usePrintKitchenTicket();
 
   if (!orderId) return null;
@@ -77,7 +79,6 @@ export default function OrderDetailDrawer({
   }
 
   const next = nextStatusFor(order.status);
-  const delayed = isOrderDelayed(order.status, order.createdAt);
   const amountPaid = payments.reduce((sum, p) => sum + p.amount, 0);
   const balanceDue = Math.max(order.totalAmount - amountPaid, 0);
   const canRegisterPayment = order.status !== 'CANCELLED' && balanceDue > 0;
@@ -130,20 +131,28 @@ export default function OrderDetailDrawer({
         }
       >
         <Stack spacing={3}>
-          <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
-            <OrderTimer createdAt={order.createdAt} />
-            {delayed && <StatusChip label="Pedido retrasado" tone="error" />}
+          <Stack direction="row" spacing={1}>
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<Printer size={16} />}
+              onClick={() => printTicket(order)}
+            >
+              Imprimir comanda
+            </Button>
+            {order.status === 'PENDING' && (
+              <Can permission="orders.update">
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<Pencil size={16} />}
+                  onClick={() => setEditItemsOpen(true)}
+                >
+                  Editar productos
+                </Button>
+              </Can>
+            )}
           </Stack>
-
-          <Button
-            variant="outlined"
-            size="small"
-            startIcon={<Printer size={16} />}
-            onClick={() => printTicket(order)}
-            sx={{ alignSelf: 'flex-start' }}
-          >
-            Imprimir comanda
-          </Button>
 
           <Box>
             <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
@@ -368,6 +377,25 @@ export default function OrderDetailDrawer({
         balanceDue={balanceDue}
         onClose={() => setSplitBillOpen(false)}
         onDone={() => setSplitBillOpen(false)}
+      />
+
+      <EditOrderItemsDrawer
+        open={editItemsOpen}
+        order={order}
+        loading={replaceItems.isPending}
+        onClose={() => setEditItemsOpen(false)}
+        onSubmit={(values) => {
+          replaceItems.mutate(
+            { id: order.id, items: values.items },
+            {
+              onSuccess: () => {
+                setEditItemsOpen(false);
+                enqueueSnackbar('Pedido actualizado correctamente', { variant: 'success' });
+              },
+              onError: (error) => enqueueSnackbar(normalizeApiError(error).message, { variant: 'error' }),
+            },
+          );
+        }}
       />
     </>
   );

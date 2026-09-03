@@ -1,0 +1,1 @@
+ALTER TABLE products ADD COLUMN uses_sauces BOOLEAN NOT NULL DEFAULT false;

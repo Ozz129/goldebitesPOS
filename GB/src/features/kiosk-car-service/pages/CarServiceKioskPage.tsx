@@ -82,7 +82,14 @@ export default function CarServiceKioskPage() {
       }
       return [
         ...prev,
-        { productId: product.id, name: product.name, unitPrice: product.salePrice, quantity: 1, sauces: [] },
+        {
+          productId: product.id,
+          name: product.name,
+          unitPrice: product.salePrice,
+          quantity: 1,
+          sauces: [],
+          usesSauces: product.usesSauces,
+        },
       ];
     });
   }

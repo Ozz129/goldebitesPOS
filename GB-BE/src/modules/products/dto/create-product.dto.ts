@@ -50,4 +50,12 @@ export class CreateProductDto {
   @IsOptional()
   @IsBoolean()
   trackInventory?: boolean;
+
+  @ApiPropertyOptional({
+    default: false,
+    description: 'Whether sauce options should be offered when ordering this product',
+  })
+  @IsOptional()
+  @IsBoolean()
+  usesSauces?: boolean;
 }

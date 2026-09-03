@@ -30,3 +30,10 @@ export const newOrderSchema = z
   });
 
 export type NewOrderFormValues = z.infer<typeof newOrderSchema>;
+
+/** Mirrors GB-BE's ReplaceOrderItemsDto — only items can be edited, and only while PENDING. */
+export const editOrderItemsSchema = z.object({
+  items: z.array(newOrderItemSchema).min(1, 'Agrega al menos un producto'),
+});
+
+export type EditOrderItemsFormValues = z.infer<typeof editOrderItemsSchema>;

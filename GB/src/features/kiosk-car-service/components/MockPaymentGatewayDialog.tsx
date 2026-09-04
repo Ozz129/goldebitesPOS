@@ -13,6 +13,7 @@ import { CreditCard, CheckCircle2, Banknote } from 'lucide-react';
 import { useSnackbar } from 'notistack';
 import { formatCOP } from '../../../utils/format';
 import { useCreatePayment } from '../../../modules/orders/hooks/use-create-payment';
+import { usePrintInvoice } from '../../../modules/orders/hooks/use-print-invoice';
 import { normalizeApiError } from '../../../lib/api/api-error';
 
 interface MockPaymentGatewayDialogProps {
@@ -42,6 +43,7 @@ export default function MockPaymentGatewayDialog({
   const [authCode, setAuthCode] = useState('');
   const [wasOpen, setWasOpen] = useState(false);
   const createPayment = useCreatePayment();
+  const { printByOrderId: printInvoiceByOrderId } = usePrintInvoice();
 
   if (open && !wasOpen) {
     setWasOpen(true);
@@ -57,7 +59,12 @@ export default function MockPaymentGatewayDialog({
     createPayment.mutate(
       { orderId: order!.id, payload: { paymentMethod, amount: order!.totalAmount, reference } },
       {
-        onSuccess: () => onPaid(),
+        onSuccess: () => {
+          onPaid();
+          printInvoiceByOrderId(order!.id).catch(() => {
+            // Si falla la carga de datos para la factura, se puede reimprimir manualmente desde el pedido.
+          });
+        },
         onError: (error) => {
           enqueueSnackbar(normalizeApiError(error).message, { variant: 'error' });
           setStage('idle');

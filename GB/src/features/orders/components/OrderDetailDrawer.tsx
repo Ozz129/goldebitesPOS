@@ -12,7 +12,7 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogActions from '@mui/material/DialogActions';
 import { useSnackbar } from 'notistack';
-import { MapPin, ArrowRight, Ban, CreditCard, Users, Printer, Pencil } from 'lucide-react';
+import { MapPin, ArrowRight, Ban, CreditCard, Users, Printer, Receipt, Pencil } from 'lucide-react';
 import DetailDrawer from '../../../components/common/DetailDrawer';
 import StatusChip from '../../../components/common/StatusChip';
 import CurrencyDisplay from '../../../components/common/CurrencyDisplay';
@@ -23,6 +23,7 @@ import { useOrderPayments } from '../../../modules/orders/hooks/use-order-paymen
 import { useCreatePayment } from '../../../modules/orders/hooks/use-create-payment';
 import { useReplaceOrderItems } from '../../../modules/orders/hooks/use-replace-order-items';
 import { usePrintKitchenTicket } from '../../../modules/orders/hooks/use-print-kitchen-ticket';
+import { usePrintInvoice } from '../../../modules/orders/hooks/use-print-invoice';
 import { normalizeApiError } from '../../../lib/api/api-error';
 import LoadingSkeleton from '../../../components/common/LoadingSkeleton';
 import SplitBillDialog from './SplitBillDialog';
@@ -67,6 +68,7 @@ export default function OrderDetailDrawer({
   const createPayment = useCreatePayment();
   const replaceItems = useReplaceOrderItems();
   const printTicket = usePrintKitchenTicket();
+  const { printNow: printInvoiceNow, printByOrderId: printInvoiceByOrderId } = usePrintInvoice();
 
   if (!orderId) return null;
 
@@ -89,9 +91,14 @@ export default function OrderDetailDrawer({
     createPayment.mutate(
       { orderId: order.id, payload: { paymentMethod, amount } },
       {
-        onSuccess: () => {
+        onSuccess: (payment) => {
           enqueueSnackbar('Pago registrado correctamente', { variant: 'success' });
           setPaymentAmount('');
+          if (amountPaid + payment.amount >= order.totalAmount) {
+            printInvoiceByOrderId(order.id).catch(() => {
+              // Si falla la carga de datos para la factura, el usuario puede reimprimirla manualmente.
+            });
+          }
         },
         onError: (error) => enqueueSnackbar(normalizeApiError(error).message, { variant: 'error' }),
       },
@@ -139,6 +146,15 @@ export default function OrderDetailDrawer({
               onClick={() => printTicket(order)}
             >
               Imprimir comanda
+            </Button>
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<Receipt size={16} />}
+              disabled={payments.length === 0}
+              onClick={() => printInvoiceNow(order, payments)}
+            >
+              Imprimir factura
             </Button>
             {order.status === 'PENDING' && (
               <Can permission="orders.update">
@@ -386,7 +402,12 @@ export default function OrderDetailDrawer({
         orderId={order.id}
         balanceDue={balanceDue}
         onClose={() => setSplitBillOpen(false)}
-        onDone={() => setSplitBillOpen(false)}
+        onDone={() => {
+          setSplitBillOpen(false);
+          printInvoiceByOrderId(order.id).catch(() => {
+            // Si falla la carga de datos para la factura, el usuario puede reimprimirla manualmente.
+          });
+        }}
       />
 
       <EditOrderItemsDrawer

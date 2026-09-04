@@ -5,6 +5,8 @@ export interface OrderItemInput {
   quantity: number;
   discountAmount?: number;
   notes?: string;
+  sauceIds?: string[];
+  sideIds?: string[];
 }
 
 export interface CreateOrderData {
@@ -38,4 +40,6 @@ export interface OrderItemComputed extends OrderItemInput {
   unitPrice: number;
   unitCostSnapshot: number;
   totalPrice: number;
+  sauceNames?: string[];
+  sideNames?: string[];
 }

@@ -87,11 +87,45 @@ export default function CarServiceKioskPage() {
           name: product.name,
           unitPrice: product.salePrice,
           quantity: 1,
-          sauces: [],
-          usesSauces: product.usesSauces,
+          maxSauces: product.maxSauces,
+          maxSides: product.maxSides,
+          sauceIds: [],
+          sideIds: [],
         },
       ];
     });
+  }
+
+  function handleToggleSauce(productId: string, sauceId: string) {
+    setCart((prev) =>
+      prev.map((line) => {
+        if (line.productId !== productId) return line;
+        const selected = line.sauceIds.includes(sauceId);
+        if (!selected && line.sauceIds.length >= line.maxSauces) return line;
+        return {
+          ...line,
+          sauceIds: selected
+            ? line.sauceIds.filter((id) => id !== sauceId)
+            : [...line.sauceIds, sauceId],
+        };
+      }),
+    );
+  }
+
+  function handleToggleSide(productId: string, sideId: string) {
+    setCart((prev) =>
+      prev.map((line) => {
+        if (line.productId !== productId) return line;
+        const selected = line.sideIds.includes(sideId);
+        if (!selected && line.sideIds.length >= line.maxSides) return line;
+        return {
+          ...line,
+          sideIds: selected
+            ? line.sideIds.filter((id) => id !== sideId)
+            : [...line.sideIds, sideId],
+        };
+      }),
+    );
   }
 
   function handleIncrement(productId: string) {
@@ -125,7 +159,12 @@ export default function CarServiceKioskPage() {
         branchId,
         orderType: 'CAR_SERVICE',
         tableNumber: vehicleTag || undefined,
-        items: cart.map((line) => ({ productId: line.productId, quantity: line.quantity })),
+        items: cart.map((line) => ({
+          productId: line.productId,
+          quantity: line.quantity,
+          sauceIds: line.sauceIds.length ? line.sauceIds : undefined,
+          sideIds: line.sideIds.length ? line.sideIds : undefined,
+        })),
       },
       {
         onSuccess: (order) => {
@@ -236,6 +275,8 @@ export default function CarServiceKioskPage() {
             onIncrement={handleIncrement}
             onDecrement={handleDecrement}
             onRemove={handleRemove}
+            onToggleSauce={handleToggleSauce}
+            onToggleSide={handleToggleSide}
             vehicleTag={vehicleTag}
             onVehicleTagChange={setVehicleTag}
             onSubmit={handleSubmit}

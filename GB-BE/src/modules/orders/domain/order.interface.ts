@@ -87,6 +87,10 @@ export interface OrderItem {
   discountAmount: number;
   totalPrice: number;
   notes: string | null;
+  sauceIds: string[];
+  sauceNames: string[];
+  sideIds: string[];
+  sideNames: string[];
   createdAt: Date;
 }
 
@@ -101,6 +105,10 @@ export interface OrderItemRow {
   discount_amount: string;
   total_price: string;
   notes: string | null;
+  sauce_ids: string[];
+  sauce_names: string[];
+  side_ids: string[];
+  side_names: string[];
   created_at: Date;
 }
 

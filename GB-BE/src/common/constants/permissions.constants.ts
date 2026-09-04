@@ -16,7 +16,11 @@ export const PERMISSIONS: PermissionDefinition[] = [
 
   { code: 'orders.read', module: 'orders', description: 'Ver pedidos' },
   { code: 'orders.create', module: 'orders', description: 'Crear pedidos' },
-  { code: 'orders.update', module: 'orders', description: 'Actualizar pedidos' },
+  {
+    code: 'orders.update',
+    module: 'orders',
+    description: 'Actualizar pedidos',
+  },
   { code: 'orders.cancel', module: 'orders', description: 'Cancelar pedidos' },
 
   {
@@ -69,8 +73,16 @@ export const PERMISSIONS: PermissionDefinition[] = [
     description: 'Actualizar productos',
   },
 
-  { code: 'cash.open', module: 'cash', description: 'Abrir una sesión de caja' },
-  { code: 'cash.close', module: 'cash', description: 'Cerrar una sesión de caja' },
+  {
+    code: 'cash.open',
+    module: 'cash',
+    description: 'Abrir una sesión de caja',
+  },
+  {
+    code: 'cash.close',
+    module: 'cash',
+    description: 'Cerrar una sesión de caja',
+  },
   {
     code: 'cash.withdraw',
     module: 'cash',
@@ -95,7 +107,8 @@ export const PERMISSIONS: PermissionDefinition[] = [
   {
     code: 'purchases.receive',
     module: 'purchases',
-    description: 'Registrar recepciones de mercancía contra una orden de compra',
+    description:
+      'Registrar recepciones de mercancía contra una orden de compra',
   },
   {
     code: 'purchases.cancel',
@@ -113,7 +126,11 @@ export const PERMISSIONS: PermissionDefinition[] = [
     description: 'Crear, actualizar y desactivar proveedores',
   },
 
-  { code: 'users.manage', module: 'users', description: 'Administrar usuarios' },
+  {
+    code: 'users.manage',
+    module: 'users',
+    description: 'Administrar usuarios',
+  },
   {
     code: 'roles.manage',
     module: 'users',
@@ -188,7 +205,8 @@ export const PERMISSIONS: PermissionDefinition[] = [
   {
     code: 'loyalty.manage',
     module: 'loyalty',
-    description: 'Administrar la configuración de fidelización y el catálogo de recompensas',
+    description:
+      'Administrar la configuración de fidelización y el catálogo de recompensas',
   },
   {
     code: 'loyalty.redeem',
@@ -204,7 +222,8 @@ export const PERMISSIONS: PermissionDefinition[] = [
   {
     code: 'marketing.manage',
     module: 'marketing',
-    description: 'Crear y actualizar campañas de marketing, cupones y contenido',
+    description:
+      'Crear y actualizar campañas de marketing, cupones y contenido',
   },
 
   {

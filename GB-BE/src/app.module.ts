@@ -50,7 +50,9 @@ import { ProductsModule } from './modules/products/products.module';
 import { PurchasesModule } from './modules/purchases/purchases.module';
 import { RecipesModule } from './modules/recipes/recipes.module';
 import { RolesModule } from './modules/roles/roles.module';
+import { SaucesModule } from './modules/sauces/sauces.module';
 import { SettingsModule } from './modules/settings/settings.module';
+import { SidesModule } from './modules/sides/sides.module';
 import { SuppliersModule } from './modules/suppliers/suppliers.module';
 import { TabletKioskModule } from './modules/tablet-kiosk/tablet-kiosk.module';
 import { UsersModule } from './modules/users/users.module';
@@ -80,6 +82,8 @@ import { WasteModule } from './modules/waste/waste.module';
     AuthModule,
     ProductCategoriesModule,
     ProductsModule,
+    SaucesModule,
+    SidesModule,
     SuppliersModule,
     InventoryItemCategoriesModule,
     InventoryItemsModule,

@@ -27,7 +27,8 @@ export class CreatePaymentDto {
 
   @ApiPropertyOptional({
     maxLength: 100,
-    description: 'Optional label for who this portion of a split bill belongs to, e.g. "Persona 1" or a name.',
+    description:
+      'Optional label for who this portion of a split bill belongs to, e.g. "Persona 1" or a name.',
   })
   @IsOptional()
   @IsString()

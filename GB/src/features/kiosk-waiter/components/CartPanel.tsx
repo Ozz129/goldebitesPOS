@@ -4,6 +4,7 @@ import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
+import TextField from '@mui/material/TextField';
 import Divider from '@mui/material/Divider';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import ToggleButton from '@mui/material/ToggleButton';
@@ -11,6 +12,8 @@ import { Minus, Plus, Trash2, Send } from 'lucide-react';
 import { formatCOP } from '../../../utils/format';
 import { ORDER_TYPE_LABELS } from '../../../modules/orders/order-status';
 import type { OrderType } from '../../../modules/orders/types/order.types';
+import { useSauces } from '../../../modules/sauces/hooks/use-sauces';
+import { useSides } from '../../../modules/sides/hooks/use-sides';
 import TableNumberPicker from './TableNumberPicker';
 
 export interface CartLine {
@@ -18,22 +21,25 @@ export interface CartLine {
   name: string;
   unitPrice: number;
   quantity: number;
-  sauces: string[];
-  usesSauces: boolean;
+  maxSauces: number;
+  maxSides: number;
+  sauceIds: string[];
+  sideIds: string[];
 }
-
-const SAUCE_OPTIONS = ['Mielmostaza', 'De la Casa', 'BBQ', 'Miel Picante'];
 
 interface CartPanelProps {
   cart: CartLine[];
   onIncrement: (productId: string) => void;
   onDecrement: (productId: string) => void;
   onRemove: (productId: string) => void;
-  onToggleSauce: (productId: string, sauce: string) => void;
+  onToggleSauce: (productId: string, sauceId: string) => void;
+  onToggleSide: (productId: string, sideId: string) => void;
   tableNumber: string;
   onTableNumberChange: (value: string) => void;
   orderType: OrderType;
   onOrderTypeChange: (value: OrderType) => void;
+  orderNotes: string;
+  onOrderNotesChange: (value: string) => void;
   onSubmit: () => void;
   submitting: boolean;
 }
@@ -46,13 +52,21 @@ export default function CartPanel({
   onDecrement,
   onRemove,
   onToggleSauce,
+  onToggleSide,
   tableNumber,
   onTableNumberChange,
   orderType,
   onOrderTypeChange,
+  orderNotes,
+  onOrderNotesChange,
   onSubmit,
   submitting,
 }: CartPanelProps) {
+  const { data: saucesData } = useSauces({ isActive: true, limit: 100 });
+  const { data: sidesData } = useSides({ isActive: true, limit: 100 });
+  const sauces = saucesData?.data ?? [];
+  const sides = sidesData?.data ?? [];
+
   const total = cart.reduce((sum, line) => sum + line.unitPrice * line.quantity, 0);
   const canSubmit = cart.length > 0 && !submitting;
 
@@ -121,29 +135,78 @@ export default function CartPanel({
                 </IconButton>
               </Stack>
 
-              {line.usesSauces && (
-                <Stack direction="row" spacing={0.75} useFlexGap sx={{ mt: 0.75, flexWrap: 'wrap' }}>
-                  {SAUCE_OPTIONS.map((sauce) => {
-                    const selected = line.sauces.includes(sauce);
-                    return (
-                      <Chip
-                        key={sauce}
-                        label={sauce}
-                        size="small"
-                        clickable
-                        onClick={() => onToggleSauce(line.productId, sauce)}
-                        color={selected ? 'primary' : 'default'}
-                        variant={selected ? 'filled' : 'outlined'}
-                        sx={{ fontWeight: 600 }}
-                      />
-                    );
-                  })}
-                </Stack>
+              {line.maxSauces > 0 && (
+                <Box sx={{ mt: 0.75 }}>
+                  <Typography variant="caption" color="text.secondary">
+                    Salsas (máx. {line.maxSauces})
+                  </Typography>
+                  <Stack direction="row" spacing={0.75} useFlexGap sx={{ mt: 0.25, flexWrap: 'wrap' }}>
+                    {sauces.map((sauce) => {
+                      const selected = line.sauceIds.includes(sauce.id);
+                      const disabled = !selected && line.sauceIds.length >= line.maxSauces;
+                      return (
+                        <Chip
+                          key={sauce.id}
+                          label={sauce.name}
+                          size="small"
+                          clickable={!disabled}
+                          disabled={disabled}
+                          onClick={() => onToggleSauce(line.productId, sauce.id)}
+                          color={selected ? 'primary' : 'default'}
+                          variant={selected ? 'filled' : 'outlined'}
+                          sx={{ fontWeight: 600 }}
+                        />
+                      );
+                    })}
+                  </Stack>
+                </Box>
+              )}
+
+              {line.maxSides > 0 && (
+                <Box sx={{ mt: 0.75 }}>
+                  <Typography variant="caption" color="text.secondary">
+                    Acompañantes (máx. {line.maxSides})
+                  </Typography>
+                  <Stack direction="row" spacing={0.75} useFlexGap sx={{ mt: 0.25, flexWrap: 'wrap' }}>
+                    {sides.map((side) => {
+                      const selected = line.sideIds.includes(side.id);
+                      const disabled = !selected && line.sideIds.length >= line.maxSides;
+                      return (
+                        <Chip
+                          key={side.id}
+                          label={side.name}
+                          size="small"
+                          clickable={!disabled}
+                          disabled={disabled}
+                          onClick={() => onToggleSide(line.productId, side.id)}
+                          color={selected ? 'primary' : 'default'}
+                          variant={selected ? 'filled' : 'outlined'}
+                          sx={{ fontWeight: 600 }}
+                        />
+                      );
+                    })}
+                  </Stack>
+                </Box>
               )}
             </Box>
           ))
         )}
       </Stack>
+
+      <Divider />
+
+      <Box sx={{ px: 1.5, py: 1.25 }}>
+        <TextField
+          value={orderNotes}
+          onChange={(e) => onOrderNotesChange(e.target.value)}
+          label="Comentario del pedido (opcional)"
+          placeholder="Ej. Sin cebolla, cliente frecuente..."
+          multiline
+          minRows={2}
+          fullWidth
+          size="small"
+        />
+      </Box>
 
       <Divider sx={{ borderBottomWidth: 2 }} />
 

@@ -3,10 +3,13 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import ButtonBase from '@mui/material/ButtonBase';
 import Button from '@mui/material/Button';
+import Chip from '@mui/material/Chip';
 import TextField from '@mui/material/TextField';
 import Divider from '@mui/material/Divider';
 import { Minus, Plus, Trash2, ShoppingCart, CreditCard } from 'lucide-react';
 import { formatCOP } from '../../../utils/format';
+import { useSauces } from '../../../modules/sauces/hooks/use-sauces';
+import { useSides } from '../../../modules/sides/hooks/use-sides';
 import type { CartLine } from '../../kiosk-waiter/components/CartPanel';
 
 interface CarServiceCartPanelProps {
@@ -14,6 +17,8 @@ interface CarServiceCartPanelProps {
   onIncrement: (productId: string) => void;
   onDecrement: (productId: string) => void;
   onRemove: (productId: string) => void;
+  onToggleSauce: (productId: string, sauceId: string) => void;
+  onToggleSide: (productId: string, sideId: string) => void;
   vehicleTag: string;
   onVehicleTagChange: (value: string) => void;
   onSubmit: () => void;
@@ -25,11 +30,17 @@ export default function CarServiceCartPanel({
   onIncrement,
   onDecrement,
   onRemove,
+  onToggleSauce,
+  onToggleSide,
   vehicleTag,
   onVehicleTagChange,
   onSubmit,
   submitting,
 }: CarServiceCartPanelProps) {
+  const { data: saucesData } = useSauces({ isActive: true, limit: 100 });
+  const { data: sidesData } = useSides({ isActive: true, limit: 100 });
+  const sauces = saucesData?.data ?? [];
+  const sides = sidesData?.data ?? [];
   const total = cart.reduce((sum, line) => sum + line.unitPrice * line.quantity, 0);
   const itemCount = cart.reduce((sum, line) => sum + line.quantity, 0);
   const canSubmit = cart.length > 0 && !submitting;
@@ -68,36 +79,87 @@ export default function CarServiceCartPanel({
             <Box
               key={line.productId}
               sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1.25,
                 px: 2,
                 py: 1.5,
                 borderBottom: '1px solid',
                 borderColor: 'divider',
               }}
             >
-              <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Typography sx={{ fontWeight: 700, fontSize: '1rem' }} noWrap>
-                  {line.name}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {formatCOP(line.unitPrice)} c/u
-                </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography sx={{ fontWeight: 700, fontSize: '1rem' }} noWrap>
+                    {line.name}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {formatCOP(line.unitPrice)} c/u
+                  </Typography>
+                </Box>
+                <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
+                  <Stepper icon={<Minus size={18} />} onClick={() => onDecrement(line.productId)} />
+                  <Typography sx={{ minWidth: 26, textAlign: 'center', fontWeight: 800, fontSize: '1.1rem' }}>
+                    {line.quantity}
+                  </Typography>
+                  <Stepper icon={<Plus size={18} />} onClick={() => onIncrement(line.productId)} />
+                  <ButtonBase
+                    onClick={() => onRemove(line.productId)}
+                    sx={{ p: 1, borderRadius: 2, color: 'error.main', ml: 0.5 }}
+                  >
+                    <Trash2 size={18} />
+                  </ButtonBase>
+                </Stack>
               </Box>
-              <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
-                <Stepper icon={<Minus size={18} />} onClick={() => onDecrement(line.productId)} />
-                <Typography sx={{ minWidth: 26, textAlign: 'center', fontWeight: 800, fontSize: '1.1rem' }}>
-                  {line.quantity}
-                </Typography>
-                <Stepper icon={<Plus size={18} />} onClick={() => onIncrement(line.productId)} />
-                <ButtonBase
-                  onClick={() => onRemove(line.productId)}
-                  sx={{ p: 1, borderRadius: 2, color: 'error.main', ml: 0.5 }}
-                >
-                  <Trash2 size={18} />
-                </ButtonBase>
-              </Stack>
+
+              {line.maxSauces > 0 && (
+                <Box sx={{ mt: 1 }}>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>
+                    Salsas (máx. {line.maxSauces})
+                  </Typography>
+                  <Stack direction="row" spacing={0.75} useFlexGap sx={{ mt: 0.5, flexWrap: 'wrap' }}>
+                    {sauces.map((sauce) => {
+                      const selected = line.sauceIds.includes(sauce.id);
+                      const disabled = !selected && line.sauceIds.length >= line.maxSauces;
+                      return (
+                        <Chip
+                          key={sauce.id}
+                          label={sauce.name}
+                          clickable={!disabled}
+                          disabled={disabled}
+                          onClick={() => onToggleSauce(line.productId, sauce.id)}
+                          color={selected ? 'primary' : 'default'}
+                          variant={selected ? 'filled' : 'outlined'}
+                          sx={{ fontWeight: 700 }}
+                        />
+                      );
+                    })}
+                  </Stack>
+                </Box>
+              )}
+
+              {line.maxSides > 0 && (
+                <Box sx={{ mt: 1 }}>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>
+                    Acompañantes (máx. {line.maxSides})
+                  </Typography>
+                  <Stack direction="row" spacing={0.75} useFlexGap sx={{ mt: 0.5, flexWrap: 'wrap' }}>
+                    {sides.map((side) => {
+                      const selected = line.sideIds.includes(side.id);
+                      const disabled = !selected && line.sideIds.length >= line.maxSides;
+                      return (
+                        <Chip
+                          key={side.id}
+                          label={side.name}
+                          clickable={!disabled}
+                          disabled={disabled}
+                          onClick={() => onToggleSide(line.productId, side.id)}
+                          color={selected ? 'primary' : 'default'}
+                          variant={selected ? 'filled' : 'outlined'}
+                          sx={{ fontWeight: 700 }}
+                        />
+                      );
+                    })}
+                  </Stack>
+                </Box>
+              )}
             </Box>
           ))
         )}

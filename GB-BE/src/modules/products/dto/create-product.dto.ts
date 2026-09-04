@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsBoolean,
+  IsInt,
   IsNumber,
   IsOptional,
   IsString,
@@ -52,10 +53,24 @@ export class CreateProductDto {
   trackInventory?: boolean;
 
   @ApiPropertyOptional({
-    default: false,
-    description: 'Whether sauce options should be offered when ordering this product',
+    default: 0,
+    minimum: 0,
+    description:
+      'How many sauces can be chosen when ordering this product (0 = none offered)',
   })
   @IsOptional()
-  @IsBoolean()
-  usesSauces?: boolean;
+  @IsInt()
+  @Min(0)
+  maxSauces?: number;
+
+  @ApiPropertyOptional({
+    default: 0,
+    minimum: 0,
+    description:
+      'How many sides can be chosen when ordering this product (0 = none offered)',
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  maxSides?: number;
 }

@@ -3,7 +3,10 @@ import { EntityNotFoundException } from '../../../common/exceptions';
 import { PaginatedResult } from '../../../common/pagination/paginated-result.interface';
 import { buildPaginationMeta } from '../../../common/pagination/pagination.util';
 import { AuditService } from '../../audit/services/audit.service';
-import { DocumentScan, DocumentScanRow } from '../domain/document-scan.interface';
+import {
+  DocumentScan,
+  DocumentScanRow,
+} from '../domain/document-scan.interface';
 import {
   CreateDocumentScanData,
   DocumentScanQuery,
@@ -49,10 +52,7 @@ export class DocumentScansService {
   }
 
   /** Returns the raw row (including storage_path) for streaming the file back — never exposed via the JSON API. */
-  async getRowOrFail(
-    businessId: string,
-    id: string,
-  ): Promise<DocumentScanRow> {
+  async getRowOrFail(businessId: string, id: string): Promise<DocumentScanRow> {
     const row = await this.documentScansRepository.findById(id, businessId);
     if (!row) {
       throw new EntityNotFoundException('DocumentScan', id);

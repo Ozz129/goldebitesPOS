@@ -26,7 +26,8 @@ export class PlatformAdminController {
 
   @Post('businesses')
   @ApiOperation({
-    summary: 'Provision a new business with its default branch, roles, and first owner user',
+    summary:
+      'Provision a new business with its default branch, roles, and first owner user',
   })
   createBusiness(
     @CurrentUser('userId') actorUserId: string,
@@ -43,14 +44,19 @@ export class PlatformAdminController {
 
   @Post('businesses/:id/users/:userId/reset-password')
   @ApiOperation({
-    summary: "Reset a business user's password (returns the new temporary password once)",
+    summary:
+      "Reset a business user's password (returns the new temporary password once)",
   })
   resetUserPassword(
     @CurrentUser('userId') actorUserId: string,
     @Param('id') businessId: string,
     @Param('userId') userId: string,
   ) {
-    return this.platformAdminService.resetUserPassword(businessId, userId, actorUserId);
+    return this.platformAdminService.resetUserPassword(
+      businessId,
+      userId,
+      actorUserId,
+    );
   }
 
   @Get('businesses/:id/features')

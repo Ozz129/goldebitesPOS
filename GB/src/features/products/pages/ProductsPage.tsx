@@ -3,6 +3,8 @@ import Grid from '@mui/material/Grid';
 import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
 import Button from '@mui/material/Button';
+import Tabs from '@mui/material/Tabs';
+import Tab from '@mui/material/Tab';
 import { Plus } from 'lucide-react';
 import { useSnackbar } from 'notistack';
 import PageHeader from '../../../components/common/PageHeader';
@@ -23,12 +25,18 @@ import { normalizeApiError } from '../../../lib/api/api-error';
 import ProductCard from '../components/ProductCard';
 import ProductDetailDrawer from '../components/ProductDetailDrawer';
 import ProductFormDrawer from '../components/ProductFormDrawer';
+import ProductCategoriesTab from '../components/ProductCategoriesTab';
+import SaucesTab from '../components/SaucesTab';
+import SidesTab from '../components/SidesTab';
 import type { Product } from '../../../modules/products/types/product.types';
 import type { ProductFormValues } from '../schemas/productSchema';
+
+type TabKey = 'productos' | 'categorias' | 'salsas' | 'acompanantes';
 
 export default function ProductsPage() {
   const { enqueueSnackbar } = useSnackbar();
 
+  const [tab, setTab] = useState<TabKey>('productos');
   const [search, setSearch] = useState('');
   const [availability, setAvailability] = useState<'todos' | 'disponible' | 'no_disponible'>(
     'todos',
@@ -67,7 +75,8 @@ export default function ProductsPage() {
       sku: values.sku || undefined,
       salePrice: values.salePrice,
       trackInventory: values.trackInventory,
-      usesSauces: values.usesSauces,
+      maxSauces: values.maxSauces,
+      maxSides: values.maxSides,
     };
 
     if (editingProduct) {
@@ -124,24 +133,39 @@ export default function ProductsPage() {
     <>
       <PageHeader
         title="Productos"
-        subtitle="Gestiona el catálogo de productos del menú."
+        subtitle="Gestiona el catálogo de productos del menú, sus categorías, salsas y acompañantes."
         breadcrumbs={[{ label: 'Productos' }]}
         actions={
-          <Can permission="products.create">
-            <Button
-              variant="contained"
-              startIcon={<Plus size={16} />}
-              onClick={() => {
-                setEditingProduct(null);
-                setFormOpen(true);
-              }}
-            >
-              Nuevo producto
-            </Button>
-          </Can>
+          tab === 'productos' ? (
+            <Can permission="products.create">
+              <Button
+                variant="contained"
+                startIcon={<Plus size={16} />}
+                onClick={() => {
+                  setEditingProduct(null);
+                  setFormOpen(true);
+                }}
+              >
+                Nuevo producto
+              </Button>
+            </Can>
+          ) : undefined
         }
       />
 
+      <Tabs value={tab} onChange={(_, value: TabKey) => setTab(value)} sx={{ mb: 2 }}>
+        <Tab value="productos" label="Productos" />
+        <Tab value="categorias" label="Categorías" />
+        <Tab value="salsas" label="Salsas" />
+        <Tab value="acompanantes" label="Acompañantes" />
+      </Tabs>
+
+      {tab === 'categorias' && <ProductCategoriesTab />}
+      {tab === 'salsas' && <SaucesTab />}
+      {tab === 'acompanantes' && <SidesTab />}
+
+      {tab === 'productos' && (
+        <>
       <FilterBar
         onClear={() => {
           setSearch('');
@@ -202,6 +226,8 @@ export default function ProductsPage() {
             </Grid>
           ))}
         </Grid>
+      )}
+        </>
       )}
 
       <ProductDetailDrawer

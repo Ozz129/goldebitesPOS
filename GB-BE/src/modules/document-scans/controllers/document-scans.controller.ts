@@ -18,7 +18,12 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiConsumes,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import { diskStorage } from 'multer';
 import type { Response } from 'express';
 import { CurrentBusiness } from '../../../common/decorators/current-business.decorator';
@@ -50,7 +55,9 @@ export class DocumentScansController {
   @Post()
   @Permissions('document_scans.manage')
   @ApiConsumes('multipart/form-data')
-  @ApiOperation({ summary: 'Upload a scanned invoice, receipt or other document' })
+  @ApiOperation({
+    summary: 'Upload a scanned invoice, receipt or other document',
+  })
   @UseInterceptors(
     FileInterceptor('file', {
       storage: diskStorage({
@@ -62,7 +69,12 @@ export class DocumentScansController {
       limits: { fileSize: MAX_FILE_SIZE_BYTES },
       fileFilter: (_req, file, cb) => {
         if (!ALLOWED_MIME_TYPES.includes(file.mimetype)) {
-          cb(new BadRequestException('Solo se permiten archivos JPG, PNG o PDF.'), false);
+          cb(
+            new BadRequestException(
+              'Solo se permiten archivos JPG, PNG o PDF.',
+            ),
+            false,
+          );
           return;
         }
         cb(null, true);
@@ -76,7 +88,9 @@ export class DocumentScansController {
     @UploadedFile() file: Express.Multer.File,
   ) {
     if (!file) {
-      throw new BadRequestException('Debes adjuntar un archivo (JPG, PNG o PDF).');
+      throw new BadRequestException(
+        'Debes adjuntar un archivo (JPG, PNG o PDF).',
+      );
     }
     return this.documentScansService.create(
       {
@@ -130,7 +144,9 @@ export class DocumentScansController {
 
   @Patch(':id')
   @Permissions('document_scans.manage')
-  @ApiOperation({ summary: 'Update document scan metadata (not the file itself)' })
+  @ApiOperation({
+    summary: 'Update document scan metadata (not the file itself)',
+  })
   update(
     @CurrentBusiness() businessId: string,
     @CurrentUser('userId') actorUserId: string,

@@ -6,7 +6,6 @@ import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
-import Checkbox from '@mui/material/Checkbox';
 import FormDrawer from '../../../components/common/FormDrawer';
 import { productSchema, type ProductFormValues } from '../schemas/productSchema';
 import { useProductCategories } from '../../../modules/product-categories/hooks/use-product-categories';
@@ -26,7 +25,8 @@ const emptyValues: ProductFormValues = {
   sku: '',
   salePrice: 0,
   trackInventory: true,
-  usesSauces: false,
+  maxSauces: 0,
+  maxSides: 0,
 };
 
 export default function ProductFormDrawer({
@@ -59,7 +59,8 @@ export default function ProductFormDrawer({
               sku: initialProduct.sku ?? '',
               salePrice: initialProduct.salePrice,
               trackInventory: initialProduct.trackInventory,
-              usesSauces: initialProduct.usesSauces,
+              maxSauces: initialProduct.maxSauces,
+              maxSides: initialProduct.maxSides,
             }
           : emptyValues,
       );
@@ -170,18 +171,36 @@ export default function ProductFormDrawer({
           )}
         />
 
-        <Controller
-          name="usesSauces"
-          control={control}
-          render={({ field }) => (
-            <FormControlLabel
-              control={
-                <Checkbox checked={field.value} onChange={(e) => field.onChange(e.target.checked)} />
-              }
-              label="Permite elegir salsas al pedirlo"
-            />
-          )}
-        />
+        <Stack direction="row" spacing={2}>
+          <Controller
+            name="maxSauces"
+            control={control}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                label="Máx. salsas"
+                type="number"
+                fullWidth
+                helperText="0 = no ofrecer salsas"
+                error={Boolean(errors.maxSauces)}
+              />
+            )}
+          />
+          <Controller
+            name="maxSides"
+            control={control}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                label="Máx. acompañantes"
+                type="number"
+                fullWidth
+                helperText="0 = no ofrecer acompañantes"
+                error={Boolean(errors.maxSides)}
+              />
+            )}
+          />
+        </Stack>
       </Stack>
     </FormDrawer>
   );

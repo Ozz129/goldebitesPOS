@@ -7,7 +7,8 @@ export interface CreateProductData {
   salePrice?: number;
   imageUrl?: string;
   trackInventory?: boolean;
-  usesSauces?: boolean;
+  maxSauces?: number;
+  maxSides?: number;
 }
 
 export interface UpdateProductData {
@@ -18,7 +19,8 @@ export interface UpdateProductData {
   salePrice?: number;
   imageUrl?: string;
   trackInventory?: boolean;
-  usesSauces?: boolean;
+  maxSauces?: number;
+  maxSides?: number;
 }
 
 export interface ProductQuery {

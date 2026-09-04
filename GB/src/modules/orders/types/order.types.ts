@@ -21,6 +21,10 @@ export interface OrderItem {
   discountAmount: number;
   totalPrice: number;
   notes: string | null;
+  sauceIds: string[];
+  sauceNames: string[];
+  sideIds: string[];
+  sideNames: string[];
   createdAt: string;
 }
 
@@ -60,6 +64,8 @@ export interface CreateOrderItemPayload {
   quantity: number;
   discountAmount?: number;
   notes?: string;
+  sauceIds?: string[];
+  sideIds?: string[];
 }
 
 export interface CreateOrderPayload {

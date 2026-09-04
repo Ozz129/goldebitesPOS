@@ -1,4 +1,7 @@
-import { DocumentScan, DocumentScanRow } from '../domain/document-scan.interface';
+import {
+  DocumentScan,
+  DocumentScanRow,
+} from '../domain/document-scan.interface';
 
 export class DocumentScanMapper {
   /** storage_path is intentionally omitted — it's a server-internal file path, never exposed to clients. */

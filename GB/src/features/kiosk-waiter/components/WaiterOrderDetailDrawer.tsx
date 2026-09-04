@@ -113,6 +113,16 @@ export default function WaiterOrderDetailDrawer({ orderId, onClose }: WaiterOrde
                 <Typography variant="body1" sx={{ fontWeight: 700 }}>
                   {item.quantity}× {item.productNameSnapshot}
                 </Typography>
+                {(item.sauceNames.length > 0 || item.sideNames.length > 0) && (
+                  <Typography variant="body2" color="text.secondary">
+                    {[
+                      item.sauceNames.length > 0 && `Salsas: ${item.sauceNames.join(', ')}`,
+                      item.sideNames.length > 0 && `Acompañantes: ${item.sideNames.join(', ')}`,
+                    ]
+                      .filter(Boolean)
+                      .join(' · ')}
+                  </Typography>
+                )}
                 {item.notes && (
                   <Typography variant="body2" color="warning.main" sx={{ fontWeight: 600 }}>
                     Nota: {item.notes}

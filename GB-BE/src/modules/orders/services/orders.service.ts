@@ -17,6 +17,8 @@ import { InventoryMovementsService } from '../../inventory-movements/services/in
 import { LoyaltyService } from '../../loyalty/services/loyalty.service';
 import { ProductsService } from '../../products/services/products.service';
 import { RecipesService } from '../../recipes/services/recipes.service';
+import { SaucesService } from '../../sauces/services/sauces.service';
+import { SidesService } from '../../sides/services/sides.service';
 import {
   DailySales,
   Order,
@@ -67,6 +69,8 @@ export class OrdersService {
     private readonly movementsService: InventoryMovementsService,
     private readonly businessesService: BusinessesService,
     private readonly loyaltyService: LoyaltyService,
+    private readonly saucesService: SaucesService,
+    private readonly sidesService: SidesService,
     private readonly transactionService: TransactionService,
     private readonly auditService: AuditService,
   ) {}
@@ -93,9 +97,7 @@ export class OrdersService {
 
     const computedItems = await this.computeItems(data.businessId, items);
     const taxRate = await this.businessesService.getTaxRate(data.businessId);
-    const timezone = await this.businessesService.getTimezone(
-      data.businessId,
-    );
+    const timezone = await this.businessesService.getTimezone(data.businessId);
     const totals = this.computeTotals(
       computedItems,
       data.discountAmount ?? 0,
@@ -490,15 +492,72 @@ export class OrdersService {
           'ORDER_ITEM_DISCOUNT_EXCEEDS_TOTAL',
         );
       }
+
+      const sauceIds = item.sauceIds ?? [];
+      if (sauceIds.length > product.max_sauces) {
+        throw new BusinessRuleException(
+          `Product "${product.name}" allows at most ${product.max_sauces} sauce(s)`,
+          'ORDER_ITEM_TOO_MANY_SAUCES',
+        );
+      }
+      const sauceNames = await this.resolveSelectionNames(
+        sauceIds,
+        (ids) => this.saucesService.findByIds(businessId, ids),
+        'sauce',
+      );
+
+      const sideIds = item.sideIds ?? [];
+      if (sideIds.length > product.max_sides) {
+        throw new BusinessRuleException(
+          `Product "${product.name}" allows at most ${product.max_sides} side(s)`,
+          'ORDER_ITEM_TOO_MANY_SIDES',
+        );
+      }
+      const sideNames = await this.resolveSelectionNames(
+        sideIds,
+        (ids) => this.sidesService.findByIds(businessId, ids),
+        'side',
+      );
+
       computed.push({
         ...item,
         productNameSnapshot: product.name,
         unitPrice,
         unitCostSnapshot: parseFloat(product.current_cost),
         totalPrice,
+        sauceIds,
+        sauceNames,
+        sideIds,
+        sideNames,
       });
     }
     return computed;
+  }
+
+  private async resolveSelectionNames(
+    ids: string[],
+    findByIds: (
+      ids: string[],
+    ) => Promise<{ id: string; name: string; isActive: boolean }[]>,
+    label: 'sauce' | 'side',
+  ): Promise<string[]> {
+    if (ids.length === 0) {
+      return [];
+    }
+    const rows = await findByIds(ids);
+    const byId = new Map(rows.map((row) => [row.id, row]));
+    return ids.map((id) => {
+      const row = byId.get(id);
+      if (!row || !row.isActive) {
+        throw new BusinessRuleException(
+          `Unknown or inactive ${label} selected`,
+          label === 'sauce'
+            ? 'ORDER_ITEM_INVALID_SAUCE'
+            : 'ORDER_ITEM_INVALID_SIDE',
+        );
+      }
+      return row.name;
+    });
   }
 
   private computeTotals(

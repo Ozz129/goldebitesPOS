@@ -185,6 +185,16 @@ export default function OrderDetailDrawer({
                     <Typography variant="body2" sx={{ fontWeight: 600 }}>
                       {item.quantity}× {item.productNameSnapshot}
                     </Typography>
+                    {(item.sauceNames.length > 0 || item.sideNames.length > 0) && (
+                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                        {[
+                          item.sauceNames.length > 0 && `Salsas: ${item.sauceNames.join(', ')}`,
+                          item.sideNames.length > 0 && `Acompañantes: ${item.sideNames.join(', ')}`,
+                        ]
+                          .filter(Boolean)
+                          .join(' · ')}
+                      </Typography>
+                    )}
                     {item.notes && (
                       <Typography variant="caption" color="text.secondary">
                         Nota: {item.notes}

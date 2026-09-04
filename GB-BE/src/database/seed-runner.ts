@@ -208,7 +208,9 @@ async function seedPlatformAdmin(
   const roles = await rolesService.findAllForBusiness(business.id);
   const ownerRole = roles.find((role) => role.name === 'OWNER');
   if (!ownerRole) {
-    throw new Error('OWNER role was not provisioned for the platform business.');
+    throw new Error(
+      'OWNER role was not provisioned for the platform business.',
+    );
   }
 
   const user = await usersService.create(business.id, {

@@ -71,6 +71,16 @@ export default function KitchenOrderCard({ order, onStartPreparation, onMarkRead
               <Typography variant="body1" sx={{ fontWeight: 700 }}>
                 {item.quantity}× {item.productNameSnapshot}
               </Typography>
+              {(item.sauceNames.length > 0 || item.sideNames.length > 0) && (
+                <Typography variant="caption" sx={{ display: 'block' }}>
+                  {[
+                    item.sauceNames.length > 0 && `Salsas: ${item.sauceNames.join(', ')}`,
+                    item.sideNames.length > 0 && `Acompañantes: ${item.sideNames.join(', ')}`,
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')}
+                </Typography>
+              )}
               {item.notes && (
                 <Typography variant="caption" color="warning.main" sx={{ display: 'block', fontWeight: 600 }}>
                   Nota: {item.notes}

@@ -91,9 +91,10 @@ describe('OrdersRepository (integration)', () => {
       [businessId],
     );
     await pool.query('DELETE FROM orders WHERE business_id = $1', [businessId]);
-    await pool.query('DELETE FROM daily_order_counters WHERE business_id = $1', [
-      businessId,
-    ]);
+    await pool.query(
+      'DELETE FROM daily_order_counters WHERE business_id = $1',
+      [businessId],
+    );
     await pool.query('DELETE FROM products WHERE business_id = $1', [
       businessId,
     ]);

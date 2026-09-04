@@ -37,6 +37,7 @@ export default function WaiterKioskPage() {
   const [cart, setCart] = useState<CartLine[]>([]);
   const [tableNumber, setTableNumber] = useState('');
   const [orderType, setOrderType] = useState<OrderType>('DINE_IN');
+  const [orderNotes, setOrderNotes] = useState('');
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -114,25 +115,44 @@ export default function WaiterKioskPage() {
           name: product.name,
           unitPrice: product.salePrice,
           quantity: 1,
-          sauces: [],
-          usesSauces: product.usesSauces,
+          maxSauces: product.maxSauces,
+          maxSides: product.maxSides,
+          sauceIds: [],
+          sideIds: [],
         },
       ];
     });
   }
 
-  function handleToggleSauce(productId: string, sauce: string) {
+  function handleToggleSauce(productId: string, sauceId: string) {
     setCart((prev) =>
-      prev.map((line) =>
-        line.productId === productId
-          ? {
-              ...line,
-              sauces: line.sauces.includes(sauce)
-                ? line.sauces.filter((s) => s !== sauce)
-                : [...line.sauces, sauce],
-            }
-          : line,
-      ),
+      prev.map((line) => {
+        if (line.productId !== productId) return line;
+        const selected = line.sauceIds.includes(sauceId);
+        if (!selected && line.sauceIds.length >= line.maxSauces) return line;
+        return {
+          ...line,
+          sauceIds: selected
+            ? line.sauceIds.filter((id) => id !== sauceId)
+            : [...line.sauceIds, sauceId],
+        };
+      }),
+    );
+  }
+
+  function handleToggleSide(productId: string, sideId: string) {
+    setCart((prev) =>
+      prev.map((line) => {
+        if (line.productId !== productId) return line;
+        const selected = line.sideIds.includes(sideId);
+        if (!selected && line.sideIds.length >= line.maxSides) return line;
+        return {
+          ...line,
+          sideIds: selected
+            ? line.sideIds.filter((id) => id !== sideId)
+            : [...line.sideIds, sideId],
+        };
+      }),
     );
   }
 
@@ -167,10 +187,12 @@ export default function WaiterKioskPage() {
         branchId,
         orderType,
         tableNumber: orderType === 'DINE_IN' ? tableNumber || undefined : undefined,
+        notes: orderNotes || undefined,
         items: cart.map((line) => ({
           productId: line.productId,
           quantity: line.quantity,
-          notes: line.sauces.length ? `Salsa: ${line.sauces.join(', ')}` : undefined,
+          sauceIds: line.sauceIds.length ? line.sauceIds : undefined,
+          sideIds: line.sideIds.length ? line.sideIds : undefined,
         })),
       },
       {
@@ -179,6 +201,7 @@ export default function WaiterKioskPage() {
           enqueueSnackbar(`Pedido #${order.orderNumber} enviado a cocina`, { variant: 'success' });
           setCart([]);
           setTableNumber('');
+          setOrderNotes('');
         },
         onError: (error) => enqueueSnackbar(normalizeApiError(error).message, { variant: 'error' }),
       },
@@ -255,10 +278,13 @@ export default function WaiterKioskPage() {
               onDecrement={handleDecrement}
               onRemove={handleRemove}
               onToggleSauce={handleToggleSauce}
+              onToggleSide={handleToggleSide}
               tableNumber={tableNumber}
               onTableNumberChange={setTableNumber}
               orderType={orderType}
               onOrderTypeChange={setOrderType}
+              orderNotes={orderNotes}
+              onOrderNotesChange={setOrderNotes}
               onSubmit={handleSubmit}
               submitting={createOrder.isPending}
             />

@@ -14,7 +14,11 @@ export class CreatePlatformBusinessDto {
   @MaxLength(150)
   name: string;
 
-  @ApiPropertyOptional({ minLength: 3, maxLength: 3, description: 'ISO 4217 currency code' })
+  @ApiPropertyOptional({
+    minLength: 3,
+    maxLength: 3,
+    description: 'ISO 4217 currency code',
+  })
   @IsString()
   @Length(3, 3)
   currency = 'COP';

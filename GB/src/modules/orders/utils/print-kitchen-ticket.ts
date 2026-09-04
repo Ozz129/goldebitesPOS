@@ -16,14 +16,21 @@ function buildTicketHtml(order: OrderWithItems, { businessName }: PrintTicketOpt
   });
 
   const itemsHtml = order.items
-    .map(
-      (item) => `
+    .map((item) => {
+      const selections = [
+        item.sauceNames.length > 0 && `Salsas: ${item.sauceNames.join(', ')}`,
+        item.sideNames.length > 0 && `Acompañantes: ${item.sideNames.join(', ')}`,
+      ]
+        .filter(Boolean)
+        .join(' · ');
+      return `
         <div class="item">
           <div class="item-line"><span class="qty">${item.quantity}×</span> ${escapeHtml(item.productNameSnapshot)}</div>
+          ${selections ? `<div class="note">${escapeHtml(selections)}</div>` : ''}
           ${item.notes ? `<div class="note">Nota: ${escapeHtml(item.notes)}</div>` : ''}
         </div>
-      `,
-    )
+      `;
+    })
     .join('');
 
   const tableLine = order.tableNumber

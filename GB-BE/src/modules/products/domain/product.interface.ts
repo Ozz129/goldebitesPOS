@@ -10,7 +10,8 @@ export interface Product {
   imageUrl: string | null;
   isActive: boolean;
   trackInventory: boolean;
-  usesSauces: boolean;
+  maxSauces: number;
+  maxSides: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -27,7 +28,8 @@ export interface ProductRow {
   image_url: string | null;
   is_active: boolean;
   track_inventory: boolean;
-  uses_sauces: boolean;
+  max_sauces: number;
+  max_sides: number;
   created_at: Date;
   updated_at: Date;
   deleted_at: Date | null;

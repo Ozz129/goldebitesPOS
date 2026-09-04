@@ -11,7 +11,7 @@ import {
 import { IProductsRepository } from './products.repository.interface';
 
 const SELECT_COLUMNS = `id, business_id, category_id, name, description, sku, sale_price,
-  current_cost, image_url, is_active, track_inventory, uses_sauces, created_at, updated_at, deleted_at`;
+  current_cost, image_url, is_active, track_inventory, max_sauces, max_sides, created_at, updated_at, deleted_at`;
 
 interface CountRow {
   count: string;
@@ -26,8 +26,8 @@ export class ProductsRepository implements IProductsRepository {
     client?: DbClient,
   ): Promise<ProductRow> {
     const result = await this.db.query<ProductRow>(
-      `INSERT INTO products (business_id, category_id, name, description, sku, sale_price, image_url, track_inventory, uses_sauces)
-       VALUES ($1, $2, $3, $4, $5, COALESCE($6::numeric, 0), $7, COALESCE($8, true), COALESCE($9, false))
+      `INSERT INTO products (business_id, category_id, name, description, sku, sale_price, image_url, track_inventory, max_sauces, max_sides)
+       VALUES ($1, $2, $3, $4, $5, COALESCE($6::numeric, 0), $7, COALESCE($8, true), COALESCE($9::smallint, 0), COALESCE($10::smallint, 0))
        RETURNING ${SELECT_COLUMNS}`,
       [
         data.businessId,
@@ -38,7 +38,8 @@ export class ProductsRepository implements IProductsRepository {
         data.salePrice ?? null,
         data.imageUrl ?? null,
         data.trackInventory ?? null,
-        data.usesSauces ?? null,
+        data.maxSauces ?? null,
+        data.maxSides ?? null,
       ],
       client,
     );
@@ -131,7 +132,8 @@ export class ProductsRepository implements IProductsRepository {
            sale_price = COALESCE($7, sale_price),
            image_url = COALESCE($8, image_url),
            track_inventory = COALESCE($9, track_inventory),
-           uses_sauces = COALESCE($10, uses_sauces)
+           max_sauces = COALESCE($10::smallint, max_sauces),
+           max_sides = COALESCE($11::smallint, max_sides)
        WHERE id = $1 AND business_id = $2 AND deleted_at IS NULL
        RETURNING ${SELECT_COLUMNS}`,
       [
@@ -144,7 +146,8 @@ export class ProductsRepository implements IProductsRepository {
         data.salePrice ?? null,
         data.imageUrl ?? null,
         data.trackInventory ?? null,
-        data.usesSauces ?? null,
+        data.maxSauces ?? null,
+        data.maxSides ?? null,
       ],
       client,
     );

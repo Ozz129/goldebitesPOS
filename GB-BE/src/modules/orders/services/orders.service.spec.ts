@@ -44,6 +44,8 @@ describe('OrdersService', () => {
   };
   let businessesService: { getTaxRate: jest.Mock; getTimezone: jest.Mock };
   let loyaltyService: { awardPointsForOrder: jest.Mock };
+  let saucesService: { findByIds: jest.Mock };
+  let sidesService: { findByIds: jest.Mock };
   let transactionService: { execute: jest.Mock };
   let auditService: { record: jest.Mock };
   let service: OrdersService;
@@ -94,6 +96,10 @@ describe('OrdersService', () => {
       discount_amount: '0.00',
       total_price: '10000.00',
       notes: null,
+      sauce_ids: [],
+      sauce_names: [],
+      side_ids: [],
+      side_names: [],
       created_at: new Date(),
       ...overrides,
     };
@@ -131,6 +137,8 @@ describe('OrdersService', () => {
         sale_price: '5000.00',
         current_cost: '2000.00',
         track_inventory: false,
+        max_sauces: 0,
+        max_sides: 0,
       }),
     };
     recipesService = { findByProductOrNull: jest.fn().mockResolvedValue(null) };
@@ -147,6 +155,8 @@ describe('OrdersService', () => {
       getTimezone: jest.fn().mockResolvedValue('America/Bogota'),
     };
     loyaltyService = { awardPointsForOrder: jest.fn() };
+    saucesService = { findByIds: jest.fn().mockResolvedValue([]) };
+    sidesService = { findByIds: jest.fn().mockResolvedValue([]) };
     transactionService = {
       execute: jest.fn((work: (client: unknown) => Promise<unknown>) =>
         work({}),
@@ -163,6 +173,8 @@ describe('OrdersService', () => {
       movementsService as never,
       businessesService as never,
       loyaltyService as never,
+      saucesService as never,
+      sidesService as never,
       transactionService as never,
       auditService as never,
     );

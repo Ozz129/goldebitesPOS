@@ -24,7 +24,7 @@ const SELECT_COLUMNS = `id, business_id, branch_id, customer_id, created_by, ord
   confirmed_at, prepared_at, delivered_at, cancelled_at, created_at, updated_at`;
 
 const ITEM_COLUMNS = `id, order_id, product_id, product_name_snapshot, quantity, unit_price,
-  unit_cost_snapshot, discount_amount, total_price, notes, created_at`;
+  unit_cost_snapshot, discount_amount, total_price, notes, sauce_ids, sauce_names, side_ids, side_names, created_at`;
 
 const HISTORY_COLUMNS = `id, order_id, previous_status, new_status, changed_by, notes, created_at`;
 
@@ -200,8 +200,8 @@ export class OrdersRepository implements IOrdersRepository {
     for (const item of items) {
       await this.db.query(
         `INSERT INTO order_items
-           (order_id, product_id, product_name_snapshot, quantity, unit_price, unit_cost_snapshot, discount_amount, total_price, notes)
-         VALUES ($1, $2, $3, $4, $5, $6, COALESCE($7::numeric, 0), $8, $9)`,
+           (order_id, product_id, product_name_snapshot, quantity, unit_price, unit_cost_snapshot, discount_amount, total_price, notes, sauce_ids, sauce_names, side_ids, side_names)
+         VALUES ($1, $2, $3, $4, $5, $6, COALESCE($7::numeric, 0), $8, $9, COALESCE($10::uuid[], '{}'), COALESCE($11::text[], '{}'), COALESCE($12::uuid[], '{}'), COALESCE($13::text[], '{}'))`,
         [
           orderId,
           item.productId,
@@ -212,6 +212,10 @@ export class OrdersRepository implements IOrdersRepository {
           item.discountAmount ?? null,
           item.totalPrice,
           item.notes ?? null,
+          item.sauceIds ?? null,
+          item.sauceNames ?? null,
+          item.sideIds ?? null,
+          item.sideNames ?? null,
         ],
         client,
       );

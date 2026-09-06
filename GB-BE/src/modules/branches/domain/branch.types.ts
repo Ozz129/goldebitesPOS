@@ -4,6 +4,7 @@ export interface CreateBranchData {
   address?: string;
   city?: string;
   phone?: string;
+  tableCount?: number;
 }
 
 export interface UpdateBranchData {
@@ -11,6 +12,7 @@ export interface UpdateBranchData {
   address?: string;
   city?: string;
   phone?: string;
+  tableCount?: number;
 }
 
 export interface BranchQuery {

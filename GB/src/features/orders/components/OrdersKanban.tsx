@@ -51,6 +51,11 @@ export default function OrdersKanban({ orders, onSelect, onAdvance, customerName
                     <CardActionArea onClick={() => onSelect(order)} sx={{ p: 1.5 }}>
                       <Typography variant="body2" sx={{ fontWeight: 700 }}>
                         #{order.orderNumber}
+                        {order.tableNumber && (
+                          <Typography component="span" variant="caption" color="text.secondary" sx={{ ml: 0.75 }}>
+                            {order.orderType === 'CAR_SERVICE' ? 'Vehículo' : 'Mesa'} {order.tableNumber}
+                          </Typography>
+                        )}
                       </Typography>
                       <Typography variant="body2" sx={{ mt: 0.5 }} noWrap>
                         {customerName(order)}

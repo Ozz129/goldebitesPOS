@@ -1,5 +1,5 @@
 import type { StatusTone } from '../../components/common/StatusChip';
-import type { OrderStatus, OrderType, OrderPaymentStatus } from './types/order.types';
+import type { Order, OrderStatus, OrderType, OrderPaymentStatus } from './types/order.types';
 import type { PaymentMethod } from './types/payment.types';
 
 export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
@@ -86,4 +86,11 @@ export const ACTIVE_STATUSES: OrderStatus[] = ['PENDING', 'CONFIRMED', 'PREPARIN
 export function isOrderDelayed(status: OrderStatus, createdAt: string): boolean {
   if (!ACTIVE_STATUSES.includes(status)) return false;
   return getElapsedMinutes(createdAt) > ORDER_SLA_MINUTES;
+}
+
+/** "Mesa 5"/"Vehículo ABC-123" when there's a physical spot to name, otherwise the order type label (e.g. "Domicilio"). */
+export function getOrderIdentifierLabel(order: Pick<Order, 'orderType' | 'tableNumber'>): string {
+  if (order.orderType === 'DINE_IN') return `Mesa ${order.tableNumber ?? '—'}`;
+  if (order.orderType === 'CAR_SERVICE') return `Vehículo ${order.tableNumber ?? '—'}`;
+  return ORDER_TYPE_LABELS[order.orderType];
 }

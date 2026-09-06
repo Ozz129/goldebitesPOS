@@ -1,19 +1,16 @@
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import IconButton from '@mui/material/IconButton';
 import Button from '@mui/material/Button';
-import Chip from '@mui/material/Chip';
 import TextField from '@mui/material/TextField';
 import Divider from '@mui/material/Divider';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import ToggleButton from '@mui/material/ToggleButton';
-import { Minus, Plus, Trash2, Send } from 'lucide-react';
+import { Send } from 'lucide-react';
 import { formatCOP } from '../../../utils/format';
 import { ORDER_TYPE_LABELS } from '../../../modules/orders/order-status';
 import type { OrderType } from '../../../modules/orders/types/order.types';
-import { useSauces } from '../../../modules/sauces/hooks/use-sauces';
-import { useSides } from '../../../modules/sides/hooks/use-sides';
+import OrderCartList from '../../orders/components/OrderCartList';
 import TableNumberPicker from './TableNumberPicker';
 
 export interface CartLine {
@@ -36,8 +33,12 @@ interface CartPanelProps {
   onToggleSide: (productId: string, sideId: string) => void;
   tableNumber: string;
   onTableNumberChange: (value: string) => void;
+  tableCount?: number;
+  occupiedTables?: Set<string>;
   orderType: OrderType;
   onOrderTypeChange: (value: OrderType) => void;
+  customerName: string;
+  onCustomerNameChange: (value: string) => void;
   orderNotes: string;
   onOrderNotesChange: (value: string) => void;
   onSubmit: () => void;
@@ -55,20 +56,20 @@ export default function CartPanel({
   onToggleSide,
   tableNumber,
   onTableNumberChange,
+  tableCount,
+  occupiedTables,
   orderType,
   onOrderTypeChange,
+  customerName,
+  onCustomerNameChange,
   orderNotes,
   onOrderNotesChange,
   onSubmit,
   submitting,
 }: CartPanelProps) {
-  const { data: saucesData } = useSauces({ isActive: true, limit: 100 });
-  const { data: sidesData } = useSides({ isActive: true, limit: 100 });
-  const sauces = saucesData?.data ?? [];
-  const sides = sidesData?.data ?? [];
-
   const total = cart.reduce((sum, line) => sum + line.unitPrice * line.quantity, 0);
-  const canSubmit = cart.length > 0 && !submitting;
+  const tableIsOccupied = orderType === 'DINE_IN' && Boolean(tableNumber) && (occupiedTables?.has(tableNumber) ?? false);
+  const canSubmit = cart.length > 0 && !submitting && !tableIsOccupied;
 
   return (
     <Stack sx={{ height: '100%' }}>
@@ -90,108 +91,38 @@ export default function CartPanel({
 
       {orderType === 'DINE_IN' && (
         <Box sx={{ px: 1.5, pb: 1.5 }}>
-          <TableNumberPicker value={tableNumber} onChange={onTableNumberChange} />
+          <TableNumberPicker
+            value={tableNumber}
+            onChange={onTableNumberChange}
+            tableCount={tableCount}
+            occupiedTables={occupiedTables}
+          />
         </Box>
       )}
 
+      <Box sx={{ px: 1.5, pb: 1.5 }}>
+        <TextField
+          value={customerName}
+          onChange={(e) => onCustomerNameChange(e.target.value)}
+          label="Nombre del cliente (opcional)"
+          fullWidth
+          size="small"
+        />
+      </Box>
+
       <Divider />
 
-      <Stack spacing={0} sx={{ flex: 1, overflowY: 'auto' }}>
-        {cart.length === 0 ? (
-          <Typography variant="body2" color="text.secondary" sx={{ p: 2, textAlign: 'center' }}>
-            Toca un producto para agregarlo al pedido.
-          </Typography>
-        ) : (
-          cart.map((line) => (
-            <Box
-              key={line.productId}
-              sx={{
-                px: 1.5,
-                py: 1.25,
-                borderBottom: '1px solid',
-                borderColor: 'divider',
-              }}
-            >
-              <Stack direction="row" sx={{ alignItems: 'center', gap: 1 }}>
-                <Box sx={{ flex: 1, minWidth: 0 }}>
-                  <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                    {line.name}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {formatCOP(line.unitPrice)} c/u
-                  </Typography>
-                </Box>
-                <IconButton size="small" onClick={() => onDecrement(line.productId)}>
-                  <Minus size={16} />
-                </IconButton>
-                <Typography sx={{ minWidth: 20, textAlign: 'center', fontWeight: 700 }}>
-                  {line.quantity}
-                </Typography>
-                <IconButton size="small" onClick={() => onIncrement(line.productId)}>
-                  <Plus size={16} />
-                </IconButton>
-                <IconButton size="small" color="error" onClick={() => onRemove(line.productId)}>
-                  <Trash2 size={16} />
-                </IconButton>
-              </Stack>
-
-              {line.maxSauces > 0 && (
-                <Box sx={{ mt: 0.75 }}>
-                  <Typography variant="caption" color="text.secondary">
-                    Salsas (máx. {line.maxSauces})
-                  </Typography>
-                  <Stack direction="row" spacing={0.75} useFlexGap sx={{ mt: 0.25, flexWrap: 'wrap' }}>
-                    {sauces.map((sauce) => {
-                      const selected = line.sauceIds.includes(sauce.id);
-                      const disabled = !selected && line.sauceIds.length >= line.maxSauces;
-                      return (
-                        <Chip
-                          key={sauce.id}
-                          label={sauce.name}
-                          size="small"
-                          clickable={!disabled}
-                          disabled={disabled}
-                          onClick={() => onToggleSauce(line.productId, sauce.id)}
-                          color={selected ? 'primary' : 'default'}
-                          variant={selected ? 'filled' : 'outlined'}
-                          sx={{ fontWeight: 600 }}
-                        />
-                      );
-                    })}
-                  </Stack>
-                </Box>
-              )}
-
-              {line.maxSides > 0 && (
-                <Box sx={{ mt: 0.75 }}>
-                  <Typography variant="caption" color="text.secondary">
-                    Acompañantes (máx. {line.maxSides})
-                  </Typography>
-                  <Stack direction="row" spacing={0.75} useFlexGap sx={{ mt: 0.25, flexWrap: 'wrap' }}>
-                    {sides.map((side) => {
-                      const selected = line.sideIds.includes(side.id);
-                      const disabled = !selected && line.sideIds.length >= line.maxSides;
-                      return (
-                        <Chip
-                          key={side.id}
-                          label={side.name}
-                          size="small"
-                          clickable={!disabled}
-                          disabled={disabled}
-                          onClick={() => onToggleSide(line.productId, side.id)}
-                          color={selected ? 'primary' : 'default'}
-                          variant={selected ? 'filled' : 'outlined'}
-                          sx={{ fontWeight: 600 }}
-                        />
-                      );
-                    })}
-                  </Stack>
-                </Box>
-              )}
-            </Box>
-          ))
-        )}
-      </Stack>
+      <Box sx={{ flex: 1, overflowY: 'auto' }}>
+        <OrderCartList
+          cart={cart}
+          onIncrement={onIncrement}
+          onDecrement={onDecrement}
+          onRemove={onRemove}
+          onToggleSauce={onToggleSauce}
+          onToggleSide={onToggleSide}
+          emptyMessage="Toca un producto para agregarlo al pedido."
+        />
+      </Box>
 
       <Divider />
 
@@ -219,6 +150,11 @@ export default function CartPanel({
             {formatCOP(total)}
           </Typography>
         </Stack>
+        {tableIsOccupied && (
+          <Typography variant="caption" color="error.main" sx={{ display: 'block', mb: 1, fontWeight: 700 }}>
+            Esta mesa ya tiene un pedido activo — elige otra o usa "Agregar productos" desde ese pedido.
+          </Typography>
+        )}
         <Button
           variant="contained"
           color="primary"

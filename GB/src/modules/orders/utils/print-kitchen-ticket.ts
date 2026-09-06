@@ -24,6 +24,7 @@ function buildTicketHtml(order: OrderWithItems, { businessName }: PrintTicketOpt
       return `
         <div class="item">
           <div class="item-line"><span class="qty">${item.quantity}×</span> ${escapeHtml(item.productNameSnapshot)}</div>
+          ${item.productDescriptionSnapshot ? `<div class="description">${escapeHtml(item.productDescriptionSnapshot)}</div>` : ''}
           ${selections ? `<div class="note">${escapeHtml(selections)}</div>` : ''}
           ${item.notes ? `<div class="note">Nota: ${escapeHtml(item.notes)}</div>` : ''}
         </div>
@@ -33,6 +34,10 @@ function buildTicketHtml(order: OrderWithItems, { businessName }: PrintTicketOpt
 
   const tableLine = order.tableNumber
     ? `<div class="meta">${order.orderType === 'CAR_SERVICE' ? 'Vehículo' : 'Mesa'}: ${escapeHtml(order.tableNumber)}</div>`
+    : '';
+
+  const customerLine = order.customerName
+    ? `<div class="meta">Cliente: ${escapeHtml(order.customerName)}</div>`
     : '';
 
   const notesBlock = order.notes
@@ -64,6 +69,7 @@ function buildTicketHtml(order: OrderWithItems, { businessName }: PrintTicketOpt
   .item { margin-bottom: 2mm; }
   .item-line { font-size: 14px; font-weight: 700; word-break: break-word; }
   .qty { display: inline-block; min-width: 7mm; }
+  .description { font-size: 11px; margin-left: 7mm; color: #333; word-break: break-word; }
   .note { font-size: 11px; font-weight: 700; margin-left: 7mm; word-break: break-word; }
   .order-notes { margin-top: 2.5mm; font-size: 11px; font-weight: 700; border: 1px dashed #000; padding: 1.5mm; word-break: break-word; }
   .footer { margin-top: 3mm; text-align: center; font-size: 9px; }
@@ -75,6 +81,7 @@ function buildTicketHtml(order: OrderWithItems, { businessName }: PrintTicketOpt
     <div class="order-number">#${order.orderNumber}</div>
     <div class="type">${ORDER_TYPE_LABELS[order.orderType]}</div>
     ${tableLine}
+    ${customerLine}
     <div class="date">${dateLabel}</div>
   </div>
   <hr />

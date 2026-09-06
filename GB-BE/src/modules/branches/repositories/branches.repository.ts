@@ -10,7 +10,7 @@ import {
 } from '../domain/branch.types';
 import { IBranchesRepository } from './branches.repository.interface';
 
-const SELECT_COLUMNS = `id, business_id, name, address, city, phone, is_active, created_at, updated_at`;
+const SELECT_COLUMNS = `id, business_id, name, address, city, phone, table_count, is_active, created_at, updated_at`;
 
 interface CountRow {
   count: string;
@@ -22,8 +22,8 @@ export class BranchesRepository implements IBranchesRepository {
 
   async create(data: CreateBranchData, client?: DbClient): Promise<BranchRow> {
     const result = await this.db.query<BranchRow>(
-      `INSERT INTO branches (business_id, name, address, city, phone)
-       VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO branches (business_id, name, address, city, phone, table_count)
+       VALUES ($1, $2, $3, $4, $5, COALESCE($6, 20))
        RETURNING ${SELECT_COLUMNS}`,
       [
         data.businessId,
@@ -31,6 +31,7 @@ export class BranchesRepository implements IBranchesRepository {
         data.address ?? null,
         data.city ?? null,
         data.phone ?? null,
+        data.tableCount ?? null,
       ],
       client,
     );
@@ -102,7 +103,8 @@ export class BranchesRepository implements IBranchesRepository {
        SET name = COALESCE($3, name),
            address = COALESCE($4, address),
            city = COALESCE($5, city),
-           phone = COALESCE($6, phone)
+           phone = COALESCE($6, phone),
+           table_count = COALESCE($7, table_count)
        WHERE id = $1 AND business_id = $2
        RETURNING ${SELECT_COLUMNS}`,
       [
@@ -112,6 +114,7 @@ export class BranchesRepository implements IBranchesRepository {
         data.address ?? null,
         data.city ?? null,
         data.phone ?? null,
+        data.tableCount ?? null,
       ],
       client,
     );

@@ -12,16 +12,19 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../../modules/auth/store/auth.store';
 import { useLogout } from '../../../modules/auth/hooks/use-logout';
 import { useCurrentBusiness } from '../../../modules/businesses/hooks/use-current-business';
+import { useBranch } from '../../../modules/branches/hooks/use-branch';
 import { useCreateOrder } from '../../../modules/orders/hooks/use-create-order';
 import { useUpdateOrderStatus } from '../../../modules/orders/hooks/use-update-order-status';
+import { useCartLines } from '../../../modules/orders/hooks/use-cart-lines';
+import { useOccupiedTables } from '../../../modules/orders/hooks/use-occupied-tables';
+import { getOrderIdentifierLabel } from '../../../modules/orders/order-status';
 import { normalizeApiError } from '../../../lib/api/api-error';
 import { useNotificationsStore } from '../../../store/notificationsStore';
 import type { Order, OrderStatus, OrderType } from '../../../modules/orders/types/order.types';
-import type { Product } from '../../../modules/products/types/product.types';
 import { useWaiterOrders } from '../hooks/use-waiter-orders';
 import CategoryTabs from '../components/CategoryTabs';
 import ProductGrid from '../components/ProductGrid';
-import CartPanel, { type CartLine } from '../components/CartPanel';
+import CartPanel from '../components/CartPanel';
 import WaiterOrderList from '../components/WaiterOrderList';
 import WaiterOrderDetailDrawer from '../components/WaiterOrderDetailDrawer';
 
@@ -30,13 +33,16 @@ export default function WaiterKioskPage() {
   const navigate = useNavigate();
   const business = useCurrentBusiness();
   const branchId = useAuthStore((s) => s.user?.branchId);
+  const { data: branch } = useBranch(branchId);
+  const occupiedTables = useOccupiedTables(branchId);
   const logout = useLogout();
   const addNotification = useNotificationsStore((s) => s.addNotification);
 
   const [categoryId, setCategoryId] = useState<string | null>(null);
-  const [cart, setCart] = useState<CartLine[]>([]);
+  const { cart, addToCart, toggleSauce, toggleSide, increment, decrement, remove, clear } = useCartLines();
   const [tableNumber, setTableNumber] = useState('');
   const [orderType, setOrderType] = useState<OrderType>('DINE_IN');
+  const [customerName, setCustomerName] = useState('');
   const [orderNotes, setOrderNotes] = useState('');
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -76,7 +82,7 @@ export default function WaiterKioskPage() {
     for (const order of orders) {
       const prev = previousStatuses.current.get(order.id);
       if (prev && prev !== 'READY' && order.status === 'READY') {
-        enqueueSnackbar(`¡Pedido #${order.orderNumber} listo! Mesa ${order.tableNumber ?? '—'}`, {
+        enqueueSnackbar(`¡Pedido #${order.orderNumber} listo! ${getOrderIdentifierLabel(order)}`, {
           variant: 'success',
           persist: true,
           // Ancla arriba (no abajo, el default) para no tapar el botón "Marcar
@@ -92,7 +98,7 @@ export default function WaiterKioskPage() {
         });
         addNotification({
           title: 'Pedido listo',
-          message: `#${order.orderNumber} — Mesa ${order.tableNumber ?? '—'}`,
+          message: `#${order.orderNumber} — ${getOrderIdentifierLabel(order)}`,
           level: 'success',
         });
       }
@@ -100,83 +106,15 @@ export default function WaiterKioskPage() {
     previousStatuses.current = new Map(orders.map((order) => [order.id, order.status]));
   }, [orders, enqueueSnackbar, closeSnackbar, addNotification]);
 
-  function handleAddToCart(product: Product) {
-    setCart((prev) => {
-      const existing = prev.find((line) => line.productId === product.id);
-      if (existing) {
-        return prev.map((line) =>
-          line.productId === product.id ? { ...line, quantity: line.quantity + 1 } : line,
-        );
-      }
-      return [
-        ...prev,
-        {
-          productId: product.id,
-          name: product.name,
-          unitPrice: product.salePrice,
-          quantity: 1,
-          maxSauces: product.maxSauces,
-          maxSides: product.maxSides,
-          sauceIds: [],
-          sideIds: [],
-        },
-      ];
-    });
-  }
-
-  function handleToggleSauce(productId: string, sauceId: string) {
-    setCart((prev) =>
-      prev.map((line) => {
-        if (line.productId !== productId) return line;
-        const selected = line.sauceIds.includes(sauceId);
-        if (!selected && line.sauceIds.length >= line.maxSauces) return line;
-        return {
-          ...line,
-          sauceIds: selected
-            ? line.sauceIds.filter((id) => id !== sauceId)
-            : [...line.sauceIds, sauceId],
-        };
-      }),
-    );
-  }
-
-  function handleToggleSide(productId: string, sideId: string) {
-    setCart((prev) =>
-      prev.map((line) => {
-        if (line.productId !== productId) return line;
-        const selected = line.sideIds.includes(sideId);
-        if (!selected && line.sideIds.length >= line.maxSides) return line;
-        return {
-          ...line,
-          sideIds: selected
-            ? line.sideIds.filter((id) => id !== sideId)
-            : [...line.sideIds, sideId],
-        };
-      }),
-    );
-  }
-
-  function handleIncrement(productId: string) {
-    setCart((prev) =>
-      prev.map((line) => (line.productId === productId ? { ...line, quantity: line.quantity + 1 } : line)),
-    );
-  }
-
-  function handleDecrement(productId: string) {
-    setCart((prev) =>
-      prev
-        .map((line) => (line.productId === productId ? { ...line, quantity: line.quantity - 1 } : line))
-        .filter((line) => line.quantity > 0),
-    );
-  }
-
-  function handleRemove(productId: string) {
-    setCart((prev) => prev.filter((line) => line.productId !== productId));
-  }
-
   function handleSubmit() {
     if (!branchId) {
       enqueueSnackbar('Tu usuario no tiene una sucursal asignada; no puedes crear pedidos.', {
+        variant: 'error',
+      });
+      return;
+    }
+    if (orderType === 'DINE_IN' && tableNumber && occupiedTables.has(tableNumber)) {
+      enqueueSnackbar('Esa mesa ya tiene un pedido activo. Usa "Agregar productos" desde ese pedido.', {
         variant: 'error',
       });
       return;
@@ -187,6 +125,7 @@ export default function WaiterKioskPage() {
         branchId,
         orderType,
         tableNumber: orderType === 'DINE_IN' ? tableNumber || undefined : undefined,
+        customerName: customerName || undefined,
         notes: orderNotes || undefined,
         items: cart.map((line) => ({
           productId: line.productId,
@@ -199,8 +138,9 @@ export default function WaiterKioskPage() {
         onSuccess: (order) => {
           updateStatus.mutate({ id: order.id, status: 'CONFIRMED' });
           enqueueSnackbar(`Pedido #${order.orderNumber} enviado a cocina`, { variant: 'success' });
-          setCart([]);
+          clear();
           setTableNumber('');
+          setCustomerName('');
           setOrderNotes('');
         },
         onError: (error) => enqueueSnackbar(normalizeApiError(error).message, { variant: 'error' }),
@@ -247,7 +187,7 @@ export default function WaiterKioskPage() {
         <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           <CategoryTabs value={categoryId} onChange={setCategoryId} />
           <Box sx={{ flex: 1, overflowY: 'auto' }}>
-            <ProductGrid categoryId={categoryId} onSelect={handleAddToCart} />
+            <ProductGrid categoryId={categoryId} onSelect={addToCart} />
           </Box>
         </Box>
 
@@ -274,15 +214,19 @@ export default function WaiterKioskPage() {
           <Box sx={{ flex: 1, overflow: 'hidden' }}>
             <CartPanel
               cart={cart}
-              onIncrement={handleIncrement}
-              onDecrement={handleDecrement}
-              onRemove={handleRemove}
-              onToggleSauce={handleToggleSauce}
-              onToggleSide={handleToggleSide}
+              onIncrement={increment}
+              onDecrement={decrement}
+              onRemove={remove}
+              onToggleSauce={toggleSauce}
+              onToggleSide={toggleSide}
               tableNumber={tableNumber}
               onTableNumberChange={setTableNumber}
+              tableCount={branch?.tableCount}
+              occupiedTables={occupiedTables}
               orderType={orderType}
               onOrderTypeChange={setOrderType}
+              customerName={customerName}
+              onCustomerNameChange={setCustomerName}
               orderNotes={orderNotes}
               onOrderNotesChange={setOrderNotes}
               onSubmit={handleSubmit}

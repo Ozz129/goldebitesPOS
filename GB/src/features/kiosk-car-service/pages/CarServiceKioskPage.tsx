@@ -39,6 +39,7 @@ export default function CarServiceKioskPage() {
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [cart, setCart] = useState<CartLine[]>([]);
   const [vehicleTag, setVehicleTag] = useState('');
+  const [customerName, setCustomerName] = useState('');
   const [payingOrder, setPayingOrder] = useState<PayingOrder | null>(null);
   const [lastOrderNumber, setLastOrderNumber] = useState<string | null>(null);
 
@@ -159,6 +160,7 @@ export default function CarServiceKioskPage() {
         branchId,
         orderType: 'CAR_SERVICE',
         tableNumber: vehicleTag || undefined,
+        customerName: customerName || undefined,
         items: cart.map((line) => ({
           productId: line.productId,
           quantity: line.quantity,
@@ -172,6 +174,7 @@ export default function CarServiceKioskPage() {
           enqueueSnackbar(`Pedido #${order.orderNumber} enviado a cocina`, { variant: 'success' });
           setCart([]);
           setVehicleTag('');
+          setCustomerName('');
           setLastOrderNumber(order.orderNumber);
           setPayingOrder({ id: order.id, orderNumber: order.orderNumber, totalAmount: order.totalAmount });
         },
@@ -279,6 +282,8 @@ export default function CarServiceKioskPage() {
             onToggleSide={handleToggleSide}
             vehicleTag={vehicleTag}
             onVehicleTagChange={setVehicleTag}
+            customerName={customerName}
+            onCustomerNameChange={setCustomerName}
             onSubmit={handleSubmit}
             submitting={createOrder.isPending}
           />

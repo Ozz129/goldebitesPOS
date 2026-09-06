@@ -18,12 +18,12 @@ import {
 } from '../domain/order.types';
 import { IOrdersRepository } from './orders.repository.interface';
 
-const SELECT_COLUMNS = `id, business_id, branch_id, customer_id, created_by, order_number::text AS order_number,
+const SELECT_COLUMNS = `id, business_id, branch_id, customer_id, customer_name, created_by, order_number::text AS order_number,
   order_type, status, payment_status, table_number, delivery_address, delivery_instructions,
   subtotal, discount_amount, tax_amount, delivery_fee, total_amount, notes,
   confirmed_at, prepared_at, delivered_at, cancelled_at, created_at, updated_at`;
 
-const ITEM_COLUMNS = `id, order_id, product_id, product_name_snapshot, quantity, unit_price,
+const ITEM_COLUMNS = `id, order_id, product_id, product_name_snapshot, product_description_snapshot, quantity, unit_price,
   unit_cost_snapshot, discount_amount, total_price, notes, sauce_ids, sauce_names, side_ids, side_names, created_at`;
 
 const HISTORY_COLUMNS = `id, order_id, previous_status, new_status, changed_by, notes, created_at`;
@@ -54,9 +54,9 @@ export class OrdersRepository implements IOrdersRepository {
          RETURNING last_number, order_date
        )
        INSERT INTO orders (business_id, branch_id, customer_id, created_by, order_type, table_number,
-         delivery_address, delivery_instructions, discount_amount, delivery_fee, notes, order_number)
+         delivery_address, delivery_instructions, discount_amount, delivery_fee, notes, order_number, customer_name)
        SELECT $1, $2, $3, $4, $5, $6, $7, $8, COALESCE($9::numeric, 0), COALESCE($10::numeric, 0), $11,
-         to_char(counter.order_date, 'MMDD') || '-' || lpad(counter.last_number::text, 2, '0')
+         to_char(counter.order_date, 'MMDD') || '-' || lpad(counter.last_number::text, 2, '0'), $13
        FROM counter
        RETURNING ${SELECT_COLUMNS}`,
       [
@@ -72,6 +72,7 @@ export class OrdersRepository implements IOrdersRepository {
         data.deliveryFee ?? null,
         data.notes ?? null,
         timezone,
+        data.customerName ?? null,
       ],
       client,
     );
@@ -200,12 +201,13 @@ export class OrdersRepository implements IOrdersRepository {
     for (const item of items) {
       await this.db.query(
         `INSERT INTO order_items
-           (order_id, product_id, product_name_snapshot, quantity, unit_price, unit_cost_snapshot, discount_amount, total_price, notes, sauce_ids, sauce_names, side_ids, side_names)
-         VALUES ($1, $2, $3, $4, $5, $6, COALESCE($7::numeric, 0), $8, $9, COALESCE($10::uuid[], '{}'), COALESCE($11::text[], '{}'), COALESCE($12::uuid[], '{}'), COALESCE($13::text[], '{}'))`,
+           (order_id, product_id, product_name_snapshot, product_description_snapshot, quantity, unit_price, unit_cost_snapshot, discount_amount, total_price, notes, sauce_ids, sauce_names, side_ids, side_names)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, COALESCE($8::numeric, 0), $9, $10, COALESCE($11::uuid[], '{}'), COALESCE($12::text[], '{}'), COALESCE($13::uuid[], '{}'), COALESCE($14::text[], '{}'))`,
         [
           orderId,
           item.productId,
           item.productNameSnapshot,
+          item.productDescriptionSnapshot ?? null,
           item.quantity,
           item.unitPrice,
           item.unitCostSnapshot,

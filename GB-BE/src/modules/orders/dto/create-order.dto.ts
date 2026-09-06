@@ -25,6 +25,12 @@ export class CreateOrderDto {
   @IsUUID()
   customerId?: string;
 
+  @ApiPropertyOptional({ maxLength: 150 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(150)
+  customerName?: string;
+
   @ApiProperty({ enum: OrderType })
   @IsEnum(OrderType)
   orderType: OrderType;

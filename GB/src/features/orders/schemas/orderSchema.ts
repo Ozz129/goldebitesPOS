@@ -4,12 +4,15 @@ export const newOrderItemSchema = z.object({
   productId: z.string().min(1, 'Selecciona un producto'),
   quantity: z.coerce.number().positive('Cantidad inválida'),
   notes: z.string().optional(),
+  sauceIds: z.array(z.string()).optional(),
+  sideIds: z.array(z.string()).optional(),
 });
 
 /** Mirrors GB-BE's CreateOrderDto. */
 export const newOrderSchema = z
   .object({
     customerId: z.string().optional(),
+    customerName: z.string().optional(),
     orderType: z.enum(['DINE_IN', 'TAKEAWAY', 'DELIVERY', 'CAR_SERVICE']),
     tableNumber: z.string().optional(),
     deliveryAddress: z.string().optional(),

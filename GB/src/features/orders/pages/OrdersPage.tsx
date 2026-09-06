@@ -107,6 +107,7 @@ export default function OrdersPage() {
   );
 
   const customerName = (order: Order): string => {
+    if (order.customerName) return order.customerName;
     if (!order.customerId) return 'Cliente ocasional';
     const customer = customerById.get(order.customerId);
     return customer ? `${customer.firstName} ${customer.lastName ?? ''}`.trim() : 'Cliente ocasional';
@@ -164,6 +165,7 @@ export default function OrdersPage() {
       {
         branchId,
         customerId: values.customerId || undefined,
+        customerName: values.customerName || undefined,
         orderType: values.orderType,
         tableNumber: values.tableNumber || undefined,
         deliveryAddress: values.deliveryAddress || undefined,
@@ -175,6 +177,8 @@ export default function OrdersPage() {
           productId: item.productId,
           quantity: item.quantity,
           notes: item.notes || undefined,
+          sauceIds: item.sauceIds?.length ? item.sauceIds : undefined,
+          sideIds: item.sideIds?.length ? item.sideIds : undefined,
         })),
       },
       {

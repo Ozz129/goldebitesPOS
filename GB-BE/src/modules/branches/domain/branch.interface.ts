@@ -5,6 +5,7 @@ export interface Branch {
   address: string | null;
   city: string | null;
   phone: string | null;
+  tableCount: number;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -17,6 +18,7 @@ export interface BranchRow {
   address: string | null;
   city: string | null;
   phone: string | null;
+  table_count: number;
   is_active: boolean;
   created_at: Date;
   updated_at: Date;

@@ -21,6 +21,8 @@ interface CarServiceCartPanelProps {
   onToggleSide: (productId: string, sideId: string) => void;
   vehicleTag: string;
   onVehicleTagChange: (value: string) => void;
+  customerName: string;
+  onCustomerNameChange: (value: string) => void;
   onSubmit: () => void;
   submitting: boolean;
 }
@@ -34,6 +36,8 @@ export default function CarServiceCartPanel({
   onToggleSide,
   vehicleTag,
   onVehicleTagChange,
+  customerName,
+  onCustomerNameChange,
   onSubmit,
   submitting,
 }: CarServiceCartPanelProps) {
@@ -60,7 +64,13 @@ export default function CarServiceCartPanel({
           placeholder="Ej. ABC-123 / Camioneta gris"
           value={vehicleTag}
           onChange={(e) => onVehicleTagChange(e.target.value)}
-          sx={{ '& .MuiInputBase-input': { fontWeight: 700 } }}
+          sx={{ '& .MuiInputBase-input': { fontWeight: 700 }, mb: 1.5 }}
+        />
+        <TextField
+          fullWidth
+          label="Nombre del cliente (opcional)"
+          value={customerName}
+          onChange={(e) => onCustomerNameChange(e.target.value)}
         />
       </Box>
 

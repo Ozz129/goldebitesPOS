@@ -82,6 +82,21 @@ export class OrdersController {
     return this.ordersService.findOne(businessId, id);
   }
 
+  @Post(':id/items')
+  @Permissions('orders.update')
+  @ApiOperation({
+    summary:
+      'Add items to an existing order (does not touch the items already there)',
+  })
+  addItems(
+    @CurrentBusiness() businessId: string,
+    @CurrentUser('userId') actorUserId: string,
+    @Param('id') id: string,
+    @Body() dto: ReplaceOrderItemsDto,
+  ) {
+    return this.ordersService.addItems(businessId, id, dto.items, actorUserId);
+  }
+
   @Put(':id/items')
   @Permissions('orders.update')
   @ApiOperation({

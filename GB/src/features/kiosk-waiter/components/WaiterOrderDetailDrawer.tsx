@@ -16,7 +16,7 @@ import { normalizeApiError } from '../../../lib/api/api-error';
 import {
   ORDER_STATUS_LABELS,
   ORDER_STATUS_TONE,
-  ORDER_TYPE_LABELS,
+  getOrderIdentifierLabel,
 } from '../../../modules/orders/order-status';
 
 interface WaiterOrderDetailDrawerProps {
@@ -71,7 +71,7 @@ export default function WaiterOrderDetailDrawer({ orderId, onClose }: WaiterOrde
       open={Boolean(orderId)}
       onClose={onClose}
       title={`Pedido #${order.orderNumber}`}
-      subtitle={`${order.orderType === 'CAR_SERVICE' ? 'Vehículo' : 'Mesa'} ${order.tableNumber ?? '—'} · ${ORDER_TYPE_LABELS[order.orderType]}`}
+      subtitle={[getOrderIdentifierLabel(order), order.customerName].filter(Boolean).join(' · ')}
       headerExtra={<StatusChip label={ORDER_STATUS_LABELS[order.status]} tone={ORDER_STATUS_TONE[order.status]} />}
       footer={
         order.status === 'READY' ? (

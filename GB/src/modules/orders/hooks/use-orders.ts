@@ -5,6 +5,7 @@ import type { OrderFilters } from '../types/order.types';
 
 interface UseOrdersOptions {
   refetchInterval?: number;
+  enabled?: boolean;
 }
 
 export function useOrders(filters: OrderFilters = {}, options: UseOrdersOptions = {}) {
@@ -13,5 +14,6 @@ export function useOrders(filters: OrderFilters = {}, options: UseOrdersOptions 
     queryFn: () => ordersApi.getOrders(filters),
     staleTime: 15_000,
     refetchInterval: options.refetchInterval ?? 30_000,
+    enabled: options.enabled ?? true,
   });
 }

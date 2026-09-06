@@ -15,6 +15,7 @@ export interface OrderItem {
   orderId: string;
   productId: string | null;
   productNameSnapshot: string;
+  productDescriptionSnapshot: string | null;
   quantity: number;
   unitPrice: number;
   unitCostSnapshot: number;
@@ -33,6 +34,7 @@ export interface Order {
   businessId: string;
   branchId: string;
   customerId: string | null;
+  customerName: string | null;
   createdBy: string | null;
   orderNumber: string;
   orderType: OrderType;
@@ -71,6 +73,7 @@ export interface CreateOrderItemPayload {
 export interface CreateOrderPayload {
   branchId: string;
   customerId?: string;
+  customerName?: string;
   orderType: OrderType;
   tableNumber?: string;
   deliveryAddress?: string;

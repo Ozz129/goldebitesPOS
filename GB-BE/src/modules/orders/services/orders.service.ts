@@ -252,6 +252,85 @@ export class OrdersService {
     }));
   }
 
+  /** Adds items to an existing order without touching the ones already there — a running tab. */
+  async addItems(
+    businessId: string,
+    id: string,
+    items: OrderItemInput[],
+    actorUserId?: string,
+  ): Promise<OrderWithItems> {
+    if (items.length === 0) {
+      throw new BusinessRuleException(
+        'An order must include at least one item',
+        'ORDER_EMPTY',
+      );
+    }
+    const order = await this.getOwnedOrFail(businessId, id);
+    if (
+      order.status === OrderStatus.DELIVERED ||
+      order.status === OrderStatus.CANCELLED
+    ) {
+      throw new BusinessRuleException(
+        'Items cannot be added to a delivered or cancelled order',
+        'ORDER_NOT_EDITABLE',
+      );
+    }
+
+    const computedItems = await this.computeItems(businessId, items);
+    const taxRate = await this.businessesService.getTaxRate(businessId);
+    const additionalSubtotal = round2(
+      computedItems.reduce((sum, item) => sum + item.totalPrice, 0),
+    );
+    const newSubtotal = round2(
+      parseFloat(order.subtotal) + additionalSubtotal,
+    );
+    const totals = this.computeTotalsFromSubtotal(
+      newSubtotal,
+      parseFloat(order.discount_amount),
+      parseFloat(order.delivery_fee),
+      taxRate,
+    );
+
+    await this.transactionService.execute(async (client) => {
+      await this.ordersRepository.addItems(id, computedItems, client);
+      await this.ordersRepository.updateTotals(
+        id,
+        totals.subtotal,
+        totals.discountAmount,
+        totals.taxAmount,
+        totals.deliveryFee,
+        totals.totalAmount,
+        client,
+      );
+      // Items present at the PENDING -> CONFIRMED transition already have their
+      // stock consumed by consumeStock(); anything added after that point needs
+      // its own consumption now, or it would never be decremented.
+      if (order.status !== OrderStatus.PENDING) {
+        await this.consumeStockForItems(
+          order,
+          computedItems.map((item) => ({
+            productId: item.productId,
+            quantity: item.quantity,
+          })),
+          client,
+          actorUserId,
+        );
+      }
+    });
+
+    await this.auditService.record({
+      businessId,
+      branchId: order.branch_id,
+      userId: actorUserId,
+      entityType: 'order',
+      entityId: id,
+      action: 'ADD_ITEMS',
+      newValues: { itemCount: items.length, additionalSubtotal },
+    });
+
+    return this.buildWithItems({ ...order, ...totalsToRow(totals) });
+  }
+
   async replaceItems(
     businessId: string,
     id: string,
@@ -403,28 +482,44 @@ export class OrdersService {
     actorUserId?: string,
   ): Promise<void> {
     const items = await this.ordersRepository.findItems(order.id, client);
+    await this.consumeStockForItems(
+      order,
+      items.map((item) => ({
+        productId: item.product_id,
+        quantity: parseFloat(item.quantity),
+      })),
+      client,
+      actorUserId,
+    );
+  }
+
+  private async consumeStockForItems(
+    order: OrderRow,
+    items: { productId: string | null; quantity: number }[],
+    client: DbClient,
+    actorUserId?: string,
+  ): Promise<void> {
     for (const item of items) {
-      if (!item.product_id) {
+      if (!item.productId) {
         continue;
       }
       const product = await this.productsService.getOwnedOrFail(
         order.business_id,
-        item.product_id,
+        item.productId,
       );
       if (!product.track_inventory) {
         continue;
       }
       const recipe = await this.recipesService.findByProductOrNull(
         order.business_id,
-        item.product_id,
+        item.productId,
       );
       if (!recipe) {
         continue;
       }
-      const orderedQuantity = parseFloat(item.quantity);
       for (const recipeItem of recipe.items) {
         const consumeQuantity =
-          (recipeItem.quantity / recipe.cost.yieldQuantity) * orderedQuantity;
+          (recipeItem.quantity / recipe.cost.yieldQuantity) * item.quantity;
         await this.movementsService.recordMovement(
           {
             businessId: order.business_id,
@@ -522,6 +617,7 @@ export class OrdersService {
       computed.push({
         ...item,
         productNameSnapshot: product.name,
+        productDescriptionSnapshot: product.description,
         unitPrice,
         unitCostSnapshot: parseFloat(product.current_cost),
         totalPrice,
@@ -575,6 +671,26 @@ export class OrdersService {
     const subtotal = round2(
       items.reduce((sum, item) => sum + item.totalPrice, 0),
     );
+    return this.computeTotalsFromSubtotal(
+      subtotal,
+      discountAmount,
+      deliveryFee,
+      taxRate,
+    );
+  }
+
+  private computeTotalsFromSubtotal(
+    subtotal: number,
+    discountAmount: number,
+    deliveryFee: number,
+    taxRate: number,
+  ): {
+    subtotal: number;
+    discountAmount: number;
+    taxAmount: number;
+    deliveryFee: number;
+    totalAmount: number;
+  } {
     const taxableBase = Math.max(subtotal - discountAmount, 0);
     const taxAmount = round2(taxableBase * taxRate);
     const totalAmount = round2(taxableBase + taxAmount + deliveryFee);

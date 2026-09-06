@@ -12,7 +12,7 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogActions from '@mui/material/DialogActions';
 import { useSnackbar } from 'notistack';
-import { MapPin, ArrowRight, Ban, CreditCard, Users, Printer, Receipt, Pencil } from 'lucide-react';
+import { MapPin, ArrowRight, Ban, CreditCard, Users, Printer, Receipt, Pencil, Plus } from 'lucide-react';
 import DetailDrawer from '../../../components/common/DetailDrawer';
 import StatusChip from '../../../components/common/StatusChip';
 import CurrencyDisplay from '../../../components/common/CurrencyDisplay';
@@ -22,12 +22,14 @@ import { useOrder } from '../../../modules/orders/hooks/use-order';
 import { useOrderPayments } from '../../../modules/orders/hooks/use-order-payments';
 import { useCreatePayment } from '../../../modules/orders/hooks/use-create-payment';
 import { useReplaceOrderItems } from '../../../modules/orders/hooks/use-replace-order-items';
+import { useAddOrderItems } from '../../../modules/orders/hooks/use-add-order-items';
 import { usePrintKitchenTicket } from '../../../modules/orders/hooks/use-print-kitchen-ticket';
 import { usePrintInvoice } from '../../../modules/orders/hooks/use-print-invoice';
 import { normalizeApiError } from '../../../lib/api/api-error';
 import LoadingSkeleton from '../../../components/common/LoadingSkeleton';
 import SplitBillDialog from './SplitBillDialog';
 import EditOrderItemsDrawer from './EditOrderItemsDrawer';
+import AddOrderItemsDrawer from './AddOrderItemsDrawer';
 import {
   nextStatusFor,
   ORDER_STATUS_LABELS,
@@ -61,12 +63,14 @@ export default function OrderDetailDrawer({
   const [paymentAmount, setPaymentAmount] = useState('');
   const [splitBillOpen, setSplitBillOpen] = useState(false);
   const [editItemsOpen, setEditItemsOpen] = useState(false);
+  const [addItemsOpen, setAddItemsOpen] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
 
   const { data: order, isLoading } = useOrder(orderId);
   const { data: payments = [] } = useOrderPayments(orderId);
   const createPayment = useCreatePayment();
   const replaceItems = useReplaceOrderItems();
+  const addItems = useAddOrderItems();
   const printTicket = usePrintKitchenTicket();
   const { printNow: printInvoiceNow, printByOrderId: printInvoiceByOrderId } = usePrintInvoice();
 
@@ -151,7 +155,6 @@ export default function OrderDetailDrawer({
               variant="outlined"
               size="small"
               startIcon={<Receipt size={16} />}
-              disabled={payments.length === 0}
               onClick={() => printInvoiceNow(order, payments)}
             >
               Imprimir factura
@@ -165,6 +168,18 @@ export default function OrderDetailDrawer({
                   onClick={() => setEditItemsOpen(true)}
                 >
                   Editar productos
+                </Button>
+              </Can>
+            )}
+            {order.status !== 'DELIVERED' && order.status !== 'CANCELLED' && (
+              <Can permission="orders.update">
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<Plus size={16} />}
+                  onClick={() => setAddItemsOpen(true)}
+                >
+                  Agregar productos
                 </Button>
               </Can>
             )}
@@ -422,6 +437,25 @@ export default function OrderDetailDrawer({
               onSuccess: () => {
                 setEditItemsOpen(false);
                 enqueueSnackbar('Pedido actualizado correctamente', { variant: 'success' });
+              },
+              onError: (error) => enqueueSnackbar(normalizeApiError(error).message, { variant: 'error' }),
+            },
+          );
+        }}
+      />
+
+      <AddOrderItemsDrawer
+        open={addItemsOpen}
+        order={order}
+        loading={addItems.isPending}
+        onClose={() => setAddItemsOpen(false)}
+        onSubmit={(items) => {
+          addItems.mutate(
+            { id: order.id, items },
+            {
+              onSuccess: () => {
+                setAddItemsOpen(false);
+                enqueueSnackbar('Productos agregados al pedido', { variant: 'success' });
               },
               onError: (error) => enqueueSnackbar(normalizeApiError(error).message, { variant: 'error' }),
             },

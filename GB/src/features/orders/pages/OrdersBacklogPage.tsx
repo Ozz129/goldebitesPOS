@@ -28,6 +28,7 @@ export default function OrdersBacklogPage() {
   );
 
   const customerName = (order: Order): string => {
+    if (order.customerName) return order.customerName;
     if (!order.customerId) return 'Cliente ocasional';
     const customer = customerById.get(order.customerId);
     return customer ? `${customer.firstName} ${customer.lastName ?? ''}`.trim() : 'Cliente ocasional';

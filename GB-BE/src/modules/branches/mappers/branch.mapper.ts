@@ -9,6 +9,7 @@ export class BranchMapper {
       address: row.address,
       city: row.city,
       phone: row.phone,
+      tableCount: row.table_count,
       isActive: row.is_active,
       createdAt: row.created_at,
       updatedAt: row.updated_at,

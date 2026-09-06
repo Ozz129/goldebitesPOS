@@ -6,7 +6,11 @@ import { ChevronRight } from 'lucide-react';
 import { keyframes } from '@mui/material/styles';
 import OrderTimer from '../../orders/components/OrderTimer';
 import StatusChip from '../../../components/common/StatusChip';
-import { ORDER_STATUS_LABELS, ORDER_STATUS_TONE } from '../../../modules/orders/order-status';
+import {
+  ORDER_STATUS_LABELS,
+  ORDER_STATUS_TONE,
+  getOrderIdentifierLabel,
+} from '../../../modules/orders/order-status';
 import type { Order } from '../../../modules/orders/types/order.types';
 
 interface WaiterOrderListProps {
@@ -18,10 +22,6 @@ const pulse = keyframes`
   0%, 100% { background-color: transparent; }
   50% { background-color: rgba(76, 175, 109, 0.18); }
 `;
-
-function identifierLabel(order: Order): string {
-  return order.orderType === 'CAR_SERVICE' ? 'Vehículo' : 'Mesa';
-}
 
 export default function WaiterOrderList({ orders, onSelect }: WaiterOrderListProps) {
   if (orders.length === 0) {
@@ -53,7 +53,7 @@ export default function WaiterOrderList({ orders, onSelect }: WaiterOrderListPro
         >
           <Box sx={{ minWidth: 0 }}>
             <Typography variant="body1" sx={{ fontWeight: 700 }} noWrap>
-              #{order.orderNumber} · {identifierLabel(order)} {order.tableNumber ?? '—'}
+              #{order.orderNumber} · {getOrderIdentifierLabel(order)}
             </Typography>
             <OrderTimer createdAt={order.createdAt} />
           </Box>

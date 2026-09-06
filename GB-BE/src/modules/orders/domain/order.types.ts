@@ -13,6 +13,7 @@ export interface CreateOrderData {
   businessId: string;
   branchId: string;
   customerId?: string;
+  customerName?: string;
   orderType: OrderType;
   tableNumber?: string;
   deliveryAddress?: string;
@@ -37,6 +38,7 @@ export interface OrderQuery {
 
 export interface OrderItemComputed extends OrderItemInput {
   productNameSnapshot: string;
+  productDescriptionSnapshot: string | null;
   unitPrice: number;
   unitCostSnapshot: number;
   totalPrice: number;

@@ -27,6 +27,7 @@ export interface Order {
   businessId: string;
   branchId: string;
   customerId: string | null;
+  customerName: string | null;
   createdBy: string | null;
   orderNumber: string;
   orderType: OrderType;
@@ -54,6 +55,7 @@ export interface OrderRow {
   business_id: string;
   branch_id: string;
   customer_id: string | null;
+  customer_name: string | null;
   created_by: string | null;
   order_number: string;
   order_type: OrderType;
@@ -81,6 +83,7 @@ export interface OrderItem {
   orderId: string;
   productId: string | null;
   productNameSnapshot: string;
+  productDescriptionSnapshot: string | null;
   quantity: number;
   unitPrice: number;
   unitCostSnapshot: number;
@@ -99,6 +102,7 @@ export interface OrderItemRow {
   order_id: string;
   product_id: string | null;
   product_name_snapshot: string;
+  product_description_snapshot: string | null;
   quantity: string;
   unit_price: string;
   unit_cost_snapshot: string;

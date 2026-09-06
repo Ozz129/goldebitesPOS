@@ -8,6 +8,7 @@ describe('OrdersController', () => {
       | 'create'
       | 'findAll'
       | 'findOne'
+      | 'addItems'
       | 'replaceItems'
       | 'updateStatus'
       | 'getBacklog'
@@ -20,6 +21,7 @@ describe('OrdersController', () => {
       create: jest.fn(),
       findAll: jest.fn(),
       findOne: jest.fn(),
+      addItems: jest.fn(),
       replaceItems: jest.fn(),
       updateStatus: jest.fn(),
       getBacklog: jest.fn(),
@@ -69,6 +71,19 @@ describe('OrdersController', () => {
     service.getBacklog.mockResolvedValue([{ id: 'order-1' }] as never);
     await controller.getBacklog('business-1', 'branch-1');
     expect(service.getBacklog).toHaveBeenCalledWith('business-1', 'branch-1');
+  });
+
+  it('addItems() delegates', async () => {
+    service.addItems.mockResolvedValue({ id: 'order-1' } as never);
+    await controller.addItems('business-1', 'actor-1', 'order-1', {
+      items: [{ productId: 'product-1', quantity: 1 }],
+    });
+    expect(service.addItems).toHaveBeenCalledWith(
+      'business-1',
+      'order-1',
+      [{ productId: 'product-1', quantity: 1 }],
+      'actor-1',
+    );
   });
 
   it('replaceItems() delegates', async () => {

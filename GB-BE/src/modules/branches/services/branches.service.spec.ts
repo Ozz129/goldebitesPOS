@@ -27,6 +27,7 @@ describe('BranchesService', () => {
       address: null,
       city: null,
       phone: null,
+      table_count: 20,
       is_active: true,
       created_at: new Date(),
       updated_at: new Date(),

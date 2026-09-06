@@ -19,6 +19,7 @@ import { useCurrentBusiness } from '../../../modules/businesses/hooks/use-curren
 import { useUpdateBusiness } from '../../../modules/businesses/hooks/use-update-business';
 import { useUpdateTaxRate } from '../../../modules/settings/hooks/use-update-tax-rate';
 import { useBranches } from '../../../modules/branches/hooks/use-branches';
+import BranchTableCountField from '../components/BranchTableCountField';
 import { useProductCategories } from '../../../modules/product-categories/hooks/use-product-categories';
 import { useCreateProductCategory } from '../../../modules/product-categories/hooks/use-create-product-category';
 import { normalizeApiError } from '../../../lib/api/api-error';
@@ -129,7 +130,7 @@ export default function SettingsPage() {
         <AccordionDetails>
           <Stack spacing={1}>
             {branches.map((branch) => (
-              <Stack key={branch.id} direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
+              <Stack key={branch.id} direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1 }}>
                 <Box>
                   <Typography variant="body2" sx={{ fontWeight: 600 }}>
                     {branch.name}
@@ -138,10 +139,15 @@ export default function SettingsPage() {
                     {[branch.address, branch.city, branch.phone].filter(Boolean).join(' · ') || 'Sin datos de contacto'}
                   </Typography>
                 </Box>
-                <StatusChip
-                  label={branch.isActive ? 'Activa' : 'Inactiva'}
-                  tone={branch.isActive ? 'success' : 'neutral'}
-                />
+                <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
+                  <Can permission="branches.manage">
+                    <BranchTableCountField branch={branch} />
+                  </Can>
+                  <StatusChip
+                    label={branch.isActive ? 'Activa' : 'Inactiva'}
+                    tone={branch.isActive ? 'success' : 'neutral'}
+                  />
+                </Stack>
               </Stack>
             ))}
             {branches.length === 0 && (

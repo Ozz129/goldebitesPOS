@@ -57,6 +57,9 @@ function buildInvoiceHtml(
   const tableLine = order.tableNumber
     ? `<div class="meta">${order.orderType === 'CAR_SERVICE' ? 'Vehículo' : 'Mesa'}: ${escapeHtml(order.tableNumber)}</div>`
     : '';
+  const customerLine = order.customerName
+    ? `<div class="meta">Cliente: ${escapeHtml(order.customerName)}</div>`
+    : '';
 
   return `<!doctype html>
 <html>
@@ -103,6 +106,7 @@ function buildInvoiceHtml(
     <div class="title">Factura de venta</div>
     <div class="type">${ORDER_TYPE_LABELS[order.orderType]}</div>
     ${tableLine}
+    ${customerLine}
     <div class="date">${dateLabel}</div>
   </div>
   <hr />
@@ -114,8 +118,12 @@ function buildInvoiceHtml(
   ${order.deliveryFee > 0 ? `<div class="totals-line"><span>Domicilio</span><span>${formatCOP(order.deliveryFee)}</span></div>` : ''}
   <div class="totals-line total"><span>TOTAL</span><span>${formatCOP(order.totalAmount)}</span></div>
   <hr />
-  ${paymentsHtml}
-  <div class="totals-line" style="font-weight: 700; margin-top: 1mm;"><span>Total pagado</span><span>${formatCOP(amountPaid)}</span></div>
+  ${
+    payments.length > 0
+      ? `${paymentsHtml}
+  <div class="totals-line" style="font-weight: 700; margin-top: 1mm;"><span>Total pagado</span><span>${formatCOP(amountPaid)}</span></div>`
+      : ''
+  }
   <div class="footer">¡Gracias por su compra!</div>
 </body>
 </html>`;

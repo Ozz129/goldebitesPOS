@@ -31,7 +31,14 @@ export default function OrdersTable({ orders, onSelect, customerName }: OrdersTa
           <Typography variant="body2" sx={{ fontWeight: 700 }}>
             #{row.original.orderNumber}
           </Typography>
-          <DateDisplay value={row.original.createdAt} mode="time" variant="caption" color="text.secondary" />
+          <Stack direction="row" spacing={0.75}>
+            <DateDisplay value={row.original.createdAt} mode="time" variant="caption" color="text.secondary" />
+            {row.original.tableNumber && (
+              <Typography variant="caption" color="text.secondary">
+                · {row.original.orderType === 'CAR_SERVICE' ? 'Vehículo' : 'Mesa'} {row.original.tableNumber}
+              </Typography>
+            )}
+          </Stack>
         </Stack>
       ),
     },

@@ -60,6 +60,7 @@ describe('OrdersService', () => {
       business_id: businessId,
       branch_id: branchId,
       customer_id: null,
+      customer_name: null,
       created_by: null,
       order_number: '1',
       order_type: OrderType.DINE_IN,
@@ -90,6 +91,7 @@ describe('OrdersService', () => {
       order_id: 'order-1',
       product_id: productId,
       product_name_snapshot: 'Burger',
+      product_description_snapshot: null,
       quantity: '2.000',
       unit_price: '5000.00',
       unit_cost_snapshot: '2000.00',
@@ -271,6 +273,114 @@ describe('OrdersService', () => {
           { productId, quantity: 1 },
         ]),
       ).rejects.toThrow(BusinessRuleException);
+    });
+  });
+
+  describe('addItems', () => {
+    it('rejects an empty item list', async () => {
+      await expect(
+        service.addItems(businessId, 'order-1', []),
+      ).rejects.toThrow(BusinessRuleException);
+    });
+
+    it('rejects adding items to a delivered order', async () => {
+      repository.findById.mockResolvedValue(
+        makeOrderRow({ status: OrderStatus.DELIVERED }),
+      );
+
+      await expect(
+        service.addItems(businessId, 'order-1', [
+          { productId, quantity: 1 },
+        ]),
+      ).rejects.toThrow(BusinessRuleException);
+    });
+
+    it('rejects adding items to a cancelled order', async () => {
+      repository.findById.mockResolvedValue(
+        makeOrderRow({ status: OrderStatus.CANCELLED }),
+      );
+
+      await expect(
+        service.addItems(businessId, 'order-1', [
+          { productId, quantity: 1 },
+        ]),
+      ).rejects.toThrow(BusinessRuleException);
+    });
+
+    it('adds the new items on top of the existing subtotal without touching current items', async () => {
+      repository.findById.mockResolvedValue(
+        makeOrderRow({
+          status: OrderStatus.CONFIRMED,
+          subtotal: '10000.00',
+          discount_amount: '0.00',
+          delivery_fee: '0.00',
+        }),
+      );
+
+      await service.addItems(businessId, 'order-1', [
+        { productId, quantity: 1 },
+      ]);
+
+      expect(repository.addItems).toHaveBeenCalledWith(
+        'order-1',
+        expect.any(Array),
+        expect.anything(),
+      );
+      expect(repository.updateTotals).toHaveBeenCalledWith(
+        'order-1',
+        15000,
+        0,
+        0,
+        0,
+        15000,
+        expect.anything(),
+      );
+    });
+
+    it('does not consume stock when the order is still PENDING (it will be consumed at CONFIRMED)', async () => {
+      repository.findById.mockResolvedValue(
+        makeOrderRow({ status: OrderStatus.PENDING }),
+      );
+
+      await service.addItems(businessId, 'order-1', [
+        { productId, quantity: 1 },
+      ]);
+
+      expect(movementsService.recordMovement).not.toHaveBeenCalled();
+    });
+
+    it('consumes stock immediately for items added after the order was already confirmed', async () => {
+      repository.findById.mockResolvedValue(
+        makeOrderRow({ status: OrderStatus.CONFIRMED }),
+      );
+      productsService.getOwnedOrFail.mockResolvedValue({
+        id: productId,
+        name: 'Burger',
+        sale_price: '5000.00',
+        current_cost: '2000.00',
+        track_inventory: true,
+        max_sauces: 0,
+        max_sides: 0,
+      });
+      recipesService.findByProductOrNull.mockResolvedValue({
+        items: [{ inventoryItemId: 'flour-1', quantity: 0.2 }],
+        cost: { yieldQuantity: 1 },
+      });
+
+      await service.addItems(businessId, 'order-1', [
+        { productId, quantity: 2 },
+      ]);
+
+      expect(movementsService.recordMovement).toHaveBeenCalledWith(
+        expect.objectContaining({
+          movementType: InventoryMovementType.SALE_CONSUMPTION,
+          inventoryItemId: 'flour-1',
+          quantity: 0.4,
+          referenceType: 'order',
+          referenceId: 'order-1',
+        }),
+        expect.anything(),
+      );
     });
   });
 

@@ -1,20 +1,24 @@
-import { useEffect, useMemo } from 'react';
-import { useForm, useFieldArray, Controller } from 'react-hook-form';
+import { useEffect, useState } from 'react';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
 import Typography from '@mui/material/Typography';
-import IconButton from '@mui/material/IconButton';
-import Button from '@mui/material/Button';
-import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
-import { Plus, Trash2 } from 'lucide-react';
 import FormDrawer from '../../../components/common/FormDrawer';
+import CategoryTabs from '../../kiosk-waiter/components/CategoryTabs';
+import ProductGrid from '../../kiosk-waiter/components/ProductGrid';
+import TableNumberPicker from '../../kiosk-waiter/components/TableNumberPicker';
+import OrderCartList from './OrderCartList';
 import { newOrderSchema, type NewOrderFormValues } from '../schemas/orderSchema';
 import { ORDER_TYPE_LABELS } from '../../../modules/orders/order-status';
-import { useProducts } from '../../../modules/products/hooks/use-products';
 import { useCustomers } from '../../../modules/customers/hooks/use-customers';
+import { useCartLines } from '../../../modules/orders/hooks/use-cart-lines';
+import { useOccupiedTables } from '../../../modules/orders/hooks/use-occupied-tables';
+import { useAuthStore } from '../../../modules/auth/store/auth.store';
+import { useBranch } from '../../../modules/branches/hooks/use-branch';
 import { formatCOP } from '../../../utils/format';
 
 interface NewOrderDrawerProps {
@@ -25,6 +29,7 @@ interface NewOrderDrawerProps {
 
 const defaultValues: NewOrderFormValues = {
   customerId: '',
+  customerName: '',
   orderType: 'DINE_IN',
   tableNumber: '',
   deliveryAddress: '',
@@ -32,37 +37,56 @@ const defaultValues: NewOrderFormValues = {
   discountAmount: 0,
   deliveryFee: 0,
   notes: '',
-  items: [{ productId: '', quantity: 1, notes: '' }],
+  items: [],
 };
 
 export default function NewOrderDrawer({ open, onClose, onSubmit }: NewOrderDrawerProps) {
-  const { data: productsData } = useProducts({ limit: 100, isActive: true });
-  const products = useMemo(() => productsData?.data ?? [], [productsData]);
+  const [categoryId, setCategoryId] = useState<string | null>(null);
+  const branchId = useAuthStore((s) => s.user?.branchId);
+  const { data: branch } = useBranch(branchId);
+  const occupiedTables = useOccupiedTables(branchId);
   const { data: customersData } = useCustomers({ limit: 100 });
   const customers = customersData?.data ?? [];
+  const { cart, addToCart, toggleSauce, toggleSide, increment, decrement, remove, clear } = useCartLines();
 
   const {
     control,
     handleSubmit,
     reset,
+    setValue,
     watch,
     formState: { errors, isSubmitting },
   } = useForm<NewOrderFormValues>({ resolver: zodResolver(newOrderSchema), defaultValues });
 
-  const { fields, append, remove } = useFieldArray({ control, name: 'items' });
   // eslint-disable-next-line react-hooks/incompatible-library -- react-hook-form's watch() is inherently non-memoizable; this is expected.
   const orderType = watch('orderType');
-  const items = watch('items');
+  // eslint-disable-next-line react-hooks/incompatible-library -- react-hook-form's watch() is inherently non-memoizable; this is expected.
+  const tableNumber = watch('tableNumber');
+  const tableIsOccupied = orderType === 'DINE_IN' && Boolean(tableNumber) && occupiedTables.has(tableNumber ?? '');
 
   useEffect(() => {
-    if (open) reset(defaultValues);
-  }, [open, reset]);
+    if (open) {
+      reset(defaultValues);
+      clear();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- clear()/reset() are fresh every render; only re-run when the drawer opens.
+  }, [open]);
 
-  const productById = useMemo(() => new Map(products.map((p) => [p.id, p])), [products]);
-  const estimatedSubtotal = items.reduce((sum, item) => {
-    const product = productById.get(item.productId);
-    return product ? sum + product.salePrice * (item.quantity || 0) : sum;
-  }, 0);
+  // Keeps the zod-validated `items` field in sync with the product-grid cart (the actual source of truth here).
+  useEffect(() => {
+    setValue(
+      'items',
+      cart.map((line) => ({
+        productId: line.productId,
+        quantity: line.quantity,
+        sauceIds: line.sauceIds,
+        sideIds: line.sideIds,
+      })),
+      { shouldValidate: false },
+    );
+  }, [cart, setValue]);
+
+  const total = cart.reduce((sum, line) => sum + line.unitPrice * line.quantity, 0);
 
   const submit = handleSubmit((values) => onSubmit(values));
 
@@ -73,168 +97,159 @@ export default function NewOrderDrawer({ open, onClose, onSubmit }: NewOrderDraw
       onSubmit={submit}
       title="Nuevo pedido"
       subtitle="Registra un pedido manual en mesa, para recoger o a domicilio."
-      submitLabel="Crear pedido"
+      submitLabel={cart.length > 0 ? `Crear pedido (${formatCOP(total)})` : 'Crear pedido'}
+      submitDisabled={cart.length === 0 || tableIsOccupied}
       loading={isSubmitting}
-      width={560}
+      width={960}
     >
-      <Stack spacing={2.5}>
-        <Controller
-          name="customerId"
-          control={control}
-          render={({ field }) => (
-            <TextField {...field} value={field.value ?? ''} label="Cliente (opcional)" select fullWidth>
-              <MenuItem value="">Cliente ocasional</MenuItem>
-              {customers.map((c) => (
-                <MenuItem key={c.id} value={c.id}>
-                  {c.firstName} {c.lastName ?? ''}
-                </MenuItem>
-              ))}
-            </TextField>
-          )}
-        />
+      <Stack direction="row" sx={{ height: '65vh', gap: 2 }}>
+        <Stack
+          sx={{
+            flex: 1,
+            minWidth: 0,
+            border: '1px solid',
+            borderColor: 'divider',
+            borderRadius: 1,
+            overflow: 'hidden',
+          }}
+        >
+          <CategoryTabs value={categoryId} onChange={setCategoryId} />
+          <Box sx={{ flex: 1, overflowY: 'auto' }}>
+            <ProductGrid categoryId={categoryId} onSelect={addToCart} />
+          </Box>
+        </Stack>
 
-        <Controller
-          name="orderType"
-          control={control}
-          render={({ field }) => (
-            <TextField {...field} select label="Tipo de pedido" fullWidth>
-              {Object.entries(ORDER_TYPE_LABELS).map(([value, label]) => (
-                <MenuItem key={value} value={value}>
-                  {label}
-                </MenuItem>
-              ))}
-            </TextField>
-          )}
-        />
-
-        {(orderType === 'DINE_IN' || orderType === 'CAR_SERVICE') && (
-          <Controller
-            name="tableNumber"
-            control={control}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                label={orderType === 'CAR_SERVICE' ? 'Placa del vehículo' : 'Número de mesa'}
-                fullWidth
-              />
-            )}
-          />
-        )}
-
-        {orderType === 'DELIVERY' && (
+        <Stack sx={{ width: 380, flexShrink: 0, overflowY: 'auto', gap: 2 }}>
           <Stack spacing={2}>
             <Controller
-              name="deliveryAddress"
+              name="customerId"
               control={control}
               render={({ field }) => (
-                <TextField
-                  {...field}
-                  label="Dirección de entrega"
-                  fullWidth
-                  error={Boolean(errors.deliveryAddress)}
-                  helperText={errors.deliveryAddress?.message}
-                />
+                <TextField {...field} value={field.value ?? ''} label="Cliente registrado (opcional)" select fullWidth size="small">
+                  <MenuItem value="">Ninguno</MenuItem>
+                  {customers.map((c) => (
+                    <MenuItem key={c.id} value={c.id}>
+                      {c.firstName} {c.lastName ?? ''}
+                    </MenuItem>
+                  ))}
+                </TextField>
               )}
             />
+
             <Controller
-              name="deliveryInstructions"
-              control={control}
-              render={({ field }) => <TextField {...field} label="Instrucciones de entrega" fullWidth />}
-            />
-            <Controller
-              name="deliveryFee"
+              name="customerName"
               control={control}
               render={({ field }) => (
-                <TextField {...field} label="Costo de domicilio (COP)" type="number" fullWidth />
+                <TextField {...field} label="Nombre del cliente (opcional)" fullWidth size="small" />
               )}
             />
-          </Stack>
-        )}
 
-        <Divider />
+            <Controller
+              name="orderType"
+              control={control}
+              render={({ field }) => (
+                <TextField {...field} select label="Tipo de pedido" fullWidth size="small">
+                  {Object.entries(ORDER_TYPE_LABELS).map(([value, label]) => (
+                    <MenuItem key={value} value={value}>
+                      {label}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              )}
+            />
 
-        <Box>
-          <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-            <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-              Productos
-            </Typography>
-            <Button
-              size="small"
-              startIcon={<Plus size={14} />}
-              onClick={() => append({ productId: '', quantity: 1, notes: '' })}
-            >
-              Agregar producto
-            </Button>
-          </Stack>
-          {errors.items?.root && (
-            <Typography variant="caption" color="error">
-              {errors.items.root.message}
-            </Typography>
-          )}
-          <Stack spacing={1.5}>
-            {fields.map((field, index) => (
-              <Stack key={field.id} spacing={1}>
-                <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-                  <Controller
-                    name={`items.${index}.productId`}
-                    control={control}
-                    render={({ field: selectField }) => (
-                      <TextField {...selectField} select label="Producto" fullWidth size="small">
-                        <MenuItem value="">Selecciona…</MenuItem>
-                        {products.map((p) => (
-                          <MenuItem key={p.id} value={p.id}>
-                            {p.name} — {formatCOP(p.salePrice)}
-                          </MenuItem>
-                        ))}
-                      </TextField>
-                    )}
-                  />
-                  <Controller
-                    name={`items.${index}.quantity`}
-                    control={control}
-                    render={({ field: qtyField }) => (
-                      <TextField {...qtyField} label="Cant." type="number" size="small" sx={{ width: 90 }} />
-                    )}
-                  />
-                  <IconButton size="small" onClick={() => remove(index)} disabled={fields.length === 1}>
-                    <Trash2 size={15} />
-                  </IconButton>
-                </Stack>
+            {(orderType === 'DINE_IN' || orderType === 'CAR_SERVICE') && (
+              <Controller
+                name="tableNumber"
+                control={control}
+                render={({ field }) =>
+                  orderType === 'DINE_IN' ? (
+                    <TableNumberPicker
+                      value={field.value ?? ''}
+                      onChange={field.onChange}
+                      tableCount={branch?.tableCount}
+                      occupiedTables={occupiedTables}
+                    />
+                  ) : (
+                    <TextField {...field} label="Placa del vehículo" fullWidth size="small" />
+                  )
+                }
+              />
+            )}
+
+            {orderType === 'DELIVERY' && (
+              <Stack spacing={2}>
                 <Controller
-                  name={`items.${index}.notes`}
+                  name="deliveryAddress"
                   control={control}
-                  render={({ field: notesField }) => (
-                    <TextField {...notesField} label="Nota del producto (opcional)" size="small" fullWidth />
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label="Dirección de entrega"
+                      fullWidth
+                      size="small"
+                      error={Boolean(errors.deliveryAddress)}
+                      helperText={errors.deliveryAddress?.message}
+                    />
+                  )}
+                />
+                <Controller
+                  name="deliveryInstructions"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField {...field} label="Instrucciones de entrega" fullWidth size="small" />
+                  )}
+                />
+                <Controller
+                  name="deliveryFee"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField {...field} label="Costo de domicilio (COP)" type="number" fullWidth size="small" />
                   )}
                 />
               </Stack>
-            ))}
+            )}
+
+            <Controller
+              name="discountAmount"
+              control={control}
+              render={({ field }) => (
+                <TextField {...field} label="Descuento (COP)" type="number" fullWidth size="small" />
+              )}
+            />
+
+            <Controller
+              name="notes"
+              control={control}
+              render={({ field }) => (
+                <TextField {...field} label="Notas del pedido" multiline minRows={2} fullWidth size="small" />
+              )}
+            />
           </Stack>
-        </Box>
 
-        <Divider />
-
-        <Controller
-          name="discountAmount"
-          control={control}
-          render={({ field }) => (
-            <TextField {...field} label="Descuento (COP)" type="number" fullWidth />
+          {tableIsOccupied && (
+            <Typography variant="caption" color="error.main" sx={{ fontWeight: 700 }}>
+              Esta mesa ya tiene un pedido activo — elige otra o usa "Agregar productos" desde ese pedido.
+            </Typography>
           )}
-        />
 
-        <Controller
-          name="notes"
-          control={control}
-          render={({ field }) => <TextField {...field} label="Notas del pedido" multiline minRows={2} fullWidth />}
-        />
+          <Divider />
 
-        <Stack direction="row" sx={{ justifyContent: 'space-between', pt: 1 }}>
-          <Typography variant="body2" color="text.secondary">
-            Subtotal estimado
-          </Typography>
-          <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-            {formatCOP(estimatedSubtotal)}
-          </Typography>
+          <Box sx={{ flex: 1, overflowY: 'auto', border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
+            {errors.items?.root && (
+              <Typography variant="caption" color="error" sx={{ px: 1.5, pt: 1, display: 'block' }}>
+                {errors.items.root.message}
+              </Typography>
+            )}
+            <OrderCartList
+              cart={cart}
+              onIncrement={increment}
+              onDecrement={decrement}
+              onRemove={remove}
+              onToggleSauce={toggleSauce}
+              onToggleSide={toggleSide}
+            />
+          </Box>
         </Stack>
       </Stack>
     </FormDrawer>

@@ -41,6 +41,13 @@ export const ordersApi = {
     return data.data;
   },
 
+  async addItems(id: string, items: CreateOrderItemPayload[]): Promise<OrderWithItems> {
+    const { data } = await apiClient.post<ApiResponse<OrderWithItems>>(`/orders/${id}/items`, {
+      items,
+    });
+    return data.data;
+  },
+
   async updateStatus(
     id: string,
     status: OrderStatus,

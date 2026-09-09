@@ -12,11 +12,12 @@ interface CloseSessionDialogProps {
   open: boolean;
   loading?: boolean;
   onClose: () => void;
-  onConfirm: (actualClosingAmount: number, notes: string) => void;
+  onConfirm: (actualClosingAmount: number, actualTransferAmount: number | undefined, notes: string) => void;
 }
 
 export default function CloseSessionDialog({ open, loading, onClose, onConfirm }: CloseSessionDialogProps) {
   const [counted, setCounted] = useState('');
+  const [transfers, setTransfers] = useState('');
   const [notes, setNotes] = useState('');
 
   // Reset the form fields when the dialog transitions from closed to open.
@@ -25,6 +26,7 @@ export default function CloseSessionDialog({ open, loading, onClose, onConfirm }
     setWasOpen(open);
     if (open) {
       setCounted('');
+      setTransfers('');
       setNotes('');
     }
   }
@@ -34,8 +36,8 @@ export default function CloseSessionDialog({ open, loading, onClose, onConfirm }
       <DialogTitle sx={{ fontWeight: 700 }}>Cierre de caja</DialogTitle>
       <DialogContent>
         <DialogContentText sx={{ mb: 2 }}>
-          Cuenta el efectivo físico en caja. El sistema calculará la diferencia frente al valor esperado
-          al confirmar el cierre.
+          Cuenta el efectivo físico en caja y, si lo verificas, el total recibido por transferencias. El
+          sistema calculará la diferencia frente al valor esperado de cada uno al confirmar el cierre.
         </DialogContentText>
         <Stack spacing={2}>
           <TextField
@@ -44,6 +46,14 @@ export default function CloseSessionDialog({ open, loading, onClose, onConfirm }
             value={counted}
             onChange={(e) => setCounted(e.target.value)}
             autoFocus
+            fullWidth
+          />
+          <TextField
+            label="Transferencias recibidas (COP, opcional)"
+            type="number"
+            value={transfers}
+            onChange={(e) => setTransfers(e.target.value)}
+            helperText="Déjalo vacío si no vas a verificar las transferencias en este cierre."
             fullWidth
           />
           <TextField
@@ -63,7 +73,7 @@ export default function CloseSessionDialog({ open, loading, onClose, onConfirm }
         <Button
           variant="contained"
           disabled={counted === '' || loading}
-          onClick={() => onConfirm(Number(counted), notes)}
+          onClick={() => onConfirm(Number(counted), transfers === '' ? undefined : Number(transfers), notes)}
         >
           Cerrar caja
         </Button>

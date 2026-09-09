@@ -12,7 +12,8 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogActions from '@mui/material/DialogActions';
 import { useSnackbar } from 'notistack';
-import { MapPin, ArrowRight, Ban, CreditCard, Users, Printer, Receipt, Pencil, Plus } from 'lucide-react';
+import IconButton from '@mui/material/IconButton';
+import { MapPin, ArrowRight, Ban, CreditCard, Users, Printer, Receipt, Pencil, Plus, Check, X } from 'lucide-react';
 import DetailDrawer from '../../../components/common/DetailDrawer';
 import StatusChip from '../../../components/common/StatusChip';
 import CurrencyDisplay from '../../../components/common/CurrencyDisplay';
@@ -21,6 +22,7 @@ import { Can } from '../../../modules/auth/components/can';
 import { useOrder } from '../../../modules/orders/hooks/use-order';
 import { useOrderPayments } from '../../../modules/orders/hooks/use-order-payments';
 import { useCreatePayment } from '../../../modules/orders/hooks/use-create-payment';
+import { useUpdatePaymentMethod } from '../../../modules/orders/hooks/use-update-payment-method';
 import { useReplaceOrderItems } from '../../../modules/orders/hooks/use-replace-order-items';
 import { useAddOrderItems } from '../../../modules/orders/hooks/use-add-order-items';
 import { usePrintKitchenTicket } from '../../../modules/orders/hooks/use-print-kitchen-ticket';
@@ -64,11 +66,14 @@ export default function OrderDetailDrawer({
   const [splitBillOpen, setSplitBillOpen] = useState(false);
   const [editItemsOpen, setEditItemsOpen] = useState(false);
   const [addItemsOpen, setAddItemsOpen] = useState(false);
+  const [editingPaymentId, setEditingPaymentId] = useState<string | null>(null);
+  const [editMethod, setEditMethod] = useState<PaymentMethod>('CASH');
   const { enqueueSnackbar } = useSnackbar();
 
   const { data: order, isLoading } = useOrder(orderId);
   const { data: payments = [] } = useOrderPayments(orderId);
   const createPayment = useCreatePayment();
+  const updatePaymentMethod = useUpdatePaymentMethod(orderId ?? '');
   const replaceItems = useReplaceOrderItems();
   const addItems = useAddOrderItems();
   const printTicket = usePrintKitchenTicket();
@@ -103,6 +108,19 @@ export default function OrderDetailDrawer({
               // Si falla la carga de datos para la factura, el usuario puede reimprimirla manualmente.
             });
           }
+        },
+        onError: (error) => enqueueSnackbar(normalizeApiError(error).message, { variant: 'error' }),
+      },
+    );
+  };
+
+  const handleSavePaymentMethod = (paymentId: string) => {
+    updatePaymentMethod.mutate(
+      { paymentId, payload: { paymentMethod: editMethod } },
+      {
+        onSuccess: () => {
+          enqueueSnackbar('Método de pago corregido', { variant: 'success' });
+          setEditingPaymentId(null);
         },
         onError: (error) => enqueueSnackbar(normalizeApiError(error).message, { variant: 'error' }),
       },
@@ -302,23 +320,65 @@ export default function OrderDetailDrawer({
               />
             </Stack>
             <Stack spacing={1}>
-              {payments.map((payment) => (
-                <Stack key={payment.id} direction="row" sx={{ justifyContent: 'space-between' }}>
-                  <Typography variant="body2">
-                    {PAYMENT_METHOD_LABELS[payment.paymentMethod]}
-                    {payment.payerLabel && (
-                      <Typography component="span" variant="caption" color="text.secondary">
-                        {' '}
-                        · {payment.payerLabel}
-                      </Typography>
-                    )}
-                  </Typography>
-                  <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-                    <CurrencyDisplay value={payment.amount} variant="body2" />
-                    <DateDisplay value={payment.paidAt} mode="time" variant="caption" color="text.secondary" />
+              {payments.map((payment) =>
+                editingPaymentId === payment.id ? (
+                  <Stack key={payment.id} direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                    <TextField
+                      select
+                      size="small"
+                      value={editMethod}
+                      onChange={(e) => setEditMethod(e.target.value as PaymentMethod)}
+                      sx={{ minWidth: 140 }}
+                    >
+                      {Object.entries(PAYMENT_METHOD_LABELS).map(([value, label]) => (
+                        <MenuItem key={value} value={value}>
+                          {label}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                    <IconButton
+                      size="small"
+                      color="primary"
+                      disabled={updatePaymentMethod.isPending}
+                      onClick={() => handleSavePaymentMethod(payment.id)}
+                    >
+                      <Check size={16} />
+                    </IconButton>
+                    <IconButton size="small" onClick={() => setEditingPaymentId(null)}>
+                      <X size={16} />
+                    </IconButton>
                   </Stack>
-                </Stack>
-              ))}
+                ) : (
+                  <Stack key={payment.id} direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
+                      <Typography variant="body2">
+                        {PAYMENT_METHOD_LABELS[payment.paymentMethod]}
+                        {payment.payerLabel && (
+                          <Typography component="span" variant="caption" color="text.secondary">
+                            {' '}
+                            · {payment.payerLabel}
+                          </Typography>
+                        )}
+                      </Typography>
+                      <Can permission="orders.update">
+                        <IconButton
+                          size="small"
+                          onClick={() => {
+                            setEditingPaymentId(payment.id);
+                            setEditMethod(payment.paymentMethod);
+                          }}
+                        >
+                          <Pencil size={13} />
+                        </IconButton>
+                      </Can>
+                    </Stack>
+                    <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                      <CurrencyDisplay value={payment.amount} variant="body2" />
+                      <DateDisplay value={payment.paidAt} mode="time" variant="caption" color="text.secondary" />
+                    </Stack>
+                  </Stack>
+                ),
+              )}
               {payments.length === 0 && (
                 <Typography variant="body2" color="text.secondary">
                   Sin pagos registrados.

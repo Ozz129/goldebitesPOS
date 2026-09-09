@@ -1,5 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { BusinessRuleException } from '../../../common/exceptions';
+import {
+  BusinessRuleException,
+  EntityNotFoundException,
+} from '../../../common/exceptions';
 import { TransactionService } from '../../../database/transaction.service';
 import { AuditService } from '../../audit/services/audit.service';
 import {
@@ -13,7 +16,7 @@ import {
 } from '../../orders/domain/order.interface';
 import { OrdersService } from '../../orders/services/orders.service';
 import { Payment } from '../domain/payment.interface';
-import { CreatePaymentData } from '../domain/payment.types';
+import { CreatePaymentData, UpdatePaymentMethodData } from '../domain/payment.types';
 import { PaymentMapper } from '../mappers/payment.mapper';
 import { PAYMENTS_REPOSITORY } from '../repositories/payments.repository.interface';
 import type { IPaymentsRepository } from '../repositories/payments.repository.interface';
@@ -82,6 +85,7 @@ export class PaymentsService {
           {
             cashSessionId,
             orderId: order.id,
+            paymentId: created.id,
             movementType: CashMovementType.SALE,
             paymentMethod: data.paymentMethod,
             amount: data.amount,
@@ -119,6 +123,55 @@ export class PaymentsService {
     });
 
     return PaymentMapper.toDomain(row);
+  }
+
+  /** Corrects a misrecorded payment method (e.g. marked "transferencia" but was actually cash). */
+  async updateMethod(
+    businessId: string,
+    orderId: string,
+    paymentId: string,
+    data: UpdatePaymentMethodData,
+    actorUserId?: string,
+  ): Promise<Payment> {
+    const order = await this.ordersService.getOwnedOrFail(businessId, orderId);
+    const existing = await this.paymentsRepository.findById(paymentId);
+    if (!existing || existing.order_id !== orderId) {
+      throw new EntityNotFoundException('Payment', paymentId);
+    }
+    const previousMethod = existing.payment_method;
+
+    const updated = await this.transactionService.execute(async (client) => {
+      const row = await this.paymentsRepository.updateMethod(
+        paymentId,
+        data.paymentMethod,
+        data.reference,
+        client,
+      );
+      if (!row) {
+        throw new EntityNotFoundException('Payment', paymentId);
+      }
+      if (previousMethod !== data.paymentMethod) {
+        await this.cashSessionsService.correctSaleMovementMethod(
+          paymentId,
+          data.paymentMethod,
+          client,
+        );
+      }
+      return row;
+    });
+
+    await this.auditService.record({
+      businessId,
+      branchId: order.branch_id,
+      userId: actorUserId,
+      entityType: 'payment',
+      entityId: paymentId,
+      action: 'UPDATE_METHOD',
+      oldValues: { paymentMethod: previousMethod },
+      newValues: { paymentMethod: data.paymentMethod },
+    });
+
+    return PaymentMapper.toDomain(updated);
   }
 
   async findByOrder(businessId: string, orderId: string): Promise<Payment[]> {

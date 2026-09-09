@@ -5,6 +5,7 @@ import { DbClient } from '../../../database/types/database.types';
 import {
   CashMovementRow,
   CashSessionRow,
+  PaymentMethod,
 } from '../domain/cash-session.interface';
 import {
   CashSessionQuery,
@@ -14,9 +15,11 @@ import {
 import { ICashSessionsRepository } from './cash-sessions.repository.interface';
 
 const SELECT_COLUMNS = `id, business_id, branch_id, opened_by, closed_by, opening_amount,
-  expected_closing_amount, actual_closing_amount, difference_amount, status, opened_at, closed_at, notes`;
+  expected_closing_amount, actual_closing_amount, difference_amount,
+  expected_transfer_amount, actual_transfer_amount, transfer_difference_amount,
+  status, opened_at, closed_at, notes`;
 
-const MOVEMENT_COLUMNS = `id, cash_session_id, order_id, movement_type, payment_method, amount,
+const MOVEMENT_COLUMNS = `id, cash_session_id, order_id, payment_id, movement_type, payment_method, amount,
   description, created_by, created_at`;
 
 interface CountRow {
@@ -124,12 +127,13 @@ export class CashSessionsRepository implements ICashSessionsRepository {
     client?: DbClient,
   ): Promise<CashMovementRow> {
     const result = await this.db.query<CashMovementRow>(
-      `INSERT INTO cash_movements (cash_session_id, order_id, movement_type, payment_method, amount, description, created_by)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `INSERT INTO cash_movements (cash_session_id, order_id, payment_id, movement_type, payment_method, amount, description, created_by)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING ${MOVEMENT_COLUMNS}`,
       [
         data.cashSessionId,
         data.orderId ?? null,
+        data.paymentId ?? null,
         data.movementType,
         data.paymentMethod ?? null,
         data.amount,
@@ -139,6 +143,18 @@ export class CashSessionsRepository implements ICashSessionsRepository {
       client,
     );
     return result.rows[0];
+  }
+
+  async updateMovementPaymentMethod(
+    paymentId: string,
+    paymentMethod: PaymentMethod,
+    client?: DbClient,
+  ): Promise<void> {
+    await this.db.query(
+      `UPDATE cash_movements SET payment_method = $2 WHERE payment_id = $1`,
+      [paymentId, paymentMethod],
+      client,
+    );
   }
 
   async findMovements(
@@ -178,6 +194,20 @@ export class CashSessionsRepository implements ICashSessionsRepository {
     return parseFloat(result.rows[0]?.expected ?? '0');
   }
 
+  async getExpectedTransferAmount(
+    cashSessionId: string,
+    client?: DbClient,
+  ): Promise<number> {
+    const result = await this.db.query<ExpectedRow>(
+      `SELECT COALESCE(SUM(amount), 0)::text AS expected
+       FROM cash_movements
+       WHERE cash_session_id = $1 AND movement_type = 'SALE' AND payment_method = 'TRANSFER'`,
+      [cashSessionId],
+      client,
+    );
+    return parseFloat(result.rows[0]?.expected ?? '0');
+  }
+
   async close(
     id: string,
     businessId: string,
@@ -185,6 +215,9 @@ export class CashSessionsRepository implements ICashSessionsRepository {
     expectedClosingAmount: number,
     actualClosingAmount: number,
     differenceAmount: number,
+    expectedTransferAmount: number,
+    actualTransferAmount: number | null,
+    transferDifferenceAmount: number | null,
     notes: string | undefined,
     client?: DbClient,
   ): Promise<CashSessionRow | null> {
@@ -196,7 +229,10 @@ export class CashSessionsRepository implements ICashSessionsRepository {
            expected_closing_amount = $4,
            actual_closing_amount = $5,
            difference_amount = $6,
-           notes = COALESCE($7, notes)
+           expected_transfer_amount = $7,
+           actual_transfer_amount = $8,
+           transfer_difference_amount = $9,
+           notes = COALESCE($10, notes)
        WHERE id = $1 AND business_id = $2 AND status = 'OPEN'
        RETURNING ${SELECT_COLUMNS}`,
       [
@@ -206,6 +242,9 @@ export class CashSessionsRepository implements ICashSessionsRepository {
         expectedClosingAmount,
         actualClosingAmount,
         differenceAmount,
+        expectedTransferAmount,
+        actualTransferAmount,
+        transferDifferenceAmount,
         notes ?? null,
       ],
       client,

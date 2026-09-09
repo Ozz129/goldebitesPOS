@@ -13,12 +13,14 @@ export interface OpenCashSessionData {
 
 export interface CloseCashSessionData {
   actualClosingAmount: number;
+  actualTransferAmount?: number;
   notes?: string;
 }
 
 export interface RecordCashMovementData {
   cashSessionId: string;
   orderId?: string;
+  paymentId?: string;
   movementType: CashMovementType;
   paymentMethod?: PaymentMethod;
   amount: number;

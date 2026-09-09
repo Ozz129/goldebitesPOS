@@ -17,6 +17,9 @@ export interface CashSession {
   expectedClosingAmount: number | null;
   actualClosingAmount: number | null;
   differenceAmount: number | null;
+  expectedTransferAmount: number | null;
+  actualTransferAmount: number | null;
+  transferDifferenceAmount: number | null;
   status: CashSessionStatus;
   openedAt: string;
   closedAt: string | null;
@@ -47,6 +50,7 @@ export interface OpenCashSessionPayload {
 
 export interface CloseCashSessionPayload {
   actualClosingAmount: number;
+  actualTransferAmount?: number;
   notes?: string;
 }
 

@@ -1,4 +1,7 @@
-import { BusinessRuleException } from '../../../common/exceptions';
+import {
+  BusinessRuleException,
+  EntityNotFoundException,
+} from '../../../common/exceptions';
 import {
   CashMovementType,
   PaymentMethod,
@@ -13,8 +16,10 @@ import { PaymentsService } from './payments.service';
 describe('PaymentsService', () => {
   let repository: {
     create: jest.Mock;
+    findById: jest.Mock;
     findByOrder: jest.Mock;
     getTotalPaid: jest.Mock;
+    updateMethod: jest.Mock;
   };
   let ordersService: {
     getOwnedOrFail: jest.Mock;
@@ -24,6 +29,7 @@ describe('PaymentsService', () => {
     getOpenSessionOrFail: jest.Mock;
     findOpenSessionId: jest.Mock;
     recordSaleMovement: jest.Mock;
+    correctSaleMovementMethod: jest.Mock;
   };
   let transactionService: { execute: jest.Mock };
   let auditService: { record: jest.Mock };
@@ -62,8 +68,10 @@ describe('PaymentsService', () => {
   beforeEach(() => {
     repository = {
       create: jest.fn(),
+      findById: jest.fn().mockResolvedValue(makePaymentRow()),
       findByOrder: jest.fn().mockResolvedValue([]),
       getTotalPaid: jest.fn().mockResolvedValue(0),
+      updateMethod: jest.fn().mockResolvedValue(makePaymentRow()),
     };
     ordersService = {
       getOwnedOrFail: jest.fn().mockResolvedValue(makeOrder()),
@@ -73,6 +81,7 @@ describe('PaymentsService', () => {
       getOpenSessionOrFail: jest.fn().mockResolvedValue({ id: 'session-1' }),
       findOpenSessionId: jest.fn().mockResolvedValue('session-1'),
       recordSaleMovement: jest.fn(),
+      correctSaleMovementMethod: jest.fn(),
     };
     transactionService = {
       execute: jest.fn((work: (client: unknown) => Promise<unknown>) =>
@@ -235,6 +244,61 @@ describe('PaymentsService', () => {
         OrderPaymentStatus.PARTIALLY_PAID,
         expect.anything(),
       );
+    });
+  });
+
+  describe('updateMethod', () => {
+    it('rejects when the payment does not belong to the given order', async () => {
+      repository.findById.mockResolvedValue(
+        makePaymentRow({ order_id: 'some-other-order' }),
+      );
+
+      await expect(
+        service.updateMethod(businessId, 'order-1', 'payment-1', {
+          paymentMethod: PaymentMethod.CASH,
+        }),
+      ).rejects.toThrow(EntityNotFoundException);
+    });
+
+    it('rejects when the payment does not exist', async () => {
+      repository.findById.mockResolvedValue(null);
+
+      await expect(
+        service.updateMethod(businessId, 'order-1', 'payment-1', {
+          paymentMethod: PaymentMethod.CASH,
+        }),
+      ).rejects.toThrow(EntityNotFoundException);
+    });
+
+    it('corrects the matching cash movement when the method actually changes', async () => {
+      repository.findById.mockResolvedValue(
+        makePaymentRow({ payment_method: PaymentMethod.TRANSFER }),
+      );
+      repository.updateMethod.mockResolvedValue(
+        makePaymentRow({ payment_method: PaymentMethod.CASH }),
+      );
+
+      await service.updateMethod(businessId, 'order-1', 'payment-1', {
+        paymentMethod: PaymentMethod.CASH,
+      });
+
+      expect(cashSessionsService.correctSaleMovementMethod).toHaveBeenCalledWith(
+        'payment-1',
+        PaymentMethod.CASH,
+        expect.anything(),
+      );
+    });
+
+    it('does not touch the cash movement when the method is unchanged', async () => {
+      repository.findById.mockResolvedValue(
+        makePaymentRow({ payment_method: PaymentMethod.CASH }),
+      );
+
+      await service.updateMethod(businessId, 'order-1', 'payment-1', {
+        paymentMethod: PaymentMethod.CASH,
+      });
+
+      expect(cashSessionsService.correctSaleMovementMethod).not.toHaveBeenCalled();
     });
   });
 });

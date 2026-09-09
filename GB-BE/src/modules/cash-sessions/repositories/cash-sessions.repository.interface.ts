@@ -2,6 +2,7 @@ import { DbClient } from '../../../database/types/database.types';
 import {
   CashMovementRow,
   CashSessionRow,
+  PaymentMethod,
 } from '../domain/cash-session.interface';
 import {
   CashSessionQuery,
@@ -32,11 +33,20 @@ export interface ICashSessionsRepository {
     data: RecordCashMovementData,
     client?: DbClient,
   ): Promise<CashMovementRow>;
+  updateMovementPaymentMethod(
+    paymentId: string,
+    paymentMethod: PaymentMethod,
+    client?: DbClient,
+  ): Promise<void>;
   findMovements(
     cashSessionId: string,
     client?: DbClient,
   ): Promise<CashMovementRow[]>;
   getExpectedClosingAmount(
+    cashSessionId: string,
+    client?: DbClient,
+  ): Promise<number>;
+  getExpectedTransferAmount(
     cashSessionId: string,
     client?: DbClient,
   ): Promise<number>;
@@ -47,6 +57,9 @@ export interface ICashSessionsRepository {
     expectedClosingAmount: number,
     actualClosingAmount: number,
     differenceAmount: number,
+    expectedTransferAmount: number,
+    actualTransferAmount: number | null,
+    transferDifferenceAmount: number | null,
     notes: string | undefined,
     client?: DbClient,
   ): Promise<CashSessionRow | null>;

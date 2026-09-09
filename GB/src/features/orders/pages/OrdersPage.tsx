@@ -57,7 +57,8 @@ export default function OrdersPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<OrderStatus | 'todos'>('todos');
   const [typeFilter, setTypeFilter] = useState<OrderType | 'todos'>('todos');
-  const [todayOnly, setTodayOnly] = useState(true);
+  const [dateMode, setDateMode] = useState<'hoy' | 'fecha' | 'todos'>('hoy');
+  const [specificDate, setSpecificDate] = useState(() => dayjs().format('YYYY-MM-DD'));
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [newOrderOpen, setNewOrderOpen] = useState(false);
   const [autoPrintEnabled, setAutoPrintEnabled] = useState(loadAutoPrintPreference);
@@ -71,16 +72,16 @@ export default function OrdersPage() {
     [],
   );
 
-  const filters = useMemo(
-    () => ({
+  const filters = useMemo(() => {
+    const day = dateMode === 'hoy' ? dayjs() : dateMode === 'fecha' ? dayjs(specificDate) : null;
+    return {
       limit: 100,
       status: statusFilter === 'todos' ? undefined : statusFilter,
       orderType: typeFilter === 'todos' ? undefined : typeFilter,
-      dateFrom: todayOnly ? dayjs().startOf('day').toISOString() : undefined,
-      dateTo: todayOnly ? dayjs().endOf('day').toISOString() : undefined,
-    }),
-    [statusFilter, typeFilter, todayOnly],
-  );
+      dateFrom: day ? day.startOf('day').toISOString() : undefined,
+      dateTo: day ? day.endOf('day').toISOString() : undefined,
+    };
+  }, [statusFilter, typeFilter, dateMode, specificDate]);
 
   const { data, isLoading, isError, refetch } = useOrders(filters);
   const { data: todayOrdersData } = useOrders(todayFilters);
@@ -248,8 +249,11 @@ export default function OrdersPage() {
           setSearch('');
           setStatusFilter('todos');
           setTypeFilter('todos');
+          setDateMode('hoy');
         }}
-        hasActiveFilters={Boolean(search) || statusFilter !== 'todos' || typeFilter !== 'todos'}
+        hasActiveFilters={
+          Boolean(search) || statusFilter !== 'todos' || typeFilter !== 'todos' || dateMode !== 'hoy'
+        }
       >
         <SearchInput value={search} onChange={setSearch} placeholder="Buscar por # de pedido o cliente..." />
         <TextField
@@ -283,18 +287,32 @@ export default function OrdersPage() {
           ))}
         </TextField>
         <ToggleButtonGroup
-          value={todayOnly ? 'hoy' : 'todos'}
+          value={dateMode}
           exclusive
           size="small"
-          onChange={(_, value) => value && setTodayOnly(value === 'hoy')}
+          onChange={(_, value) => value && setDateMode(value)}
         >
           <ToggleButton value="hoy" sx={{ fontWeight: 700 }}>
             Solo hoy
+          </ToggleButton>
+          <ToggleButton value="fecha" sx={{ fontWeight: 700 }}>
+            Fecha específica
           </ToggleButton>
           <ToggleButton value="todos" sx={{ fontWeight: 700 }}>
             Todos los días
           </ToggleButton>
         </ToggleButtonGroup>
+        {dateMode === 'fecha' && (
+          <TextField
+            type="date"
+            size="small"
+            label="Fecha"
+            value={specificDate}
+            onChange={(e) => setSpecificDate(e.target.value)}
+            slotProps={{ inputLabel: { shrink: true } }}
+            sx={{ minWidth: 170 }}
+          />
+        )}
         <FormControlLabel
           sx={{ ml: 1 }}
           control={

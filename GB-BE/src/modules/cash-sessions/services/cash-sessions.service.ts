@@ -17,6 +17,7 @@ import {
   CashSessionRow,
   CashSessionStatus,
   CashSessionWithMovements,
+  PaymentMethod,
 } from '../domain/cash-session.interface';
 import {
   CashSessionQuery,
@@ -202,6 +203,23 @@ export class CashSessionsService {
     await this.sessionsRepository.addMovement(data, client);
   }
 
+  /**
+   * Used by PaymentsService when a payment's method is corrected after the fact — keeps the
+   * cash session's expected-cash total accurate. A no-op if the payment never had a matching
+   * movement (e.g. no cash session was open when it was originally recorded).
+   */
+  async correctSaleMovementMethod(
+    paymentId: string,
+    paymentMethod: PaymentMethod,
+    client?: DbClient,
+  ): Promise<void> {
+    await this.sessionsRepository.updateMovementPaymentMethod(
+      paymentId,
+      paymentMethod,
+      client,
+    );
+  }
+
   async close(
     businessId: string,
     id: string,
@@ -223,6 +241,13 @@ export class CashSessionsService {
       );
       const difference = round2(data.actualClosingAmount - expected);
 
+      const expectedTransfer =
+        await this.sessionsRepository.getExpectedTransferAmount(id, client);
+      const transferDifference =
+        data.actualTransferAmount !== undefined
+          ? round2(data.actualTransferAmount - expectedTransfer)
+          : null;
+
       const closed = await this.sessionsRepository.close(
         id,
         businessId,
@@ -230,6 +255,9 @@ export class CashSessionsService {
         expected,
         data.actualClosingAmount,
         difference,
+        expectedTransfer,
+        data.actualTransferAmount ?? null,
+        transferDifference,
         data.notes,
         client,
       );
@@ -263,6 +291,9 @@ export class CashSessionsService {
         expectedClosingAmount: row.expected_closing_amount,
         actualClosingAmount: row.actual_closing_amount,
         differenceAmount: row.difference_amount,
+        expectedTransferAmount: row.expected_transfer_amount,
+        actualTransferAmount: row.actual_transfer_amount,
+        transferDifferenceAmount: row.transfer_difference_amount,
       },
     });
 

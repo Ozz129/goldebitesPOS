@@ -140,6 +140,9 @@ describe('CashSessionsRepository (integration)', () => {
       1000,
       1000,
       0,
+      0,
+      null,
+      null,
       undefined,
     );
     expect(closed?.status).toBe('CLOSED');
@@ -151,6 +154,9 @@ describe('CashSessionsRepository (integration)', () => {
       1000,
       1000,
       0,
+      0,
+      null,
+      null,
       undefined,
     );
     expect(secondAttempt).toBeNull();

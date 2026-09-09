@@ -19,3 +19,8 @@ export interface CreatePaymentPayload {
   reference?: string;
   payerLabel?: string;
 }
+
+export interface UpdatePaymentMethodPayload {
+  paymentMethod: PaymentMethod;
+  reference?: string;
+}

@@ -26,6 +26,18 @@ export class CashSessionMapper {
         row.difference_amount === null
           ? null
           : parseFloat(row.difference_amount),
+      expectedTransferAmount:
+        row.expected_transfer_amount === null
+          ? null
+          : parseFloat(row.expected_transfer_amount),
+      actualTransferAmount:
+        row.actual_transfer_amount === null
+          ? null
+          : parseFloat(row.actual_transfer_amount),
+      transferDifferenceAmount:
+        row.transfer_difference_amount === null
+          ? null
+          : parseFloat(row.transfer_difference_amount),
       status: row.status,
       openedAt: row.opened_at,
       closedAt: row.closed_at,
@@ -38,6 +50,7 @@ export class CashSessionMapper {
       id: row.id,
       cashSessionId: row.cash_session_id,
       orderId: row.order_id,
+      paymentId: row.payment_id,
       movementType: row.movement_type,
       paymentMethod: row.payment_method,
       amount: parseFloat(row.amount),

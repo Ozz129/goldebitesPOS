@@ -17,8 +17,10 @@ describe('CashSessionsService', () => {
     findOpenForBranch: jest.Mock;
     findAll: jest.Mock;
     addMovement: jest.Mock;
+    updateMovementPaymentMethod: jest.Mock;
     findMovements: jest.Mock;
     getExpectedClosingAmount: jest.Mock;
+    getExpectedTransferAmount: jest.Mock;
     close: jest.Mock;
   };
   let branchesService: { findOne: jest.Mock };
@@ -40,6 +42,9 @@ describe('CashSessionsService', () => {
       expected_closing_amount: null,
       actual_closing_amount: null,
       difference_amount: null,
+      expected_transfer_amount: null,
+      actual_transfer_amount: null,
+      transfer_difference_amount: null,
       status: CashSessionStatus.OPEN,
       opened_at: new Date(),
       closed_at: null,
@@ -55,8 +60,10 @@ describe('CashSessionsService', () => {
       findOpenForBranch: jest.fn(),
       findAll: jest.fn().mockResolvedValue({ rows: [], total: 0 }),
       addMovement: jest.fn(),
+      updateMovementPaymentMethod: jest.fn(),
       findMovements: jest.fn().mockResolvedValue([]),
       getExpectedClosingAmount: jest.fn().mockResolvedValue(0),
+      getExpectedTransferAmount: jest.fn().mockResolvedValue(0),
       close: jest.fn(),
     };
     branchesService = {
@@ -142,6 +149,18 @@ describe('CashSessionsService', () => {
     });
   });
 
+  describe('correctSaleMovementMethod', () => {
+    it('delegates to the repository to retag the movement tied to that payment', async () => {
+      await service.correctSaleMovementMethod('payment-1', 'CASH' as never);
+
+      expect(repository.updateMovementPaymentMethod).toHaveBeenCalledWith(
+        'payment-1',
+        'CASH',
+        undefined,
+      );
+    });
+  });
+
   describe('close', () => {
     it('rejects closing an already-closed session', async () => {
       repository.findById.mockResolvedValue(
@@ -176,10 +195,60 @@ describe('CashSessionsService', () => {
         55000,
         54000,
         -1000,
+        0,
+        null,
+        null,
         undefined,
         expect.anything(),
       );
       expect(result.differenceAmount).toBe(-1000);
+    });
+
+    it('computes the transfer difference only when an actual transfer amount is given', async () => {
+      repository.findById.mockResolvedValue(makeRow());
+      repository.getExpectedTransferAmount.mockResolvedValue(20000);
+      repository.close.mockResolvedValue(makeRow({ status: CashSessionStatus.CLOSED }));
+
+      await service.close(businessId, 'session-1', {
+        actualClosingAmount: 50000,
+        actualTransferAmount: 18000,
+      });
+
+      expect(repository.close).toHaveBeenCalledWith(
+        'session-1',
+        businessId,
+        undefined,
+        0,
+        50000,
+        50000,
+        20000,
+        18000,
+        -2000,
+        undefined,
+        expect.anything(),
+      );
+    });
+
+    it('leaves actual/difference transfer amounts null when none is provided', async () => {
+      repository.findById.mockResolvedValue(makeRow());
+      repository.getExpectedTransferAmount.mockResolvedValue(20000);
+      repository.close.mockResolvedValue(makeRow({ status: CashSessionStatus.CLOSED }));
+
+      await service.close(businessId, 'session-1', { actualClosingAmount: 50000 });
+
+      expect(repository.close).toHaveBeenCalledWith(
+        'session-1',
+        businessId,
+        undefined,
+        0,
+        50000,
+        50000,
+        20000,
+        null,
+        null,
+        undefined,
+        expect.anything(),
+      );
     });
 
     it('throws EntityNotFoundException when the session vanished mid-transaction', async () => {

@@ -8,7 +8,7 @@ import type {
   OrderStatus,
   OrderWithItems,
 } from '../types/order.types';
-import type { CreatePaymentPayload, Payment } from '../types/payment.types';
+import type { CreatePaymentPayload, Payment, UpdatePaymentMethodPayload } from '../types/payment.types';
 
 export const ordersApi = {
   async getOrders(filters: OrderFilters = {}): Promise<PaginatedResponse<Order>> {
@@ -68,6 +68,18 @@ export const ordersApi = {
   async createPayment(orderId: string, payload: CreatePaymentPayload): Promise<Payment> {
     const { data } = await apiClient.post<ApiResponse<Payment>>(
       `/orders/${orderId}/payments`,
+      payload,
+    );
+    return data.data;
+  },
+
+  async updatePaymentMethod(
+    orderId: string,
+    paymentId: string,
+    payload: UpdatePaymentMethodPayload,
+  ): Promise<Payment> {
+    const { data } = await apiClient.patch<ApiResponse<Payment>>(
+      `/orders/${orderId}/payments/${paymentId}`,
       payload,
     );
     return data.data;

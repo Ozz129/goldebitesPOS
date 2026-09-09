@@ -150,7 +150,7 @@ export default function CashRegisterPage() {
     },
     {
       id: 'differenceAmount',
-      header: 'Diferencia',
+      header: 'Diferencia efectivo',
       cell: ({ row }) =>
         row.original.differenceAmount !== null ? (
           <Typography
@@ -159,6 +159,28 @@ export default function CashRegisterPage() {
             sx={{ fontWeight: 700 }}
           >
             {formatCOP(row.original.differenceAmount)}
+          </Typography>
+        ) : (
+          '—'
+        ),
+    },
+    {
+      id: 'actualTransferAmount',
+      header: 'Transferencias verificadas',
+      cell: ({ row }) =>
+        row.original.actualTransferAmount !== null ? formatCOP(row.original.actualTransferAmount) : '—',
+    },
+    {
+      id: 'transferDifferenceAmount',
+      header: 'Diferencia transferencias',
+      cell: ({ row }) =>
+        row.original.transferDifferenceAmount !== null ? (
+          <Typography
+            variant="body2"
+            color={row.original.transferDifferenceAmount === 0 ? 'success.main' : 'error.main'}
+            sx={{ fontWeight: 700 }}
+          >
+            {formatCOP(row.original.transferDifferenceAmount)}
           </Typography>
         ) : (
           '—'
@@ -321,20 +343,33 @@ export default function CashRegisterPage() {
         open={closeDialogOpen}
         loading={closeSession.isPending}
         onClose={() => setCloseDialogOpen(false)}
-        onConfirm={(actualClosingAmount, notes) => {
+        onConfirm={(actualClosingAmount, actualTransferAmount, notes) => {
           if (!currentSession) return;
           closeSession.mutate(
-            { id: currentSession.id, payload: { actualClosingAmount, notes: notes || undefined } },
+            {
+              id: currentSession.id,
+              payload: { actualClosingAmount, actualTransferAmount, notes: notes || undefined },
+            },
             {
               onSuccess: (closed) => {
                 setCloseDialogOpen(false);
                 const diff = closed.differenceAmount ?? 0;
-                enqueueSnackbar(
+                const transferDiff = closed.transferDifferenceAmount;
+                const messages = [
                   diff === 0
-                    ? 'Caja cerrada correctamente. Cuadre exacto.'
-                    : `Caja cerrada. Diferencia de ${formatCOP(Math.abs(diff))} (${diff > 0 ? 'sobrante' : 'faltante'}).`,
-                  { variant: diff === 0 ? 'success' : 'warning' },
-                );
+                    ? 'Efectivo: cuadre exacto.'
+                    : `Efectivo: diferencia de ${formatCOP(Math.abs(diff))} (${diff > 0 ? 'sobrante' : 'faltante'}).`,
+                ];
+                if (transferDiff !== null) {
+                  messages.push(
+                    transferDiff === 0
+                      ? 'Transferencias: cuadre exacto.'
+                      : `Transferencias: diferencia de ${formatCOP(Math.abs(transferDiff))} (${transferDiff > 0 ? 'sobrante' : 'faltante'}).`,
+                  );
+                }
+                enqueueSnackbar(`Caja cerrada. ${messages.join(' ')}`, {
+                  variant: diff === 0 && (transferDiff === null || transferDiff === 0) ? 'success' : 'warning',
+                });
               },
               onError: (error) => enqueueSnackbar(normalizeApiError(error).message, { variant: 'error' }),
             },

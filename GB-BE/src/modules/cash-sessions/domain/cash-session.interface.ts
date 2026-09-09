@@ -31,6 +31,9 @@ export interface CashSession {
   expectedClosingAmount: number | null;
   actualClosingAmount: number | null;
   differenceAmount: number | null;
+  expectedTransferAmount: number | null;
+  actualTransferAmount: number | null;
+  transferDifferenceAmount: number | null;
   status: CashSessionStatus;
   openedAt: Date;
   closedAt: Date | null;
@@ -47,6 +50,9 @@ export interface CashSessionRow {
   expected_closing_amount: string | null;
   actual_closing_amount: string | null;
   difference_amount: string | null;
+  expected_transfer_amount: string | null;
+  actual_transfer_amount: string | null;
+  transfer_difference_amount: string | null;
   status: CashSessionStatus;
   opened_at: Date;
   closed_at: Date | null;
@@ -57,6 +63,7 @@ export interface CashMovement {
   id: string;
   cashSessionId: string;
   orderId: string | null;
+  paymentId: string | null;
   movementType: CashMovementType;
   paymentMethod: PaymentMethod | null;
   amount: number;
@@ -69,6 +76,7 @@ export interface CashMovementRow {
   id: string;
   cash_session_id: string;
   order_id: string | null;
+  payment_id: string | null;
   movement_type: CashMovementType;
   payment_method: PaymentMethod | null;
   amount: string;

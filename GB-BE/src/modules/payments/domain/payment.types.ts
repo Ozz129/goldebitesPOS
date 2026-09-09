@@ -7,3 +7,8 @@ export interface CreatePaymentData {
   reference?: string;
   payerLabel?: string;
 }
+
+export interface UpdatePaymentMethodData {
+  paymentMethod: PaymentMethod;
+  reference?: string;
+}

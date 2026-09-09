@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../../database/database.service';
 import { DbClient } from '../../../database/types/database.types';
+import { PaymentMethod } from '../../cash-sessions/domain/cash-session.interface';
 import { PaymentRow } from '../domain/payment.interface';
 import { CreatePaymentData } from '../domain/payment.types';
 import { IPaymentsRepository } from './payments.repository.interface';
@@ -35,6 +36,32 @@ export class PaymentsRepository implements IPaymentsRepository {
       client,
     );
     return result.rows[0];
+  }
+
+  async findById(id: string, client?: DbClient): Promise<PaymentRow | null> {
+    const result = await this.db.query<PaymentRow>(
+      `SELECT ${SELECT_COLUMNS} FROM payments WHERE id = $1`,
+      [id],
+      client,
+    );
+    return result.rows[0] ?? null;
+  }
+
+  async updateMethod(
+    id: string,
+    paymentMethod: PaymentMethod,
+    reference: string | undefined,
+    client?: DbClient,
+  ): Promise<PaymentRow | null> {
+    const result = await this.db.query<PaymentRow>(
+      `UPDATE payments
+       SET payment_method = $2, reference = COALESCE($3, reference)
+       WHERE id = $1
+       RETURNING ${SELECT_COLUMNS}`,
+      [id, paymentMethod, reference ?? null],
+      client,
+    );
+    return result.rows[0] ?? null;
   }
 
   async findByOrder(orderId: string, client?: DbClient): Promise<PaymentRow[]> {

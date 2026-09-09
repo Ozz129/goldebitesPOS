@@ -11,6 +11,7 @@ import {
 import { BusinessMapper } from '../mappers/business.mapper';
 import { BUSINESSES_REPOSITORY } from '../repositories/businesses.repository.interface';
 import type { IBusinessesRepository } from '../repositories/businesses.repository.interface';
+import { deleteBusinessLogoFile } from '../storage/business-logo-storage.util';
 
 @Injectable()
 export class BusinessesService {
@@ -172,6 +173,52 @@ export class BusinessesService {
       newValues: data,
     });
     return BusinessMapper.toDomain(row);
+  }
+
+  async setLogo(
+    id: string,
+    logoPath: string,
+    mimeType: string,
+    actorUserId?: string,
+  ): Promise<void> {
+    await this.getOrFail(id);
+    const existing = await this.businessesRepository.getLogo(id);
+    await this.businessesRepository.setLogo(id, logoPath, mimeType);
+    if (existing) {
+      deleteBusinessLogoFile(existing.logo_path);
+    }
+    await this.auditService.record({
+      businessId: id,
+      userId: actorUserId,
+      entityType: 'business',
+      entityId: id,
+      action: 'UPDATE_LOGO',
+    });
+  }
+
+  /** Used by BusinessesController to stream the logo file, and by print flows to embed it. */
+  async getLogo(
+    id: string,
+  ): Promise<{ logoPath: string; mimeType: string } | null> {
+    const row = await this.businessesRepository.getLogo(id);
+    return row ? { logoPath: row.logo_path, mimeType: row.logo_mime_type } : null;
+  }
+
+  async clearLogo(id: string, actorUserId?: string): Promise<void> {
+    await this.getOrFail(id);
+    const existing = await this.businessesRepository.getLogo(id);
+    if (!existing) {
+      return;
+    }
+    await this.businessesRepository.clearLogo(id);
+    deleteBusinessLogoFile(existing.logo_path);
+    await this.auditService.record({
+      businessId: id,
+      userId: actorUserId,
+      entityType: 'business',
+      entityId: id,
+      action: 'REMOVE_LOGO',
+    });
   }
 
   private async getOrFail(id: string): Promise<BusinessRow> {

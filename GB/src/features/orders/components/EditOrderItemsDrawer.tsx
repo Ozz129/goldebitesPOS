@@ -76,7 +76,7 @@ export default function EditOrderItemsDrawer({
       onClose={onClose}
       onSubmit={submit}
       title={`Editar pedido #${order.orderNumber}`}
-      subtitle="Solo puedes editar los productos mientras el pedido está pendiente."
+      subtitle="Puedes editar los productos mientras el pedido siga activo (no entregado ni cancelado)."
       submitLabel="Guardar cambios"
       loading={isSubmitting || loading}
       width={560}

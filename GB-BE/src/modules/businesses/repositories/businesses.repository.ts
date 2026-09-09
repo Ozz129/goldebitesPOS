@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../../database/database.service';
 import { DbClient } from '../../../database/types/database.types';
-import { BusinessRow } from '../domain/business.interface';
+import { BusinessLogoRow, BusinessRow } from '../domain/business.interface';
 import {
   CreateBusinessData,
   UpdateBusinessData,
@@ -134,5 +134,27 @@ export class BusinessesRepository implements IBusinessesRepository {
       client,
     );
     return result.rows[0] ?? null;
+  }
+
+  async setLogo(id: string, logoPath: string, mimeType: string): Promise<void> {
+    await this.db.query(
+      `UPDATE businesses SET logo_path = $2, logo_mime_type = $3 WHERE id = $1`,
+      [id, logoPath, mimeType],
+    );
+  }
+
+  async getLogo(id: string): Promise<BusinessLogoRow | null> {
+    const result = await this.db.query<BusinessLogoRow>(
+      `SELECT logo_path, logo_mime_type FROM businesses WHERE id = $1 AND logo_path IS NOT NULL`,
+      [id],
+    );
+    return result.rows[0] ?? null;
+  }
+
+  async clearLogo(id: string): Promise<void> {
+    await this.db.query(
+      `UPDATE businesses SET logo_path = NULL, logo_mime_type = NULL WHERE id = $1`,
+      [id],
+    );
   }
 }

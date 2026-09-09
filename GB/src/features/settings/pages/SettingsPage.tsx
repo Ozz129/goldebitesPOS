@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
@@ -10,13 +10,16 @@ import Chip from '@mui/material/Chip';
 import Switch from '@mui/material/Switch';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Box from '@mui/material/Box';
-import { ChevronDown, Check, X } from 'lucide-react';
+import { ChevronDown, Check, X, Upload, Trash2 } from 'lucide-react';
 import { useSnackbar } from 'notistack';
 import PageHeader from '../../../components/common/PageHeader';
 import StatusChip from '../../../components/common/StatusChip';
 import { Can } from '../../../modules/auth/components/can';
 import { useCurrentBusiness } from '../../../modules/businesses/hooks/use-current-business';
 import { useUpdateBusiness } from '../../../modules/businesses/hooks/use-update-business';
+import { useBusinessLogo } from '../../../modules/businesses/hooks/use-business-logo';
+import { useUploadBusinessLogo } from '../../../modules/businesses/hooks/use-upload-business-logo';
+import { useDeleteBusinessLogo } from '../../../modules/businesses/hooks/use-delete-business-logo';
 import { useUpdateTaxRate } from '../../../modules/settings/hooks/use-update-tax-rate';
 import { useBranches } from '../../../modules/branches/hooks/use-branches';
 import BranchTableCountField from '../components/BranchTableCountField';
@@ -38,6 +41,9 @@ export default function SettingsPage() {
 
   const { data: business } = useCurrentBusiness();
   const updateBusiness = useUpdateBusiness();
+  const { data: logoDataUri, isLoading: logoLoading } = useBusinessLogo();
+  const uploadLogo = useUploadBusinessLogo();
+  const deleteLogo = useDeleteBusinessLogo();
   const updateTaxRate = useUpdateTaxRate();
   const { data: branchesData } = useBranches({ limit: 50 });
   const branches = branchesData?.data ?? [];
@@ -68,6 +74,18 @@ export default function SettingsPage() {
     });
     setTaxRatePercent(String(Math.round(business.taxRate * 100)));
   }
+
+  const logoInputRef = useRef<HTMLInputElement>(null);
+
+  const handleLogoSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    uploadLogo.mutate(file, {
+      onSuccess: () => enqueueSnackbar('Logo actualizado correctamente', { variant: 'success' }),
+      onError: (error) => enqueueSnackbar(normalizeApiError(error).message, { variant: 'error' }),
+    });
+  };
 
   return (
     <>
@@ -119,6 +137,82 @@ export default function SettingsPage() {
                 Guardar cambios
               </Button>
             </Can>
+
+            <Box>
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
+                Logo del negocio
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
+                Se incluye en las comandas de cocina, facturas y comprobantes de pago que imprime la app.
+              </Typography>
+              <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
+                <Box
+                  sx={{
+                    width: 72,
+                    height: 72,
+                    borderRadius: 2,
+                    border: '1px dashed',
+                    borderColor: 'divider',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    overflow: 'hidden',
+                    bgcolor: 'action.hover',
+                    flexShrink: 0,
+                  }}
+                >
+                  {logoLoading ? (
+                    <Typography variant="caption" color="text.secondary">
+                      ...
+                    </Typography>
+                  ) : logoDataUri ? (
+                    <Box component="img" src={logoDataUri} alt="Logo del negocio" sx={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                  ) : (
+                    <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'center', px: 0.5 }}>
+                      Sin logo
+                    </Typography>
+                  )}
+                </Box>
+                <Can permission="businesses.manage">
+                  <Stack spacing={1}>
+                    <input
+                      ref={logoInputRef}
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      hidden
+                      onChange={handleLogoSelected}
+                    />
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      startIcon={<Upload size={14} />}
+                      loading={uploadLogo.isPending}
+                      onClick={() => logoInputRef.current?.click()}
+                      sx={{ alignSelf: 'flex-start' }}
+                    >
+                      {logoDataUri ? 'Cambiar logo' : 'Subir logo'}
+                    </Button>
+                    {logoDataUri && (
+                      <Button
+                        size="small"
+                        color="error"
+                        startIcon={<Trash2 size={14} />}
+                        loading={deleteLogo.isPending}
+                        onClick={() => {
+                          deleteLogo.mutate(undefined, {
+                            onSuccess: () => enqueueSnackbar('Logo eliminado', { variant: 'success' }),
+                            onError: (error) => enqueueSnackbar(normalizeApiError(error).message, { variant: 'error' }),
+                          });
+                        }}
+                        sx={{ alignSelf: 'flex-start' }}
+                      >
+                        Quitar logo
+                      </Button>
+                    )}
+                  </Stack>
+                </Can>
+              </Stack>
+            </Box>
           </Stack>
         </AccordionDetails>
       </Accordion>

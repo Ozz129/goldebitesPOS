@@ -24,6 +24,7 @@ import { useCreateOrder } from '../../../modules/orders/hooks/use-create-order';
 import { useUpdateOrderStatus } from '../../../modules/orders/hooks/use-update-order-status';
 import { useAutoPrintKitchenTickets } from '../../../modules/orders/hooks/use-auto-print-kitchen-tickets';
 import { useCurrentBusiness } from '../../../modules/businesses/hooks/use-current-business';
+import { useBusinessLogo } from '../../../modules/businesses/hooks/use-business-logo';
 import { useCustomers } from '../../../modules/customers/hooks/use-customers';
 import { normalizeApiError } from '../../../lib/api/api-error';
 import {
@@ -86,6 +87,7 @@ export default function OrdersPage() {
   const { data: backlog } = useOrdersBacklog();
   const { data: customersData } = useCustomers({ limit: 100 });
   const { data: business } = useCurrentBusiness();
+  const { data: businessLogo } = useBusinessLogo();
   const createOrder = useCreateOrder();
   const updateStatus = useUpdateOrderStatus();
   const branchId = useAuthStore((s) => s.user?.branchId);
@@ -94,7 +96,7 @@ export default function OrdersPage() {
     () => todayOrdersData?.data.filter((o) => o.status !== 'PENDING' && o.status !== 'CANCELLED'),
     [todayOrdersData],
   );
-  useAutoPrintKitchenTickets(printableOrders, business?.name, autoPrintEnabled);
+  useAutoPrintKitchenTickets(printableOrders, business?.name, businessLogo, autoPrintEnabled);
 
   function handleAutoPrintToggle(checked: boolean) {
     setAutoPrintEnabled(checked);

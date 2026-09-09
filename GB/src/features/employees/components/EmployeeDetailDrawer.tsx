@@ -7,18 +7,25 @@ import Button from '@mui/material/Button';
 import Checkbox from '@mui/material/Checkbox';
 import TextField from '@mui/material/TextField';
 import FormControlLabel from '@mui/material/FormControlLabel';
-import { Phone, Mail, Calendar, Pencil, Trash2 } from 'lucide-react';
+import { Phone, Mail, Calendar, Pencil, Trash2, Receipt } from 'lucide-react';
 import { useSnackbar } from 'notistack';
 import DetailDrawer from '../../../components/common/DetailDrawer';
 import StatusChip from '../../../components/common/StatusChip';
 import DateDisplay from '../../../components/common/DateDisplay';
+import CurrencyDisplay from '../../../components/common/CurrencyDisplay';
 import { Can } from '../../../modules/auth/components/can';
 import { useEmployee } from '../../../modules/employees/hooks/use-employee';
 import { useSetEmployeeShifts } from '../../../modules/employees/hooks/use-set-employee-shifts';
+import { usePrintPaymentReceipt } from '../../../modules/employees/hooks/use-print-payment-receipt';
 import { useRoles } from '../../../modules/roles/hooks/use-roles';
 import { getRoleLabel } from '../../../modules/roles/role-labels';
 import { normalizeApiError } from '../../../lib/api/api-error';
-import { EMPLOYEE_STATUS_LABELS, EMPLOYEE_STATUS_TONE, WEEKDAY_LABELS } from '../../../modules/employees/employee-status';
+import {
+  EMPLOYEE_PAY_FREQUENCY_LABELS,
+  EMPLOYEE_STATUS_LABELS,
+  EMPLOYEE_STATUS_TONE,
+  WEEKDAY_LABELS,
+} from '../../../modules/employees/employee-status';
 import type { Employee, ShiftInput } from '../../../modules/employees/types/employee.types';
 import EmployeeCredentialsSection from './EmployeeCredentialsSection';
 
@@ -55,6 +62,7 @@ export default function EmployeeDetailDrawer({
   const { data: roles } = useRoles();
   const roleLabel = roles?.find((role) => role.id === employee?.roleId)?.name;
   const setShifts = useSetEmployeeShifts();
+  const printReceipt = usePrintPaymentReceipt();
 
   const [rows, setRows] = useState<DayRow[] | null>(null);
   const [trackedEmployeeId, setTrackedEmployeeId] = useState<string | null>(null);
@@ -132,6 +140,45 @@ export default function EmployeeDetailDrawer({
             </Stack>
           )}
         </Stack>
+
+        <Divider />
+
+        <Box>
+          <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
+            Pago
+          </Typography>
+          <Stack direction="row" spacing={2} sx={{ mb: 1.5 }}>
+            <Box sx={{ flex: 1 }}>
+              <Typography variant="caption" color="text.secondary">
+                Valor
+              </Typography>
+              {employee.payRate != null ? (
+                <CurrencyDisplay value={employee.payRate} variant="h6" sx={{ fontWeight: 700 }} />
+              ) : (
+                <Typography variant="body2" color="text.secondary">
+                  Sin definir
+                </Typography>
+              )}
+            </Box>
+            <Box sx={{ flex: 1 }}>
+              <Typography variant="caption" color="text.secondary">
+                Frecuencia
+              </Typography>
+              <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                {employee.payFrequency ? EMPLOYEE_PAY_FREQUENCY_LABELS[employee.payFrequency] : 'Sin definir'}
+              </Typography>
+            </Box>
+          </Stack>
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<Receipt size={15} />}
+            disabled={employee.payRate == null}
+            onClick={() => printReceipt(employee)}
+          >
+            Generar comprobante de pago
+          </Button>
+        </Box>
 
         <Divider />
 

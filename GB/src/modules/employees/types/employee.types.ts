@@ -1,5 +1,7 @@
 export type EmployeeStatus = 'ACTIVE' | 'INACTIVE' | 'ON_VACATION' | 'ON_LEAVE';
 
+export type EmployeePayFrequency = 'SHIFT' | 'WEEK' | 'MONTH';
+
 export type CredentialsStatus = 'ACTIVE' | 'INACTIVE' | 'BLOCKED';
 
 export interface EmployeeUserAccount {
@@ -29,6 +31,8 @@ export interface Employee {
   status: EmployeeStatus;
   hireDate: string | null;
   notes: string | null;
+  payRate: number | null;
+  payFrequency: EmployeePayFrequency | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -48,6 +52,8 @@ export interface CreateEmployeePayload {
   branchId?: string;
   hireDate?: string;
   notes?: string;
+  payRate?: number;
+  payFrequency?: EmployeePayFrequency;
 }
 
 export type UpdateEmployeePayload = Partial<CreateEmployeePayload>;

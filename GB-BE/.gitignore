@@ -2,6 +2,9 @@
 /dist
 /node_modules
 
+# user-uploaded files (served from a docker volume in production)
+/uploads
+
 # logs
 logs
 *.log

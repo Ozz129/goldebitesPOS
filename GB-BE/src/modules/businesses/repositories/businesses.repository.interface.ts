@@ -1,5 +1,5 @@
 import { DbClient } from '../../../database/types/database.types';
-import { BusinessRow } from '../domain/business.interface';
+import { BusinessLogoRow, BusinessRow } from '../domain/business.interface';
 import {
   CreateBusinessData,
   UpdateBusinessData,
@@ -33,6 +33,9 @@ export interface IBusinessesRepository {
     },
     client?: DbClient,
   ): Promise<BusinessRow | null>;
+  setLogo(id: string, logoPath: string, mimeType: string): Promise<void>;
+  getLogo(id: string): Promise<BusinessLogoRow | null>;
+  clearLogo(id: string): Promise<void>;
 }
 
 export const BUSINESSES_REPOSITORY = Symbol('BUSINESSES_REPOSITORY');

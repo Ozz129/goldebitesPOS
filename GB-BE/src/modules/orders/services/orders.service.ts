@@ -344,9 +344,12 @@ export class OrdersService {
       );
     }
     const order = await this.getOwnedOrFail(businessId, id);
-    if (order.status !== OrderStatus.PENDING) {
+    if (
+      order.status === OrderStatus.DELIVERED ||
+      order.status === OrderStatus.CANCELLED
+    ) {
       throw new BusinessRuleException(
-        'Order items can only be edited while the order is PENDING',
+        'Items cannot be edited on a delivered or cancelled order',
         'ORDER_NOT_EDITABLE',
       );
     }
@@ -361,6 +364,12 @@ export class OrdersService {
     );
 
     await this.transactionService.execute(async (client) => {
+      // Orders CONFIRMED onward already have stock consumed against the old item set —
+      // reverse that net consumption before writing the new items, then consume fresh for
+      // the new set (mirrors addItems()'s post-PENDING branch).
+      if (order.status !== OrderStatus.PENDING) {
+        await this.reverseStock(order, client, actorUserId);
+      }
       await this.ordersRepository.replaceItems(id, computedItems, client);
       await this.ordersRepository.updateTotals(
         id,
@@ -371,6 +380,17 @@ export class OrdersService {
         totals.totalAmount,
         client,
       );
+      if (order.status !== OrderStatus.PENDING) {
+        await this.consumeStockForItems(
+          order,
+          computedItems.map((item) => ({
+            productId: item.productId,
+            quantity: item.quantity,
+          })),
+          client,
+          actorUserId,
+        );
+      }
     });
 
     await this.auditService.record({
@@ -537,29 +557,50 @@ export class OrdersService {
     }
   }
 
+  /**
+   * Reverses whatever stock is currently, net, outstanding for this order (SALE_CONSUMPTION
+   * minus prior RETURNs, all tagged referenceType 'order') — not just the original consumption.
+   * This makes it safe to call more than once across an order's life (e.g. on every item edit,
+   * and again on eventual cancellation) without double-reversing what an earlier edit already
+   * returned.
+   */
   private async reverseStock(
     order: OrderRow,
     client: DbClient,
     actorUserId?: string,
   ): Promise<void> {
-    const consumed = await this.movementsService.getMovementsByReference(
+    const movements = await this.movementsService.getMovementsByReference(
       'order',
       order.id,
       client,
     );
-    for (const movement of consumed) {
-      if (movement.movementType !== InventoryMovementType.SALE_CONSUMPTION) {
+    const netByItem = new Map<string, number>();
+    for (const movement of movements) {
+      if (movement.movementType === InventoryMovementType.SALE_CONSUMPTION) {
+        netByItem.set(
+          movement.inventoryItemId,
+          (netByItem.get(movement.inventoryItemId) ?? 0) + movement.quantity,
+        );
+      } else if (movement.movementType === InventoryMovementType.RETURN) {
+        netByItem.set(
+          movement.inventoryItemId,
+          (netByItem.get(movement.inventoryItemId) ?? 0) - movement.quantity,
+        );
+      }
+    }
+
+    for (const [inventoryItemId, quantity] of netByItem) {
+      if (quantity <= 0) {
         continue;
       }
       await this.movementsService.recordMovement(
         {
           businessId: order.business_id,
           branchId: order.branch_id,
-          locationId: movement.locationId ?? undefined,
-          inventoryItemId: movement.inventoryItemId,
+          inventoryItemId,
           movementType: InventoryMovementType.RETURN,
-          quantity: movement.quantity,
-          referenceType: 'order_cancellation',
+          quantity,
+          referenceType: 'order',
           referenceId: order.id,
           createdBy: actorUserId,
         },

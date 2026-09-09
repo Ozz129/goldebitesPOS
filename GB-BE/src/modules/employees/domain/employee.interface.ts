@@ -1,4 +1,4 @@
-import { EmployeeStatus } from './employee.types';
+import { EmployeePayFrequency, EmployeeStatus } from './employee.types';
 import { UserStatus } from '../../users/domain/user.types';
 
 export interface Employee {
@@ -15,6 +15,8 @@ export interface Employee {
   status: EmployeeStatus;
   hireDate: string | null;
   notes: string | null;
+  payRate: number | null;
+  payFrequency: EmployeePayFrequency | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -33,6 +35,8 @@ export interface EmployeeRow {
   status: EmployeeStatus;
   hire_date: string | null;
   notes: string | null;
+  pay_rate: string | null;
+  pay_frequency: EmployeePayFrequency | null;
   created_at: Date;
   updated_at: Date;
   deleted_at: Date | null;

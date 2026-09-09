@@ -2,12 +2,16 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsDateString,
   IsEmail,
+  IsEnum,
+  IsNumber,
   IsOptional,
   IsString,
   IsUUID,
+  Min,
   MaxLength,
   MinLength,
 } from 'class-validator';
+import { EmployeePayFrequency } from '../domain/employee.types';
 
 export class CreateEmployeeDto {
   @ApiProperty({ maxLength: 100 })
@@ -62,4 +66,18 @@ export class CreateEmployeeDto {
   @IsString()
   @MaxLength(2000)
   notes?: string;
+
+  @ApiPropertyOptional({
+    minimum: 0,
+    description: 'Pay rate ("valor") per shift/week/month, per payFrequency',
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  payRate?: number;
+
+  @ApiPropertyOptional({ enum: EmployeePayFrequency })
+  @IsOptional()
+  @IsEnum(EmployeePayFrequency)
+  payFrequency?: EmployeePayFrequency;
 }

@@ -1,5 +1,5 @@
 import type { StatusTone } from '../../components/common/StatusChip';
-import type { CredentialsStatus, EmployeeStatus } from './types/employee.types';
+import type { CredentialsStatus, EmployeePayFrequency, EmployeeStatus } from './types/employee.types';
 
 export const EMPLOYEE_STATUS_LABELS: Record<EmployeeStatus, string> = {
   ACTIVE: 'Activo',
@@ -29,3 +29,9 @@ export const CREDENTIALS_STATUS_TONE: Record<CredentialsStatus, StatusTone> = {
 
 /** day_of_week: 0 = Sunday, matching Postgres EXTRACT(DOW). */
 export const WEEKDAY_LABELS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+
+export const EMPLOYEE_PAY_FREQUENCY_LABELS: Record<EmployeePayFrequency, string> = {
+  SHIFT: 'Por turno',
+  WEEK: 'Semanal',
+  MONTH: 'Mensual',
+};

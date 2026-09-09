@@ -263,7 +263,31 @@ describe('OrdersService', () => {
   });
 
   describe('replaceItems', () => {
-    it('rejects editing items once the order is no longer PENDING', async () => {
+    it('rejects editing items on a delivered order', async () => {
+      repository.findById.mockResolvedValue(
+        makeOrderRow({ status: OrderStatus.DELIVERED }),
+      );
+
+      await expect(
+        service.replaceItems(businessId, 'order-1', [
+          { productId, quantity: 1 },
+        ]),
+      ).rejects.toThrow(BusinessRuleException);
+    });
+
+    it('rejects editing items on a cancelled order', async () => {
+      repository.findById.mockResolvedValue(
+        makeOrderRow({ status: OrderStatus.CANCELLED }),
+      );
+
+      await expect(
+        service.replaceItems(businessId, 'order-1', [
+          { productId, quantity: 1 },
+        ]),
+      ).rejects.toThrow(BusinessRuleException);
+    });
+
+    it('allows editing a CONFIRMED order and does not touch stock when there was nothing consumed', async () => {
       repository.findById.mockResolvedValue(
         makeOrderRow({ status: OrderStatus.CONFIRMED }),
       );
@@ -272,7 +296,69 @@ describe('OrdersService', () => {
         service.replaceItems(businessId, 'order-1', [
           { productId, quantity: 1 },
         ]),
-      ).rejects.toThrow(BusinessRuleException);
+      ).resolves.toBeDefined();
+    });
+
+    it('does not touch stock when editing a still-PENDING order', async () => {
+      repository.findById.mockResolvedValue(
+        makeOrderRow({ status: OrderStatus.PENDING }),
+      );
+
+      await service.replaceItems(businessId, 'order-1', [
+        { productId, quantity: 1 },
+      ]);
+
+      expect(movementsService.getMovementsByReference).not.toHaveBeenCalled();
+      expect(movementsService.recordMovement).not.toHaveBeenCalled();
+    });
+
+    it('reverses the net-outstanding stock and re-consumes for the new items when editing a CONFIRMED order', async () => {
+      repository.findById.mockResolvedValue(
+        makeOrderRow({ status: OrderStatus.CONFIRMED }),
+      );
+      productsService.getOwnedOrFail.mockResolvedValue({
+        id: productId,
+        name: 'Burger',
+        sale_price: '5000.00',
+        current_cost: '2000.00',
+        track_inventory: true,
+        max_sauces: 0,
+        max_sides: 0,
+      });
+      recipesService.findByProductOrNull.mockResolvedValue({
+        items: [{ inventoryItemId: 'flour-1', quantity: 0.2 }],
+        cost: { yieldQuantity: 1 },
+      });
+      movementsService.getMovementsByReference.mockResolvedValue([
+        {
+          movementType: InventoryMovementType.SALE_CONSUMPTION,
+          inventoryItemId: 'flour-1',
+          quantity: 0.2,
+        },
+      ]);
+
+      await service.replaceItems(businessId, 'order-1', [
+        { productId, quantity: 2 },
+      ]);
+
+      expect(movementsService.recordMovement).toHaveBeenCalledWith(
+        expect.objectContaining({
+          movementType: InventoryMovementType.RETURN,
+          inventoryItemId: 'flour-1',
+          quantity: 0.2,
+          referenceType: 'order',
+        }),
+        expect.anything(),
+      );
+      expect(movementsService.recordMovement).toHaveBeenCalledWith(
+        expect.objectContaining({
+          movementType: InventoryMovementType.SALE_CONSUMPTION,
+          inventoryItemId: 'flour-1',
+          quantity: 0.4,
+          referenceType: 'order',
+        }),
+        expect.anything(),
+      );
     });
   });
 
@@ -475,7 +561,7 @@ describe('OrdersService', () => {
           movementType: InventoryMovementType.RETURN,
           inventoryItemId: 'flour-1',
           quantity: 0.4,
-          referenceType: 'order_cancellation',
+          referenceType: 'order',
         }),
         expect.anything(),
       );

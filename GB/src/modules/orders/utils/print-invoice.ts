@@ -7,6 +7,7 @@ import type { Payment } from '../types/payment.types';
 
 interface PrintInvoiceOptions {
   businessName?: string;
+  businessLogo?: string | null;
   legalName?: string | null;
   taxId?: string | null;
   phone?: string | null;
@@ -15,7 +16,7 @@ interface PrintInvoiceOptions {
 function buildInvoiceHtml(
   order: OrderWithItems,
   payments: Payment[],
-  { businessName, legalName, taxId, phone }: PrintInvoiceOptions,
+  { businessName, businessLogo, legalName, taxId, phone }: PrintInvoiceOptions,
 ): string {
   const dateLabel = new Date(order.createdAt).toLocaleString('es-CO', {
     dateStyle: 'short',
@@ -77,6 +78,7 @@ function buildInvoiceHtml(
     color: #000;
   }
   .header { text-align: center; margin-bottom: 3mm; }
+  .logo { max-width: 30mm; max-height: 20mm; margin-bottom: 1.5mm; }
   .business { font-size: 15px; font-weight: 700; text-transform: uppercase; }
   .legal { font-size: 10px; margin-top: 0.5mm; }
   .order-number { font-size: 22px; font-weight: 800; margin-top: 1.5mm; }
@@ -98,6 +100,7 @@ function buildInvoiceHtml(
 </head>
 <body>
   <div class="header">
+    ${businessLogo ? `<img class="logo" src="${businessLogo}" alt="" />` : ''}
     ${businessName ? `<div class="business">${escapeHtml(businessName)}</div>` : ''}
     ${legalName && legalName !== businessName ? `<div class="legal">${escapeHtml(legalName)}</div>` : ''}
     ${taxId ? `<div class="legal">NIT: ${escapeHtml(taxId)}</div>` : ''}

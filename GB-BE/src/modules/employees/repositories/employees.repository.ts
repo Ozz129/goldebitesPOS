@@ -12,7 +12,7 @@ import {
 } from '../domain/employee.types';
 import { IEmployeesRepository } from './employees.repository.interface';
 
-const SELECT_COLUMNS = `id, business_id, branch_id, role_id, user_id, first_name, last_name, phone, email, position, status, hire_date, notes, created_at, updated_at, deleted_at`;
+const SELECT_COLUMNS = `id, business_id, branch_id, role_id, user_id, first_name, last_name, phone, email, position, status, hire_date, notes, pay_rate, pay_frequency, created_at, updated_at, deleted_at`;
 const SHIFT_COLUMNS = `id, employee_id, day_of_week, start_time, end_time`;
 
 interface CountRow {
@@ -28,8 +28,8 @@ export class EmployeesRepository implements IEmployeesRepository {
     client?: DbClient,
   ): Promise<EmployeeRow> {
     const result = await this.db.query<EmployeeRow>(
-      `INSERT INTO employees (business_id, branch_id, role_id, first_name, last_name, phone, email, position, hire_date, notes)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      `INSERT INTO employees (business_id, branch_id, role_id, first_name, last_name, phone, email, position, hire_date, notes, pay_rate, pay_frequency)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
        RETURNING ${SELECT_COLUMNS}`,
       [
         data.businessId,
@@ -42,6 +42,8 @@ export class EmployeesRepository implements IEmployeesRepository {
         data.position ?? null,
         data.hireDate ?? null,
         data.notes ?? null,
+        data.payRate ?? null,
+        data.payFrequency ?? null,
       ],
       client,
     );
@@ -126,7 +128,9 @@ export class EmployeesRepository implements IEmployeesRepository {
            email = COALESCE($8, email),
            position = COALESCE($9, position),
            hire_date = COALESCE($10, hire_date),
-           notes = COALESCE($11, notes)
+           notes = COALESCE($11, notes),
+           pay_rate = COALESCE($12, pay_rate),
+           pay_frequency = COALESCE($13, pay_frequency)
        WHERE id = $1 AND business_id = $2 AND deleted_at IS NULL
        RETURNING ${SELECT_COLUMNS}`,
       [
@@ -141,6 +145,8 @@ export class EmployeesRepository implements IEmployeesRepository {
         data.position ?? null,
         data.hireDate ?? null,
         data.notes ?? null,
+        data.payRate ?? null,
+        data.payFrequency ?? null,
       ],
       client,
     );

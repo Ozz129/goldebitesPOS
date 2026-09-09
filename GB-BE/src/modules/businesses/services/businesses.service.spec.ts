@@ -11,6 +11,9 @@ describe('BusinessesService', () => {
     setActive: jest.Mock;
     updateTaxRate: jest.Mock;
     updateLoyaltyConfig: jest.Mock;
+    setLogo: jest.Mock;
+    getLogo: jest.Mock;
+    clearLogo: jest.Mock;
   };
   let rolesService: { provisionSystemRoles: jest.Mock };
   let transactionService: { execute: jest.Mock };
@@ -47,6 +50,9 @@ describe('BusinessesService', () => {
       setActive: jest.fn(),
       updateTaxRate: jest.fn(),
       updateLoyaltyConfig: jest.fn(),
+      setLogo: jest.fn(),
+      getLogo: jest.fn(),
+      clearLogo: jest.fn(),
     };
     rolesService = {
       provisionSystemRoles: jest.fn().mockResolvedValue(new Map()),

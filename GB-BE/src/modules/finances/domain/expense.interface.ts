@@ -5,7 +5,9 @@ export interface Expense {
   businessId: string;
   branchId: string | null;
   category: ExpenseCategory;
+  name: string | null;
   description: string;
+  responsible: string | null;
   amount: number;
   expenseDate: string;
   createdAt: Date;
@@ -17,7 +19,9 @@ export interface ExpenseRow {
   business_id: string;
   branch_id: string | null;
   category: ExpenseCategory;
+  name: string | null;
   description: string;
+  responsible: string | null;
   amount: string;
   expense_date: string;
   created_at: Date;

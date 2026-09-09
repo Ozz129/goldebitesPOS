@@ -2,12 +2,15 @@ import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
-import { Pencil, Trash2, Power } from 'lucide-react';
+import Divider from '@mui/material/Divider';
+import Alert from '@mui/material/Alert';
+import { Pencil, Trash2, Power, Boxes } from 'lucide-react';
 import DetailDrawer from '../../../components/common/DetailDrawer';
 import CurrencyDisplay from '../../../components/common/CurrencyDisplay';
 import StatusChip from '../../../components/common/StatusChip';
 import { formatPercent } from '../../../utils/format';
 import { Can } from '../../../modules/auth/components/can';
+import { useProductRecipe } from '../../../modules/recipes/hooks/use-product-recipe';
 import type { Product } from '../../../modules/products/types/product.types';
 
 interface ProductDetailDrawerProps {
@@ -16,6 +19,7 @@ interface ProductDetailDrawerProps {
   onEdit: (product: Product) => void;
   onDelete: (product: Product) => void;
   onToggleStatus: (product: Product) => void;
+  onManageRecipe: (product: Product) => void;
 }
 
 export default function ProductDetailDrawer({
@@ -24,7 +28,10 @@ export default function ProductDetailDrawer({
   onEdit,
   onDelete,
   onToggleStatus,
+  onManageRecipe,
 }: ProductDetailDrawerProps) {
+  const { data: recipe, isLoading: recipeLoading } = useProductRecipe(product?.id ?? null);
+
   if (!product) return null;
 
   const margin =
@@ -102,6 +109,45 @@ export default function ProductDetailDrawer({
             tone={product.trackInventory ? 'gold' : 'neutral'}
           />
         </Stack>
+
+        {product.trackInventory && (
+          <>
+            <Divider />
+            <Box>
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
+                Vínculo con inventario
+              </Typography>
+              {recipeLoading ? (
+                <Typography variant="body2" color="text.secondary">
+                  Cargando...
+                </Typography>
+              ) : recipe && recipe.items.length > 0 ? (
+                <Stack spacing={0.5}>
+                  {recipe.items.map((item) => (
+                    <Typography key={item.id} variant="body2">
+                      {item.quantity} × {item.inventoryItemName} ({item.unit})
+                    </Typography>
+                  ))}
+                </Stack>
+              ) : (
+                <Alert severity="warning" sx={{ mb: 1 }}>
+                  Este producto no está vinculado a ningún artículo de inventario — al venderlo no se
+                  descontará stock.
+                </Alert>
+              )}
+              <Can permission="products.update">
+                <Button
+                  size="small"
+                  startIcon={<Boxes size={15} />}
+                  onClick={() => onManageRecipe(product)}
+                  sx={{ mt: 1 }}
+                >
+                  {recipe && recipe.items.length > 0 ? 'Editar vínculo' : 'Vincular inventario'}
+                </Button>
+              </Can>
+            </Box>
+          </>
+        )}
       </Stack>
     </DetailDrawer>
   );

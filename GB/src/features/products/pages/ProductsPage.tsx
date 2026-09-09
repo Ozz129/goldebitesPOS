@@ -21,10 +21,15 @@ import { useUpdateProduct } from '../../../modules/products/hooks/use-update-pro
 import { useDeleteProduct } from '../../../modules/products/hooks/use-delete-product';
 import { useSetProductStatus } from '../../../modules/products/hooks/use-set-product-status';
 import { useProductCategories } from '../../../modules/product-categories/hooks/use-product-categories';
+import { useProductRecipe } from '../../../modules/recipes/hooks/use-product-recipe';
+import { useCreateRecipe } from '../../../modules/recipes/hooks/use-create-recipe';
+import { useSetRecipeItems } from '../../../modules/recipes/hooks/use-set-recipe-items';
+import { useDeleteRecipe } from '../../../modules/recipes/hooks/use-delete-recipe';
 import { normalizeApiError } from '../../../lib/api/api-error';
 import ProductCard from '../components/ProductCard';
 import ProductDetailDrawer from '../components/ProductDetailDrawer';
 import ProductFormDrawer from '../components/ProductFormDrawer';
+import ProductRecipeDialog from '../components/ProductRecipeDialog';
 import ProductCategoriesTab from '../components/ProductCategoriesTab';
 import SaucesTab from '../components/SaucesTab';
 import SidesTab from '../components/SidesTab';
@@ -46,6 +51,7 @@ export default function ProductsPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
+  const [recipeProduct, setRecipeProduct] = useState<Product | null>(null);
 
   const filters = useMemo(
     () => ({
@@ -64,8 +70,38 @@ export default function ProductsPage() {
   const updateProduct = useUpdateProduct();
   const deleteProduct = useDeleteProduct();
   const setProductStatus = useSetProductStatus();
+  const { data: editingRecipe } = useProductRecipe(editingProduct?.id ?? null);
+  const createRecipe = useCreateRecipe();
+  const setRecipeItems = useSetRecipeItems();
+  const deleteRecipe = useDeleteRecipe();
 
   const products = data?.data ?? [];
+
+  /**
+   * Syncs the simple 1-item inventory link from the product form. Recipes with
+   * more than 1 item are managed only via ProductRecipeDialog (the form hides
+   * those fields in that case), so this never touches a multi-item recipe.
+   */
+  const syncInventoryLink = (productId: string, values: ProductFormValues, hadRecipe: boolean) => {
+    if (hadRecipe && (editingRecipe?.items.length ?? 0) > 1) return;
+
+    const onError = (error: unknown) =>
+      enqueueSnackbar(
+        `Producto guardado, pero no se pudo actualizar el vínculo con inventario: ${normalizeApiError(error).message}`,
+        { variant: 'warning' },
+      );
+
+    if (values.inventoryItemId) {
+      const items = [{ inventoryItemId: values.inventoryItemId, quantity: values.inventoryQuantity || 1 }];
+      if (hadRecipe) {
+        setRecipeItems.mutate({ productId, items }, { onError });
+      } else {
+        createRecipe.mutate({ productId, payload: { items } }, { onError });
+      }
+    } else if (hadRecipe) {
+      deleteRecipe.mutate(productId, { onError });
+    }
+  };
 
   const handleSubmit = (values: ProductFormValues) => {
     const payload = {
@@ -80,11 +116,13 @@ export default function ProductsPage() {
     };
 
     if (editingProduct) {
+      const hadRecipe = Boolean(editingRecipe);
       updateProduct.mutate(
         { id: editingProduct.id, payload },
         {
           onSuccess: () => {
             enqueueSnackbar('Producto actualizado correctamente', { variant: 'success' });
+            syncInventoryLink(editingProduct.id, values, hadRecipe);
             setFormOpen(false);
           },
           onError: (error) => {
@@ -94,8 +132,9 @@ export default function ProductsPage() {
       );
     } else {
       createProduct.mutate(payload, {
-        onSuccess: () => {
+        onSuccess: (created) => {
           enqueueSnackbar('Producto creado correctamente', { variant: 'success' });
+          syncInventoryLink(created.id, values, false);
           setFormOpen(false);
         },
         onError: (error) => {
@@ -243,7 +282,13 @@ export default function ProductsPage() {
           setDeletingProduct(p);
         }}
         onToggleStatus={handleToggleStatus}
+        onManageRecipe={(p) => {
+          setSelectedProduct(null);
+          setRecipeProduct(p);
+        }}
       />
+
+      <ProductRecipeDialog product={recipeProduct} onClose={() => setRecipeProduct(null)} />
 
       <ProductFormDrawer
         open={formOpen}

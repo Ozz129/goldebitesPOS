@@ -10,7 +10,9 @@ export interface CreateExpenseData {
   businessId: string;
   branchId?: string;
   category: ExpenseCategory;
+  name: string;
   description: string;
+  responsible: string;
   amount: number;
   expenseDate: string;
 }
@@ -18,7 +20,9 @@ export interface CreateExpenseData {
 export interface UpdateExpenseData {
   branchId?: string;
   category?: ExpenseCategory;
+  name?: string;
   description?: string;
+  responsible?: string;
   amount?: number;
   expenseDate?: string;
 }

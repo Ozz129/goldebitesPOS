@@ -151,9 +151,11 @@ export default function FinancesPage() {
 
   const columns: ColumnDef<Expense, unknown>[] = [
     { id: 'date', header: 'Fecha', cell: ({ row }) => <DateDisplay value={row.original.expenseDate} variant="body2" /> },
+    { id: 'name', header: 'Nombre', cell: ({ row }) => row.original.name ?? '—' },
     { id: 'category', header: 'Categoría', cell: ({ row }) => EXPENSE_CATEGORY_LABELS[row.original.category] },
-    { accessorKey: 'description', header: 'Descripción' },
-    { id: 'amount', header: 'Monto', cell: ({ row }) => formatCOP(row.original.amount) },
+    { accessorKey: 'description', header: 'Motivo' },
+    { id: 'responsible', header: 'Responsable', cell: ({ row }) => row.original.responsible ?? '—' },
+    { id: 'amount', header: 'Cantidad', cell: ({ row }) => formatCOP(row.original.amount) },
     {
       id: 'actions',
       header: '',
@@ -286,7 +288,7 @@ export default function FinancesPage() {
       <ConfirmDialog
         open={Boolean(deletingExpense)}
         title="Eliminar gasto"
-        description={`¿Seguro que deseas eliminar "${deletingExpense?.description}"? Esta acción no se puede deshacer.`}
+        description={`¿Seguro que deseas eliminar "${deletingExpense?.name ?? deletingExpense?.description}"? Esta acción no se puede deshacer.`}
         confirmLabel="Eliminar"
         destructive
         onClose={() => setDeletingExpense(null)}

@@ -1,11 +1,41 @@
-import { Body, Controller, Get, Patch } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { createReadStream } from 'node:fs';
+import { randomUUID } from 'node:crypto';
+import { extname } from 'node:path';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Patch,
+  Post,
+  Res,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { diskStorage } from 'multer';
+import type { Response } from 'express';
 import { CurrentBusiness } from '../../../common/decorators/current-business.decorator';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { Permissions } from '../../../common/decorators/permissions.decorator';
+import { RawResponse } from '../../../common/decorators/raw-response.decorator';
+import { EntityNotFoundException } from '../../../common/exceptions';
 import { SetBusinessStatusDto } from '../dto/set-business-status.dto';
 import { UpdateBusinessDto } from '../dto/update-business.dto';
 import { BusinessesService } from '../services/businesses.service';
+import {
+  BUSINESS_LOGOS_UPLOADS_DIR,
+  ensureBusinessLogosUploadsDir,
+} from '../storage/business-logo-storage.util';
+
+const ALLOWED_LOGO_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const MAX_LOGO_SIZE_BYTES = 5 * 1024 * 1024;
+
+ensureBusinessLogosUploadsDir();
 
 @ApiTags('Businesses')
 @ApiBearerAuth()
@@ -45,5 +75,71 @@ export class BusinessesController {
       dto.isActive,
       actorUserId,
     );
+  }
+
+  @Post('me/logo')
+  @Permissions('businesses.manage')
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: "Upload the current business's logo" })
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: BUSINESS_LOGOS_UPLOADS_DIR,
+        filename: (_req, file, cb) => {
+          cb(null, `${randomUUID()}${extname(file.originalname)}`);
+        },
+      }),
+      limits: { fileSize: MAX_LOGO_SIZE_BYTES },
+      fileFilter: (_req, file, cb) => {
+        if (!ALLOWED_LOGO_MIME_TYPES.includes(file.mimetype)) {
+          cb(
+            new BadRequestException('Solo se permiten imágenes JPG, PNG o WEBP.'),
+            false,
+          );
+          return;
+        }
+        cb(null, true);
+      },
+    }),
+  )
+  async uploadLogo(
+    @CurrentBusiness() businessId: string,
+    @CurrentUser('userId') actorUserId: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    if (!file) {
+      throw new BadRequestException('Debes adjuntar una imagen (JPG, PNG o WEBP).');
+    }
+    await this.businessesService.setLogo(
+      businessId,
+      file.path,
+      file.mimetype,
+      actorUserId,
+    );
+    return this.businessesService.findById(businessId);
+  }
+
+  @Get('me/logo')
+  @RawResponse()
+  @ApiOperation({ summary: "Stream the current business's logo" })
+  async getLogo(@CurrentBusiness() businessId: string, @Res() res: Response) {
+    const logo = await this.businessesService.getLogo(businessId);
+    if (!logo) {
+      throw new EntityNotFoundException('Business logo', businessId);
+    }
+    res.set({ 'Content-Type': logo.mimeType, 'Cache-Control': 'private, max-age=300' });
+    createReadStream(logo.logoPath).pipe(res);
+  }
+
+  @Delete('me/logo')
+  @Permissions('businesses.manage')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @RawResponse()
+  @ApiOperation({ summary: "Remove the current business's logo" })
+  async removeLogo(
+    @CurrentBusiness() businessId: string,
+    @CurrentUser('userId') actorUserId: string,
+  ) {
+    await this.businessesService.clearLogo(businessId, actorUserId);
   }
 }

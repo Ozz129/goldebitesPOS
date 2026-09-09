@@ -21,6 +21,8 @@ export class EmployeeMapper {
       status: row.status,
       hireDate: row.hire_date,
       notes: row.notes,
+      payRate: row.pay_rate ? parseFloat(row.pay_rate) : null,
+      payFrequency: row.pay_frequency,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     };

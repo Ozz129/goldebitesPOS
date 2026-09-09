@@ -17,11 +17,23 @@ export class CreateExpenseDto {
   @IsEnum(ExpenseCategory)
   category: ExpenseCategory;
 
+  @ApiProperty({ minLength: 2, maxLength: 150 })
+  @IsString()
+  @MinLength(2)
+  @MaxLength(150)
+  name: string;
+
   @ApiProperty({ minLength: 2, maxLength: 255 })
   @IsString()
   @MinLength(2)
   @MaxLength(255)
   description: string;
+
+  @ApiProperty({ minLength: 2, maxLength: 150 })
+  @IsString()
+  @MinLength(2)
+  @MaxLength(150)
+  responsible: string;
 
   @ApiProperty({ minimum: 0 })
   @IsNumber()

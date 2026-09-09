@@ -100,7 +100,8 @@ export class OrdersController {
   @Put(':id/items')
   @Permissions('orders.update')
   @ApiOperation({
-    summary: 'Replace the items of a PENDING order and recompute totals',
+    summary:
+      'Replace the items of an active (non-delivered/cancelled) order and recompute totals',
   })
   replaceItems(
     @CurrentBusiness() businessId: string,

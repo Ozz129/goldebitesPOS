@@ -33,3 +33,8 @@ export interface BusinessRow {
   created_at: Date;
   updated_at: Date;
 }
+
+export interface BusinessLogoRow {
+  logo_path: string;
+  logo_mime_type: string;
+}

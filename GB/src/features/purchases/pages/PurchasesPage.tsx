@@ -3,17 +3,19 @@ import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Checkbox from '@mui/material/Checkbox';
 import Button from '@mui/material/Button';
+import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useSnackbar } from 'notistack';
-import { ShoppingCart } from 'lucide-react';
+import { ShoppingCart, Plus, Trash2 } from 'lucide-react';
 import PageHeader from '../../../components/common/PageHeader';
 import DataTable from '../../../components/common/DataTable';
 import StatusChip from '../../../components/common/StatusChip';
 import DateDisplay from '../../../components/common/DateDisplay';
 import EmptyState from '../../../components/common/EmptyState';
 import ErrorState from '../../../components/common/ErrorState';
+import ConfirmDialog from '../../../components/common/ConfirmDialog';
 import { Can } from '../../../modules/auth/components/can';
 import { useAuthStore } from '../../../modules/auth/store/auth.store';
 import { useSuppliers } from '../../../modules/suppliers/hooks/use-suppliers';
@@ -28,6 +30,10 @@ import {
   useCancelPurchaseOrder,
 } from '../../../modules/purchases/hooks/use-purchase-order-transitions';
 import { useReceiveGoods } from '../../../modules/purchases/hooks/use-receive-goods';
+import { useExpenses } from '../../../modules/finances/hooks/use-expenses';
+import { useCreateExpense } from '../../../modules/finances/hooks/use-create-expense';
+import { useDeleteExpense } from '../../../modules/finances/hooks/use-delete-expense';
+import { EXPENSE_CATEGORY_LABELS } from '../../../modules/finances/expense-category';
 import { normalizeApiError } from '../../../lib/api/api-error';
 import { formatCOP } from '../../../utils/format';
 import {
@@ -36,18 +42,23 @@ import {
 } from '../../../modules/purchases/purchase-order-status';
 import type { PurchaseOrder, PurchaseOrderWithItems } from '../../../modules/purchases/types/purchase-order.types';
 import type { PurchaseOrderFormValues } from '../schemas/purchaseOrderSchema';
+import type { Expense } from '../../../modules/finances/types/expense.types';
+import type { ExpenseFormValues } from '../../finances/schemas/expenseSchema';
 import PurchaseOrderDetailDrawer from '../components/PurchaseOrderDetailDrawer';
 import PurchaseOrderFormDrawer from '../components/PurchaseOrderFormDrawer';
+import ExpenseFormDrawer from '../../finances/components/ExpenseFormDrawer';
 import { supplierNameResolver } from '../utils/supplier-name-resolver';
 
 export default function PurchasesPage() {
   const { enqueueSnackbar } = useSnackbar();
   const branchId = useAuthStore((s) => s.user?.branchId ?? null);
 
-  const [tab, setTab] = useState<'sugerencia' | 'ordenes'>('sugerencia');
+  const [tab, setTab] = useState<'sugerencia' | 'ordenes' | 'gastos'>('sugerencia');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [formOpen, setFormOpen] = useState(false);
+  const [expenseFormOpen, setExpenseFormOpen] = useState(false);
+  const [deletingExpense, setDeletingExpense] = useState<Expense | null>(null);
 
   const { data: suppliersData } = useSuppliers({ limit: 100, isActive: true });
   const suppliers = suppliersData?.data ?? [];
@@ -64,6 +75,11 @@ export default function PurchasesPage() {
   const approveOrder = useApprovePurchaseOrder();
   const cancelOrder = useCancelPurchaseOrder();
   const receiveGoods = useReceiveGoods();
+
+  const { data: expensesData } = useExpenses({ limit: 100 });
+  const expenses = expensesData?.data ?? [];
+  const createExpense = useCreateExpense();
+  const deleteExpense = useDeleteExpense();
 
   const getSupplierName = supplierNameResolver(suppliers);
 
@@ -106,6 +122,16 @@ export default function PurchasesPage() {
         onError: (error) => enqueueSnackbar(normalizeApiError(error).message, { variant: 'error' }),
       },
     );
+  }
+
+  function handleCreateExpense(values: ExpenseFormValues) {
+    createExpense.mutate(values, {
+      onSuccess: () => {
+        enqueueSnackbar('Gasto registrado correctamente', { variant: 'success' });
+        setExpenseFormOpen(false);
+      },
+      onError: (error) => enqueueSnackbar(normalizeApiError(error).message, { variant: 'error' }),
+    });
   }
 
   function handleSubmitOrder(order: PurchaseOrderWithItems) {
@@ -184,17 +210,53 @@ export default function PurchasesPage() {
     },
   ];
 
+  const expenseColumns: ColumnDef<Expense, unknown>[] = [
+    { id: 'date', header: 'Fecha', cell: ({ row }) => <DateDisplay value={row.original.expenseDate} variant="body2" /> },
+    { id: 'name', header: 'Nombre', cell: ({ row }) => row.original.name ?? '—' },
+    { accessorKey: 'description', header: 'Motivo' },
+    { id: 'responsible', header: 'Responsable', cell: ({ row }) => row.original.responsible ?? '—' },
+    { id: 'category', header: 'Categoría', cell: ({ row }) => EXPENSE_CATEGORY_LABELS[row.original.category] },
+    { id: 'amount', header: 'Cantidad', cell: ({ row }) => formatCOP(row.original.amount) },
+    {
+      id: 'actions',
+      header: '',
+      cell: ({ row }) => (
+        <Can permission="finances.manage">
+          <IconButton
+            size="small"
+            onClick={(e) => {
+              e.stopPropagation();
+              setDeletingExpense(row.original);
+            }}
+          >
+            <Trash2 size={14} />
+          </IconButton>
+        </Can>
+      ),
+    },
+  ];
+
   return (
     <>
       <PageHeader
         title="Compras"
-        subtitle="Sugerencias de compra basadas en inventario y seguimiento de órdenes."
+        subtitle="Sugerencias de compra basadas en inventario, seguimiento de órdenes y registro de gastos."
         breadcrumbs={[{ label: 'Compras' }]}
+        actions={
+          tab === 'gastos' ? (
+            <Can permission="finances.manage">
+              <Button variant="contained" startIcon={<Plus size={16} />} onClick={() => setExpenseFormOpen(true)}>
+                Registrar gasto
+              </Button>
+            </Can>
+          ) : undefined
+        }
       />
 
       <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2 }}>
         <Tab label="Sugerencia de compra" value="sugerencia" />
         <Tab label="Órdenes de compra" value="ordenes" />
+        <Tab label="Gastos" value="gastos" />
       </Tabs>
 
       {tab === 'sugerencia' ? (
@@ -239,6 +301,14 @@ export default function PurchasesPage() {
             />
           </>
         )
+      ) : tab === 'gastos' ? (
+        <DataTable
+          columns={expenseColumns}
+          data={expenses}
+          emptyTitle="No hay gastos registrados"
+          emptyDescription="Registra compras, insumos u otros gastos relacionados con Compras."
+          pageSize={10}
+        />
       ) : isError ? (
         <ErrorState onRetry={() => refetch()} />
       ) : (
@@ -270,6 +340,31 @@ export default function PurchasesPage() {
         initialItems={initialLines}
         onClose={() => setFormOpen(false)}
         onSubmit={handleCreateOrder}
+      />
+
+      <ExpenseFormDrawer
+        open={expenseFormOpen}
+        loading={createExpense.isPending}
+        defaultCategory="COGS"
+        onClose={() => setExpenseFormOpen(false)}
+        onSubmit={handleCreateExpense}
+      />
+
+      <ConfirmDialog
+        open={Boolean(deletingExpense)}
+        title="Eliminar gasto"
+        description={`¿Seguro que deseas eliminar "${deletingExpense?.name ?? deletingExpense?.description}"? Esta acción no se puede deshacer.`}
+        confirmLabel="Eliminar"
+        destructive
+        onClose={() => setDeletingExpense(null)}
+        onConfirm={() => {
+          if (!deletingExpense) return;
+          deleteExpense.mutate(deletingExpense.id, {
+            onSuccess: () => enqueueSnackbar('Gasto eliminado', { variant: 'success' }),
+            onError: (error) => enqueueSnackbar(normalizeApiError(error).message, { variant: 'error' }),
+            onSettled: () => setDeletingExpense(null),
+          });
+        }}
       />
     </>
   );

@@ -1,4 +1,5 @@
 import { useCurrentBusiness } from '../../businesses/hooks/use-current-business';
+import { useBusinessLogo } from '../../businesses/hooks/use-business-logo';
 import { ordersApi } from '../api/orders.api';
 import { printInvoice } from '../utils/print-invoice';
 import type { OrderWithItems } from '../types/order.types';
@@ -6,8 +7,10 @@ import type { Payment } from '../types/payment.types';
 
 export function usePrintInvoice() {
   const { data: business } = useCurrentBusiness();
+  const { data: logo } = useBusinessLogo();
   const options = {
     businessName: business?.name,
+    businessLogo: logo,
     legalName: business?.legalName,
     taxId: business?.taxId,
     phone: business?.phone,

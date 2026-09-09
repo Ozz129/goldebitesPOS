@@ -15,11 +15,14 @@ interface ExpenseFormDrawerProps {
   onClose: () => void;
   onSubmit: (values: ExpenseFormValues) => void;
   initialExpense?: Expense | null;
+  defaultCategory?: ExpenseFormValues['category'];
 }
 
 const emptyValues: ExpenseFormValues = {
   category: 'OPERATING',
+  name: '',
   description: '',
+  responsible: '',
   amount: 0,
   expenseDate: new Date().toISOString().slice(0, 10),
 };
@@ -30,6 +33,7 @@ export default function ExpenseFormDrawer({
   onClose,
   onSubmit,
   initialExpense,
+  defaultCategory,
 }: ExpenseFormDrawerProps) {
   const {
     control,
@@ -47,14 +51,16 @@ export default function ExpenseFormDrawer({
         initialExpense
           ? {
               category: initialExpense.category,
+              name: initialExpense.name ?? '',
               description: initialExpense.description,
+              responsible: initialExpense.responsible ?? '',
               amount: initialExpense.amount,
               expenseDate: initialExpense.expenseDate.slice(0, 10),
             }
-          : emptyValues,
+          : { ...emptyValues, category: defaultCategory ?? emptyValues.category },
       );
     }
-  }, [open, initialExpense, reset]);
+  }, [open, initialExpense, defaultCategory, reset]);
 
   const submit = handleSubmit((values) => onSubmit(values));
 
@@ -70,29 +76,15 @@ export default function ExpenseFormDrawer({
     >
       <Stack spacing={2.5}>
         <Controller
-          name="category"
-          control={control}
-          render={({ field }) => (
-            <TextField {...field} select label="Categoría" fullWidth>
-              {Object.entries(EXPENSE_CATEGORY_LABELS).map(([value, label]) => (
-                <MenuItem key={value} value={value}>
-                  {label}
-                </MenuItem>
-              ))}
-            </TextField>
-          )}
-        />
-
-        <Controller
-          name="description"
+          name="name"
           control={control}
           render={({ field }) => (
             <TextField
               {...field}
-              label="Descripción"
+              label="Nombre"
               fullWidth
-              error={Boolean(errors.description)}
-              helperText={errors.description?.message}
+              error={Boolean(errors.name)}
+              helperText={errors.name?.message}
             />
           )}
         />
@@ -103,11 +95,27 @@ export default function ExpenseFormDrawer({
           render={({ field }) => (
             <TextField
               {...field}
-              label="Monto (COP)"
+              label="Cantidad (COP)"
               type="number"
               fullWidth
               error={Boolean(errors.amount)}
               helperText={errors.amount?.message}
+            />
+          )}
+        />
+
+        <Controller
+          name="description"
+          control={control}
+          render={({ field }) => (
+            <TextField
+              {...field}
+              label="Motivo"
+              multiline
+              minRows={2}
+              fullWidth
+              error={Boolean(errors.description)}
+              helperText={errors.description?.message}
             />
           )}
         />
@@ -125,6 +133,34 @@ export default function ExpenseFormDrawer({
               error={Boolean(errors.expenseDate)}
               helperText={errors.expenseDate?.message}
             />
+          )}
+        />
+
+        <Controller
+          name="responsible"
+          control={control}
+          render={({ field }) => (
+            <TextField
+              {...field}
+              label="Responsable"
+              fullWidth
+              error={Boolean(errors.responsible)}
+              helperText={errors.responsible?.message}
+            />
+          )}
+        />
+
+        <Controller
+          name="category"
+          control={control}
+          render={({ field }) => (
+            <TextField {...field} select label="Categoría" fullWidth>
+              {Object.entries(EXPENSE_CATEGORY_LABELS).map(([value, label]) => (
+                <MenuItem key={value} value={value}>
+                  {label}
+                </MenuItem>
+              ))}
+            </TextField>
           )}
         />
       </Stack>

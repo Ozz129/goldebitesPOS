@@ -159,7 +159,7 @@ export default function OrderDetailDrawer({
             >
               Imprimir factura
             </Button>
-            {order.status === 'PENDING' && (
+            {order.status !== 'DELIVERED' && order.status !== 'CANCELLED' && (
               <Can permission="orders.update">
                 <Button
                   variant="outlined"

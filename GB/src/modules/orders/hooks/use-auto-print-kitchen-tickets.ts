@@ -24,7 +24,12 @@ function savePrintedIds(ids: Set<string>): void {
  * Los pedidos que ya existían al montar el hook (p.ej. tras recargar la página) se marcan como
  * "vistos" sin imprimir, para no reimprimir todo el historial del día.
  */
-export function useAutoPrintKitchenTickets(orders: Order[] | undefined, businessName: string | undefined, enabled: boolean) {
+export function useAutoPrintKitchenTickets(
+  orders: Order[] | undefined,
+  businessName: string | undefined,
+  businessLogo: string | null | undefined,
+  enabled: boolean,
+) {
   const printedIds = useRef<Set<string>>(loadPrintedIds());
   const isFirstLoad = useRef(true);
   const printingIds = useRef<Set<string>>(new Set());
@@ -48,7 +53,7 @@ export function useAutoPrintKitchenTickets(orders: Order[] | undefined, business
       printingIds.current.add(order.id);
       ordersApi
         .getOrder(order.id)
-        .then((fullOrder) => printKitchenTicket(fullOrder, { businessName }))
+        .then((fullOrder) => printKitchenTicket(fullOrder, { businessName, businessLogo }))
         .catch(() => {
           // Si falla la carga de items no bloqueamos la lista; el usuario puede reimprimir manualmente.
         })
@@ -58,5 +63,5 @@ export function useAutoPrintKitchenTickets(orders: Order[] | undefined, business
           savePrintedIds(printedIds.current);
         });
     });
-  }, [orders, businessName, enabled]);
+  }, [orders, businessName, businessLogo, enabled]);
 }

@@ -7,6 +7,7 @@ import MenuItem from '@mui/material/MenuItem';
 import FormDrawer from '../../../components/common/FormDrawer';
 import { useRoles } from '../../../modules/roles/hooks/use-roles';
 import { getRoleLabel } from '../../../modules/roles/role-labels';
+import { EMPLOYEE_PAY_FREQUENCY_LABELS } from '../../../modules/employees/employee-status';
 import { employeeSchema, type EmployeeFormValues } from '../schemas/employeeSchema';
 import type { Employee } from '../../../modules/employees/types/employee.types';
 
@@ -26,6 +27,8 @@ const emptyValues: EmployeeFormValues = {
   roleId: '',
   hireDate: '',
   notes: '',
+  payRate: undefined,
+  payFrequency: undefined,
 };
 
 export default function EmployeeFormDrawer({
@@ -58,6 +61,8 @@ export default function EmployeeFormDrawer({
               roleId: initialEmployee.roleId ?? '',
               hireDate: initialEmployee.hireDate ?? '',
               notes: initialEmployee.notes ?? '',
+              payRate: initialEmployee.payRate ?? undefined,
+              payFrequency: initialEmployee.payFrequency ?? undefined,
             }
           : emptyValues,
       );
@@ -155,6 +160,38 @@ export default function EmployeeFormDrawer({
             />
           )}
         />
+
+        <Stack direction="row" spacing={2}>
+          <Controller
+            name="payRate"
+            control={control}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                value={field.value ?? ''}
+                label="Valor"
+                type="number"
+                fullWidth
+                error={Boolean(errors.payRate)}
+                helperText={errors.payRate?.message}
+              />
+            )}
+          />
+          <Controller
+            name="payFrequency"
+            control={control}
+            render={({ field }) => (
+              <TextField {...field} value={field.value ?? ''} select label="Frecuencia de pago" fullWidth>
+                <MenuItem value="">Sin definir</MenuItem>
+                {Object.entries(EMPLOYEE_PAY_FREQUENCY_LABELS).map(([value, label]) => (
+                  <MenuItem key={value} value={value}>
+                    {label}
+                  </MenuItem>
+                ))}
+              </TextField>
+            )}
+          />
+        </Stack>
 
         <Controller
           name="notes"

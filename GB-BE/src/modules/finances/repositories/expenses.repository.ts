@@ -14,7 +14,7 @@ import {
 } from '../domain/expense.types';
 import { IExpensesRepository } from './expenses.repository.interface';
 
-const SELECT_COLUMNS = `id, business_id, branch_id, category, description, amount, expense_date, created_at, updated_at, deleted_at`;
+const SELECT_COLUMNS = `id, business_id, branch_id, category, name, description, responsible, amount, expense_date, created_at, updated_at, deleted_at`;
 
 interface CountRow {
   count: string;
@@ -29,14 +29,16 @@ export class ExpensesRepository implements IExpensesRepository {
     client?: DbClient,
   ): Promise<ExpenseRow> {
     const result = await this.db.query<ExpenseRow>(
-      `INSERT INTO expenses (business_id, branch_id, category, description, amount, expense_date)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO expenses (business_id, branch_id, category, name, description, responsible, amount, expense_date)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING ${SELECT_COLUMNS}`,
       [
         data.businessId,
         data.branchId ?? null,
         data.category,
+        data.name,
         data.description,
+        data.responsible,
         data.amount,
         data.expenseDate,
       ],
@@ -114,9 +116,11 @@ export class ExpensesRepository implements IExpensesRepository {
       `UPDATE expenses
        SET branch_id = COALESCE($3, branch_id),
            category = COALESCE($4, category),
-           description = COALESCE($5, description),
-           amount = COALESCE($6, amount),
-           expense_date = COALESCE($7, expense_date)
+           name = COALESCE($5, name),
+           description = COALESCE($6, description),
+           responsible = COALESCE($7, responsible),
+           amount = COALESCE($8, amount),
+           expense_date = COALESCE($9, expense_date)
        WHERE id = $1 AND business_id = $2 AND deleted_at IS NULL
        RETURNING ${SELECT_COLUMNS}`,
       [
@@ -124,7 +128,9 @@ export class ExpensesRepository implements IExpensesRepository {
         businessId,
         data.branchId ?? null,
         data.category ?? null,
+        data.name ?? null,
         data.description ?? null,
+        data.responsible ?? null,
         data.amount ?? null,
         data.expenseDate ?? null,
       ],

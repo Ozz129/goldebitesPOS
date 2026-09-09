@@ -18,12 +18,26 @@ export class UpdateExpenseDto {
   @IsEnum(ExpenseCategory)
   category?: ExpenseCategory;
 
+  @ApiPropertyOptional({ minLength: 2, maxLength: 150 })
+  @IsOptional()
+  @IsString()
+  @MinLength(2)
+  @MaxLength(150)
+  name?: string;
+
   @ApiPropertyOptional({ minLength: 2, maxLength: 255 })
   @IsOptional()
   @IsString()
   @MinLength(2)
   @MaxLength(255)
   description?: string;
+
+  @ApiPropertyOptional({ minLength: 2, maxLength: 150 })
+  @IsOptional()
+  @IsString()
+  @MinLength(2)
+  @MaxLength(150)
+  responsible?: string;
 
   @ApiPropertyOptional({ minimum: 0 })
   @IsOptional()

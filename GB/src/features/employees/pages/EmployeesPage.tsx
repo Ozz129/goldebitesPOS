@@ -67,6 +67,8 @@ export default function EmployeesPage() {
       roleId: values.roleId || undefined,
       hireDate: values.hireDate || undefined,
       notes: values.notes || undefined,
+      payRate: values.payRate,
+      payFrequency: values.payFrequency,
     };
 
     if (editingEmployee) {

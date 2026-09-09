@@ -5,9 +5,10 @@ import type { OrderWithItems } from '../types/order.types';
 
 interface PrintTicketOptions {
   businessName?: string;
+  businessLogo?: string | null;
 }
 
-function buildTicketHtml(order: OrderWithItems, { businessName }: PrintTicketOptions): string {
+function buildTicketHtml(order: OrderWithItems, { businessName, businessLogo }: PrintTicketOptions): string {
   const dateLabel = new Date(order.createdAt).toLocaleString('es-CO', {
     dateStyle: 'short',
     timeStyle: 'short',
@@ -60,6 +61,7 @@ function buildTicketHtml(order: OrderWithItems, { businessName }: PrintTicketOpt
     color: #000;
   }
   .header { text-align: center; margin-bottom: 3mm; }
+  .logo { max-width: 30mm; max-height: 20mm; margin-bottom: 1.5mm; }
   .business { font-size: 15px; font-weight: 700; text-transform: uppercase; }
   .order-number { font-size: 26px; font-weight: 800; margin-top: 1.5mm; }
   .type { font-size: 12px; font-weight: 700; text-transform: uppercase; margin-top: 1mm; }
@@ -77,6 +79,7 @@ function buildTicketHtml(order: OrderWithItems, { businessName }: PrintTicketOpt
 </head>
 <body>
   <div class="header">
+    ${businessLogo ? `<img class="logo" src="${businessLogo}" alt="" />` : ''}
     ${businessName ? `<div class="business">${escapeHtml(businessName)}</div>` : ''}
     <div class="order-number">#${order.orderNumber}</div>
     <div class="type">${ORDER_TYPE_LABELS[order.orderType]}</div>

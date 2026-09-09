@@ -5,6 +5,12 @@ export enum EmployeeStatus {
   ON_LEAVE = 'ON_LEAVE',
 }
 
+export enum EmployeePayFrequency {
+  SHIFT = 'SHIFT',
+  WEEK = 'WEEK',
+  MONTH = 'MONTH',
+}
+
 export interface ShiftInput {
   dayOfWeek: number;
   startTime: string;
@@ -22,6 +28,8 @@ export interface CreateEmployeeData {
   position?: string;
   hireDate?: string;
   notes?: string;
+  payRate?: number;
+  payFrequency?: EmployeePayFrequency;
 }
 
 export interface UpdateEmployeeData {
@@ -34,6 +42,8 @@ export interface UpdateEmployeeData {
   position?: string;
   hireDate?: string;
   notes?: string;
+  payRate?: number;
+  payFrequency?: EmployeePayFrequency;
 }
 
 export interface EmployeeQuery {

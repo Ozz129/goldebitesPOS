@@ -8,6 +8,8 @@ export const productSchema = z.object({
   sku: z.string().max(60).optional(),
   salePrice: z.coerce.number().min(0, 'El precio no puede ser negativo'),
   trackInventory: z.boolean(),
+  inventoryItemId: z.string().optional(),
+  inventoryQuantity: z.coerce.number().min(0.001).optional(),
   maxSauces: z.coerce.number().int().min(0),
   maxSides: z.coerce.number().int().min(0),
 });

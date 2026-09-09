@@ -1,14 +1,17 @@
 import { useEffect } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, useWatch, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
+import Alert from '@mui/material/Alert';
 import FormDrawer from '../../../components/common/FormDrawer';
 import { productSchema, type ProductFormValues } from '../schemas/productSchema';
 import { useProductCategories } from '../../../modules/product-categories/hooks/use-product-categories';
+import { useInventoryItems } from '../../../modules/inventory/hooks/use-inventory-items';
+import { useProductRecipe } from '../../../modules/recipes/hooks/use-product-recipe';
 import type { Product } from '../../../modules/products/types/product.types';
 
 interface ProductFormDrawerProps {
@@ -25,6 +28,8 @@ const emptyValues: ProductFormValues = {
   sku: '',
   salePrice: 0,
   trackInventory: true,
+  inventoryItemId: '',
+  inventoryQuantity: 1,
   maxSauces: 0,
   maxSides: 0,
 };
@@ -37,6 +42,10 @@ export default function ProductFormDrawer({
 }: ProductFormDrawerProps) {
   const { data: categoriesData } = useProductCategories({ limit: 100, isActive: true });
   const categories = categoriesData?.data ?? [];
+  const { data: inventoryItemsData } = useInventoryItems({ limit: 100, isActive: true });
+  const inventoryItems = inventoryItemsData?.data ?? [];
+  const { data: recipe, isLoading: recipeLoading } = useProductRecipe(initialProduct?.id ?? null);
+  const recipeItemCount = recipe?.items.length ?? 0;
 
   const {
     control,
@@ -48,24 +57,32 @@ export default function ProductFormDrawer({
     defaultValues: emptyValues,
   });
 
+  const trackInventory = useWatch({ control, name: 'trackInventory' });
+  const inventoryItemId = useWatch({ control, name: 'inventoryItemId' });
+
   useEffect(() => {
-    if (open) {
-      reset(
-        initialProduct
-          ? {
-              name: initialProduct.name,
-              categoryId: initialProduct.categoryId ?? '',
-              description: initialProduct.description ?? '',
-              sku: initialProduct.sku ?? '',
-              salePrice: initialProduct.salePrice,
-              trackInventory: initialProduct.trackInventory,
-              maxSauces: initialProduct.maxSauces,
-              maxSides: initialProduct.maxSides,
-            }
-          : emptyValues,
-      );
-    }
-  }, [open, initialProduct, reset]);
+    if (!open) return;
+    if (initialProduct && recipeLoading) return;
+    const singleItem = recipeItemCount === 1 ? recipe!.items[0] : null;
+    reset(
+      initialProduct
+        ? {
+            name: initialProduct.name,
+            categoryId: initialProduct.categoryId ?? '',
+            description: initialProduct.description ?? '',
+            sku: initialProduct.sku ?? '',
+            salePrice: initialProduct.salePrice,
+            trackInventory: initialProduct.trackInventory,
+            inventoryItemId: singleItem?.inventoryItemId ?? '',
+            inventoryQuantity: singleItem?.quantity ?? 1,
+            maxSauces: initialProduct.maxSauces,
+            maxSides: initialProduct.maxSides,
+          }
+        : emptyValues,
+    );
+    // recipeItemCount/recipe are derived from the same query as recipeLoading; re-running on recipe is enough.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, initialProduct, recipe, recipeLoading, reset]);
 
   const submit = handleSubmit((values) => {
     onSubmit(values);
@@ -170,6 +187,49 @@ export default function ProductFormDrawer({
             />
           )}
         />
+
+        {trackInventory && recipeItemCount > 1 && (
+          <Alert severity="info">
+            Este producto ya tiene una receta con varios artículos de inventario. Para editarla,
+            usa "Vincular inventario" desde el detalle del producto — este formulario solo maneja
+            un vínculo simple de 1 artículo.
+          </Alert>
+        )}
+
+        {trackInventory && recipeItemCount <= 1 && (
+          <Stack direction="row" spacing={2}>
+            <Controller
+              name="inventoryItemId"
+              control={control}
+              render={({ field }) => (
+                <TextField {...field} value={field.value ?? ''} label="Artículo de inventario" select fullWidth>
+                  <MenuItem value="">Sin vincular</MenuItem>
+                  {inventoryItems.map((item) => (
+                    <MenuItem key={item.id} value={item.id}>
+                      {item.name} ({item.unit})
+                    </MenuItem>
+                  ))}
+                </TextField>
+              )}
+            />
+            <Controller
+              name="inventoryQuantity"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  label="Cantidad por venta"
+                  type="number"
+                  fullWidth
+                  disabled={!inventoryItemId}
+                  error={Boolean(errors.inventoryQuantity)}
+                  helperText={errors.inventoryQuantity?.message}
+                  sx={{ maxWidth: 160 }}
+                />
+              )}
+            />
+          </Stack>
+        )}
 
         <Stack direction="row" spacing={2}>
           <Controller

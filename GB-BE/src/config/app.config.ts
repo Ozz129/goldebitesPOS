@@ -15,6 +15,14 @@ export interface AppConfig {
     businessId: string;
     branchId: string;
   };
+  wompi: {
+    enabled: boolean;
+    publicKey: string;
+    privateKey: string;
+    integritySecret: string;
+    eventsSecret: string;
+    baseUrl: string;
+  };
 }
 
 export default registerAs('app', (): AppConfig => ({
@@ -34,5 +42,13 @@ export default registerAs('app', (): AppConfig => ({
     // deployment fixes both here instead of trusting the client.
     businessId: process.env.CAR_SERVICE_BUSINESS_ID ?? '',
     branchId: process.env.CAR_SERVICE_BRANCH_ID ?? '',
+  },
+  wompi: {
+    enabled: process.env.WOMPI_PAYMENTS_ENABLED === 'true',
+    publicKey: process.env.WOMPI_PUBLIC_KEY ?? '',
+    privateKey: process.env.WOMPI_PRIVATE_KEY ?? '',
+    integritySecret: process.env.WOMPI_INTEGRITY_SECRET ?? '',
+    eventsSecret: process.env.WOMPI_EVENTS_SECRET ?? '',
+    baseUrl: process.env.WOMPI_BASE_URL ?? 'https://sandbox.wompi.co/v1',
   },
 }));

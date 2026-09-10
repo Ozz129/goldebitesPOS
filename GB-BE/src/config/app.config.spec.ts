@@ -46,4 +46,22 @@ describe('appConfig', () => {
     expect(config.jwt.accessSecret).toBe('access');
     expect(config.jwt.refreshSecret).toBe('refresh');
   });
+
+  it('keeps Wompi disabled and defaults to the sandbox base URL when unset', () => {
+    delete process.env.WOMPI_PAYMENTS_ENABLED;
+    delete process.env.WOMPI_BASE_URL;
+
+    const config = appConfig();
+
+    expect(config.wompi.enabled).toBe(false);
+    expect(config.wompi.baseUrl).toBe('https://sandbox.wompi.co/v1');
+  });
+
+  it('enables Wompi only when the flag is exactly "true"', () => {
+    process.env.WOMPI_PAYMENTS_ENABLED = 'yes';
+    expect(appConfig().wompi.enabled).toBe(false);
+
+    process.env.WOMPI_PAYMENTS_ENABLED = 'true';
+    expect(appConfig().wompi.enabled).toBe(true);
+  });
 });

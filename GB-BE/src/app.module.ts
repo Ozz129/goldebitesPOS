@@ -57,6 +57,7 @@ import { SuppliersModule } from './modules/suppliers/suppliers.module';
 import { TabletKioskModule } from './modules/tablet-kiosk/tablet-kiosk.module';
 import { UsersModule } from './modules/users/users.module';
 import { WasteModule } from './modules/waste/waste.module';
+import { WompiModule } from './modules/wompi/wompi.module';
 
 @Module({
   imports: [
@@ -99,6 +100,7 @@ import { WasteModule } from './modules/waste/waste.module';
     OrdersModule,
     KitchenModule,
     PaymentsModule,
+    WompiModule,
     WasteModule,
     SettingsModule,
     DashboardModule,

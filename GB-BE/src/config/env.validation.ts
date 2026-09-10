@@ -106,6 +106,31 @@ class EnvironmentVariables {
   @IsUUID()
   @IsNotEmpty()
   CAR_SERVICE_BRANCH_ID: string;
+
+  /** Global kill switch — the Wompi checkout stays invisible (routes 404) unless this is 'true'. */
+  @IsString()
+  @IsOptional()
+  WOMPI_PAYMENTS_ENABLED: string = 'false';
+
+  @IsString()
+  @IsOptional()
+  WOMPI_PUBLIC_KEY: string = '';
+
+  @IsString()
+  @IsOptional()
+  WOMPI_PRIVATE_KEY: string = '';
+
+  @IsString()
+  @IsOptional()
+  WOMPI_INTEGRITY_SECRET: string = '';
+
+  @IsString()
+  @IsOptional()
+  WOMPI_EVENTS_SECRET: string = '';
+
+  @IsString()
+  @IsOptional()
+  WOMPI_BASE_URL: string = 'https://sandbox.wompi.co/v1';
 }
 
 export function validate(config: Record<string, unknown>) {

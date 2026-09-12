@@ -18,6 +18,7 @@ import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { BankTransactionsModule } from './modules/bank-transactions/bank-transactions.module';
 import { BranchesModule } from './modules/branches/branches.module';
 import { BusinessFeaturesModule } from './modules/business-features/business-features.module';
 import { BusinessesModule } from './modules/businesses/businesses.module';
@@ -99,6 +100,7 @@ import { WasteModule } from './modules/waste/waste.module';
     OrdersModule,
     KitchenModule,
     PaymentsModule,
+    BankTransactionsModule,
     WasteModule,
     SettingsModule,
     DashboardModule,

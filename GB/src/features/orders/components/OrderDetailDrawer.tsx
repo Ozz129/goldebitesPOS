@@ -30,8 +30,10 @@ import { usePrintInvoice } from '../../../modules/orders/hooks/use-print-invoice
 import { normalizeApiError } from '../../../lib/api/api-error';
 import LoadingSkeleton from '../../../components/common/LoadingSkeleton';
 import SplitBillDialog from './SplitBillDialog';
+import BankTransferPanel from './BankTransferPanel';
 import EditOrderItemsDrawer from './EditOrderItemsDrawer';
 import AddOrderItemsDrawer from './AddOrderItemsDrawer';
+import { env } from '../../../config/env';
 import {
   nextStatusFor,
   ORDER_STATUS_LABELS,
@@ -388,14 +390,21 @@ export default function OrderDetailDrawer({
 
             {canRegisterPayment && (
               <Can permission="orders.update">
-                <Button
-                  size="small"
-                  startIcon={<Users size={15} />}
-                  onClick={() => setSplitBillOpen(true)}
-                  sx={{ mt: 1.5 }}
-                >
-                  Dividir cuenta
-                </Button>
+                <Stack direction="row" spacing={1} sx={{ mt: 1.5, flexWrap: 'wrap' }}>
+                  <Button size="small" startIcon={<Users size={15} />} onClick={() => setSplitBillOpen(true)}>
+                    Dividir cuenta
+                  </Button>
+                  {env.bankVerificationEnabled && (
+                    <BankTransferPanel
+                      orderId={order.id}
+                      onConfirmed={() => {
+                        printInvoiceByOrderId(order.id).catch(() => {
+                          // Si falla la carga de datos para la factura, se puede reimprimir manualmente.
+                        });
+                      }}
+                    />
+                  )}
+                </Stack>
                 <Stack direction="row" spacing={1} sx={{ mt: 1, alignItems: 'center' }}>
                   <TextField
                     select

@@ -22,7 +22,8 @@
     "migration:status": "tsx src/database/migration-status.ts",
     "migration:create": "tsx src/database/migration-create.ts",
     "seed": "ts-node -P tsconfig.json src/database/seed-runner.ts",
-    "db:reset": "tsx src/database/reset-database.ts"
+    "db:reset": "tsx src/database/reset-database.ts",
+    "gmail:authorize": "tsx scripts/gmail-oauth-setup.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
@@ -38,6 +39,7 @@
     "class-validator": "^0.15.1",
     "compression": "^1.8.1",
     "dotenv": "^17.4.2",
+    "googleapis": "^178.1.1",
     "helmet": "^8.3.0",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",

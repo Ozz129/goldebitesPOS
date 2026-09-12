@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import { Type, plainToInstance } from 'class-transformer';
 import {
   IsEnum,
+  IsIn,
   IsInt,
   IsNotEmpty,
   IsOptional,
@@ -106,6 +107,60 @@ class EnvironmentVariables {
   @IsUUID()
   @IsNotEmpty()
   CAR_SERVICE_BRANCH_ID: string;
+
+  @IsString()
+  @IsOptional()
+  BANK_VERIFICATION_ENABLED: string = 'false';
+
+  @IsIn(['mock', 'gmail'])
+  @IsOptional()
+  BANK_VERIFICATION_PROVIDER: string = 'mock';
+
+  @IsString()
+  @IsOptional()
+  BANK_VERIFICATION_BUSINESS_ID: string = '';
+
+  @Type(() => Number)
+  @IsInt()
+  @Min(1000)
+  @IsOptional()
+  BANK_VERIFICATION_POLL_INTERVAL_MS: number = 30000;
+
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @IsOptional()
+  BANK_VERIFICATION_MATCH_WINDOW_MINUTES: number = 120;
+
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  @IsOptional()
+  BANK_VERIFICATION_MATCH_BACKWARD_TOLERANCE_MINUTES: number = 5;
+
+  @IsString()
+  @IsOptional()
+  BANK_EMAIL_SENDER_ALLOWLIST: string = '';
+
+  @IsString()
+  @IsOptional()
+  BANK_EMAIL_SUBJECT_FILTER: string = '';
+
+  @IsString()
+  @IsOptional()
+  GMAIL_OAUTH_CLIENT_ID: string = '';
+
+  @IsString()
+  @IsOptional()
+  GMAIL_OAUTH_CLIENT_SECRET: string = '';
+
+  @IsString()
+  @IsOptional()
+  GMAIL_OAUTH_REFRESH_TOKEN: string = '';
+
+  @IsString()
+  @IsOptional()
+  GMAIL_OAUTH_REDIRECT_URI: string = 'http://localhost:3000/oauth2callback';
 }
 
 export function validate(config: Record<string, unknown>) {

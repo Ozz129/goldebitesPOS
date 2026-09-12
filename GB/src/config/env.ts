@@ -10,4 +10,5 @@ function requireEnv(key: keyof ImportMetaEnv): string {
 
 export const env = {
   apiBaseUrl: requireEnv('VITE_API_BASE_URL'),
+  bankVerificationEnabled: import.meta.env.VITE_BANK_VERIFICATION_ENABLED === 'true',
 };

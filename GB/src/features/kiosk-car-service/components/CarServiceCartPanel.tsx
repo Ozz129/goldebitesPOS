@@ -14,11 +14,11 @@ import type { CartLine } from '../../kiosk-waiter/components/CartPanel';
 
 interface CarServiceCartPanelProps {
   cart: CartLine[];
-  onIncrement: (productId: string) => void;
-  onDecrement: (productId: string) => void;
-  onRemove: (productId: string) => void;
-  onToggleSauce: (productId: string, sauceId: string) => void;
-  onToggleSide: (productId: string, sideId: string) => void;
+  onIncrement: (id: string) => void;
+  onDecrement: (id: string) => void;
+  onRemove: (id: string) => void;
+  onToggleSauce: (id: string, sauceId: string) => void;
+  onToggleSide: (id: string, sideId: string) => void;
   vehicleTag: string;
   onVehicleTagChange: (value: string) => void;
   customerName: string;
@@ -87,7 +87,7 @@ export default function CarServiceCartPanel({
         ) : (
           cart.map((line) => (
             <Box
-              key={line.productId}
+              key={line.id}
               sx={{
                 px: 2,
                 py: 1.5,
@@ -105,13 +105,13 @@ export default function CarServiceCartPanel({
                   </Typography>
                 </Box>
                 <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
-                  <Stepper icon={<Minus size={18} />} onClick={() => onDecrement(line.productId)} />
+                  <Stepper icon={<Minus size={18} />} onClick={() => onDecrement(line.id)} />
                   <Typography sx={{ minWidth: 26, textAlign: 'center', fontWeight: 800, fontSize: '1.1rem' }}>
                     {line.quantity}
                   </Typography>
-                  <Stepper icon={<Plus size={18} />} onClick={() => onIncrement(line.productId)} />
+                  <Stepper icon={<Plus size={18} />} onClick={() => onIncrement(line.id)} />
                   <ButtonBase
-                    onClick={() => onRemove(line.productId)}
+                    onClick={() => onRemove(line.id)}
                     sx={{ p: 1, borderRadius: 2, color: 'error.main', ml: 0.5 }}
                   >
                     <Trash2 size={18} />
@@ -134,7 +134,7 @@ export default function CarServiceCartPanel({
                           label={sauce.name}
                           clickable={!disabled}
                           disabled={disabled}
-                          onClick={() => onToggleSauce(line.productId, sauce.id)}
+                          onClick={() => onToggleSauce(line.id, sauce.id)}
                           color={selected ? 'primary' : 'default'}
                           variant={selected ? 'filled' : 'outlined'}
                           sx={{ fontWeight: 700 }}
@@ -160,7 +160,7 @@ export default function CarServiceCartPanel({
                           label={side.name}
                           clickable={!disabled}
                           disabled={disabled}
-                          onClick={() => onToggleSide(line.productId, side.id)}
+                          onClick={() => onToggleSide(line.id, side.id)}
                           color={selected ? 'primary' : 'default'}
                           variant={selected ? 'filled' : 'outlined'}
                           sx={{ fontWeight: 700 }}

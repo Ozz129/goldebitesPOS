@@ -11,11 +11,11 @@ import type { CartLine } from '../../kiosk-waiter/components/CartPanel';
 
 interface OrderCartListProps {
   cart: CartLine[];
-  onIncrement: (productId: string) => void;
-  onDecrement: (productId: string) => void;
-  onRemove: (productId: string) => void;
-  onToggleSauce: (productId: string, sauceId: string) => void;
-  onToggleSide: (productId: string, sideId: string) => void;
+  onIncrement: (id: string) => void;
+  onDecrement: (id: string) => void;
+  onRemove: (id: string) => void;
+  onToggleSauce: (id: string, sauceId: string) => void;
+  onToggleSide: (id: string, sideId: string) => void;
   emptyMessage?: string;
 }
 
@@ -46,7 +46,7 @@ export default function OrderCartList({
     <Stack spacing={0}>
       {cart.map((line) => (
         <Box
-          key={line.productId}
+          key={line.id}
           sx={{
             px: 1.5,
             py: 1.25,
@@ -63,14 +63,14 @@ export default function OrderCartList({
                 {formatCOP(line.unitPrice)} c/u
               </Typography>
             </Box>
-            <IconButton size="small" onClick={() => onDecrement(line.productId)}>
+            <IconButton size="small" onClick={() => onDecrement(line.id)}>
               <Minus size={16} />
             </IconButton>
             <Typography sx={{ minWidth: 20, textAlign: 'center', fontWeight: 700 }}>{line.quantity}</Typography>
-            <IconButton size="small" onClick={() => onIncrement(line.productId)}>
+            <IconButton size="small" onClick={() => onIncrement(line.id)}>
               <Plus size={16} />
             </IconButton>
-            <IconButton size="small" color="error" onClick={() => onRemove(line.productId)}>
+            <IconButton size="small" color="error" onClick={() => onRemove(line.id)}>
               <Trash2 size={16} />
             </IconButton>
           </Stack>
@@ -91,7 +91,7 @@ export default function OrderCartList({
                       size="small"
                       clickable={!disabled}
                       disabled={disabled}
-                      onClick={() => onToggleSauce(line.productId, sauce.id)}
+                      onClick={() => onToggleSauce(line.id, sauce.id)}
                       color={selected ? 'primary' : 'default'}
                       variant={selected ? 'filled' : 'outlined'}
                       sx={{ fontWeight: 600 }}
@@ -118,7 +118,7 @@ export default function OrderCartList({
                       size="small"
                       clickable={!disabled}
                       disabled={disabled}
-                      onClick={() => onToggleSide(line.productId, side.id)}
+                      onClick={() => onToggleSide(line.id, side.id)}
                       color={selected ? 'primary' : 'default'}
                       variant={selected ? 'filled' : 'outlined'}
                       sx={{ fontWeight: 600 }}

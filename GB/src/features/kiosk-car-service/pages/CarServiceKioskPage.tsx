@@ -75,15 +75,21 @@ export default function CarServiceKioskPage() {
 
   function handleAddToCart(product: Product) {
     setCart((prev) => {
-      const existing = prev.find((line) => line.productId === product.id);
-      if (existing) {
-        return prev.map((line) =>
-          line.productId === product.id ? { ...line, quantity: line.quantity + 1 } : line,
-        );
+      // Products with sauces/sides need one picker per unit, so each tap adds its own
+      // independently-configurable line instead of bumping a shared quantity.
+      const isCustomizable = product.maxSauces > 0 || product.maxSides > 0;
+      if (!isCustomizable) {
+        const existing = prev.find((line) => line.productId === product.id);
+        if (existing) {
+          return prev.map((line) =>
+            line.id === existing.id ? { ...line, quantity: line.quantity + 1 } : line,
+          );
+        }
       }
       return [
         ...prev,
         {
+          id: crypto.randomUUID(),
           productId: product.id,
           name: product.name,
           unitPrice: product.salePrice,
@@ -97,54 +103,73 @@ export default function CarServiceKioskPage() {
     });
   }
 
-  function handleToggleSauce(productId: string, sauceId: string) {
+  function handleToggleSauce(id: string, sauceId: string) {
     setCart((prev) =>
       prev.map((line) => {
-        if (line.productId !== productId) return line;
+        if (line.id !== id) return line;
         const selected = line.sauceIds.includes(sauceId);
         if (!selected && line.sauceIds.length >= line.maxSauces) return line;
         return {
           ...line,
           sauceIds: selected
-            ? line.sauceIds.filter((id) => id !== sauceId)
+            ? line.sauceIds.filter((sid) => sid !== sauceId)
             : [...line.sauceIds, sauceId],
         };
       }),
     );
   }
 
-  function handleToggleSide(productId: string, sideId: string) {
+  function handleToggleSide(id: string, sideId: string) {
     setCart((prev) =>
       prev.map((line) => {
-        if (line.productId !== productId) return line;
+        if (line.id !== id) return line;
         const selected = line.sideIds.includes(sideId);
         if (!selected && line.sideIds.length >= line.maxSides) return line;
         return {
           ...line,
           sideIds: selected
-            ? line.sideIds.filter((id) => id !== sideId)
+            ? line.sideIds.filter((sid) => sid !== sideId)
             : [...line.sideIds, sideId],
         };
       }),
     );
   }
 
-  function handleIncrement(productId: string) {
-    setCart((prev) =>
-      prev.map((line) => (line.productId === productId ? { ...line, quantity: line.quantity + 1 } : line)),
-    );
+  function handleIncrement(id: string) {
+    setCart((prev) => {
+      const line = prev.find((l) => l.id === id);
+      if (!line) return prev;
+      const isCustomizable = line.maxSauces > 0 || line.maxSides > 0;
+      if (isCustomizable) {
+        return [
+          ...prev,
+          {
+            id: crypto.randomUUID(),
+            productId: line.productId,
+            name: line.name,
+            unitPrice: line.unitPrice,
+            quantity: 1,
+            maxSauces: line.maxSauces,
+            maxSides: line.maxSides,
+            sauceIds: [],
+            sideIds: [],
+          },
+        ];
+      }
+      return prev.map((l) => (l.id === id ? { ...l, quantity: l.quantity + 1 } : l));
+    });
   }
 
-  function handleDecrement(productId: string) {
+  function handleDecrement(id: string) {
     setCart((prev) =>
       prev
-        .map((line) => (line.productId === productId ? { ...line, quantity: line.quantity - 1 } : line))
+        .map((line) => (line.id === id ? { ...line, quantity: line.quantity - 1 } : line))
         .filter((line) => line.quantity > 0),
     );
   }
 
-  function handleRemove(productId: string) {
-    setCart((prev) => prev.filter((line) => line.productId !== productId));
+  function handleRemove(id: string) {
+    setCart((prev) => prev.filter((line) => line.id !== id));
   }
 
   function handleSubmit() {

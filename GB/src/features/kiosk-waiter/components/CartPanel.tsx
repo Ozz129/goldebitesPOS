@@ -14,6 +14,9 @@ import OrderCartList from '../../orders/components/OrderCartList';
 import TableNumberPicker from './TableNumberPicker';
 
 export interface CartLine {
+  /** Unique per cart line — NOT the same as productId, since one product can appear as several
+   *  independently-customized lines (e.g. two burgers with different sauces/sides each). */
+  id: string;
   productId: string;
   name: string;
   unitPrice: number;
@@ -26,11 +29,11 @@ export interface CartLine {
 
 interface CartPanelProps {
   cart: CartLine[];
-  onIncrement: (productId: string) => void;
-  onDecrement: (productId: string) => void;
-  onRemove: (productId: string) => void;
-  onToggleSauce: (productId: string, sauceId: string) => void;
-  onToggleSide: (productId: string, sideId: string) => void;
+  onIncrement: (id: string) => void;
+  onDecrement: (id: string) => void;
+  onRemove: (id: string) => void;
+  onToggleSauce: (id: string, sauceId: string) => void;
+  onToggleSide: (id: string, sideId: string) => void;
   tableNumber: string;
   onTableNumberChange: (value: string) => void;
   tableCount?: number;

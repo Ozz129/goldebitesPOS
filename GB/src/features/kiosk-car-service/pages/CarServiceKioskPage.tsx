@@ -13,6 +13,7 @@ import { useCreateOrder } from '../../../modules/orders/hooks/use-create-order';
 import { useUpdateOrderStatus } from '../../../modules/orders/hooks/use-update-order-status';
 import { normalizeApiError } from '../../../lib/api/api-error';
 import { useNotificationsStore } from '../../../store/notificationsStore';
+import { generateId } from '../../../utils/generate-id';
 import type { OrderStatus } from '../../../modules/orders/types/order.types';
 import type { Product } from '../../../modules/products/types/product.types';
 import { useWaiterOrders } from '../../kiosk-waiter/hooks/use-waiter-orders';
@@ -89,7 +90,7 @@ export default function CarServiceKioskPage() {
       return [
         ...prev,
         {
-          id: crypto.randomUUID(),
+          id: generateId(),
           productId: product.id,
           name: product.name,
           unitPrice: product.salePrice,
@@ -144,7 +145,7 @@ export default function CarServiceKioskPage() {
         return [
           ...prev,
           {
-            id: crypto.randomUUID(),
+            id: generateId(),
             productId: line.productId,
             name: line.name,
             unitPrice: line.unitPrice,

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { CartLine } from '../../../features/kiosk-waiter/components/CartPanel';
 import type { Product } from '../../products/types/product.types';
+import { generateId } from '../../../utils/generate-id';
 
 /** Cart-line state management shared by the waiter kiosk, "add products" drawer, and the redesigned new-order flow. */
 export function useCartLines() {
@@ -23,7 +24,7 @@ export function useCartLines() {
       return [
         ...prev,
         {
-          id: crypto.randomUUID(),
+          id: generateId(),
           productId: product.id,
           name: product.name,
           unitPrice: product.salePrice,
@@ -79,7 +80,7 @@ export function useCartLines() {
         return [
           ...prev,
           {
-            id: crypto.randomUUID(),
+            id: generateId(),
             productId: line.productId,
             name: line.name,
             unitPrice: line.unitPrice,

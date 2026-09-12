@@ -8,6 +8,7 @@ import type {
   CloseCashSessionPayload,
   CreateCashMovementPayload,
   OpenCashSessionPayload,
+  ReopenCashSessionPayload,
 } from '../types/cash-session.types';
 
 export const cashSessionsApi = {
@@ -49,6 +50,14 @@ export const cashSessionsApi = {
   async addMovement(id: string, payload: CreateCashMovementPayload): Promise<CashMovement> {
     const { data } = await apiClient.post<ApiResponse<CashMovement>>(
       `/cash-sessions/${id}/movements`,
+      payload,
+    );
+    return data.data;
+  },
+
+  async reopen(id: string, payload: ReopenCashSessionPayload): Promise<CashSession> {
+    const { data } = await apiClient.post<ApiResponse<CashSession>>(
+      `/cash-sessions/${id}/reopen`,
       payload,
     );
     return data.data;

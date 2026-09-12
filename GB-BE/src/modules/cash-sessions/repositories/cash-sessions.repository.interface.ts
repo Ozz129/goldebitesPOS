@@ -63,6 +63,12 @@ export interface ICashSessionsRepository {
     notes: string | undefined,
     client?: DbClient,
   ): Promise<CashSessionRow | null>;
+  /** Reopens a CLOSED session as RECTIFYING, clearing its prior closing snapshot. Null if it was no longer CLOSED (race). */
+  reopenForCorrection(
+    id: string,
+    businessId: string,
+    client?: DbClient,
+  ): Promise<CashSessionRow | null>;
 }
 
 export const CASH_SESSIONS_REPOSITORY = Symbol('CASH_SESSIONS_REPOSITORY');

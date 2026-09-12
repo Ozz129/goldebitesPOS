@@ -1,9 +1,13 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { timingSafeEqual } from 'node:crypto';
 import {
   BusinessRuleException,
   CashSessionClosedException,
   EntityNotFoundException,
+  UnauthorizedOperationException,
 } from '../../../common/exceptions';
+import { AppConfig } from '../../../config/app.config';
 import { PaginatedResult } from '../../../common/pagination/paginated-result.interface';
 import { buildPaginationMeta } from '../../../common/pagination/pagination.util';
 import { DbClient } from '../../../database/types/database.types';
@@ -37,6 +41,7 @@ export class CashSessionsService {
     private readonly branchesService: BranchesService,
     private readonly transactionService: TransactionService,
     private readonly auditService: AuditService,
+    private readonly configService: ConfigService,
   ) {}
 
   async open(
@@ -170,7 +175,7 @@ export class CashSessionsService {
     actorUserId?: string,
   ): Promise<CashMovement> {
     const session = await this.getOwnedOrFail(businessId, cashSessionId);
-    if (session.status !== CashSessionStatus.OPEN) {
+    if (session.status === CashSessionStatus.CLOSED) {
       throw new CashSessionClosedException(cashSessionId);
     }
 
@@ -227,7 +232,7 @@ export class CashSessionsService {
     actorUserId?: string,
   ): Promise<CashSession> {
     const session = await this.getOwnedOrFail(businessId, id);
-    if (session.status !== CashSessionStatus.OPEN) {
+    if (session.status === CashSessionStatus.CLOSED) {
       throw new BusinessRuleException(
         'This cash session is already closed',
         'CASH_SESSION_ALREADY_CLOSED',
@@ -300,6 +305,66 @@ export class CashSessionsService {
     return CashSessionMapper.toDomain(row);
   }
 
+  /**
+   * Admin-only "rectificar caja": reopens a CLOSED session as RECTIFYING so a missing
+   * adjustment can be added and the session closed again — without touching whatever
+   * session is currently OPEN for the branch today. Gated by a shared master key
+   * (CASH_SESSION_MASTER_KEY) on top of the cash.reopen permission.
+   */
+  async reopenForCorrection(
+    businessId: string,
+    id: string,
+    masterKey: string,
+    reason: string,
+    actorUserId: string,
+  ): Promise<CashSession> {
+    const session = await this.getOwnedOrFail(businessId, id);
+    if (session.status !== CashSessionStatus.CLOSED) {
+      throw new BusinessRuleException(
+        'This cash session is not closed',
+        'CASH_SESSION_NOT_CLOSED',
+      );
+    }
+
+    const configuredKey = this.configService.getOrThrow<AppConfig>('app').cashSession.masterKey;
+    if (!configuredKey) {
+      throw new BusinessRuleException(
+        'No master key is configured for this operation',
+        'MASTER_KEY_NOT_CONFIGURED',
+      );
+    }
+    if (!constantTimeEquals(masterKey, configuredKey)) {
+      throw new UnauthorizedOperationException('Clave maestra incorrecta');
+    }
+
+    const reopened = await this.sessionsRepository.reopenForCorrection(id, businessId);
+    if (!reopened) {
+      throw new EntityNotFoundException('CashSession', id);
+    }
+
+    await this.auditService.record({
+      businessId,
+      branchId: session.branch_id,
+      userId: actorUserId,
+      entityType: 'cash_session',
+      entityId: id,
+      action: 'REOPEN_FOR_CORRECTION',
+      oldValues: {
+        status: session.status,
+        closedAt: session.closed_at,
+        closedBy: session.closed_by,
+        actualClosingAmount: session.actual_closing_amount,
+        differenceAmount: session.difference_amount,
+        actualTransferAmount: session.actual_transfer_amount,
+        transferDifferenceAmount: session.transfer_difference_amount,
+      },
+      newValues: { status: reopened.status },
+      metadata: { reason },
+    });
+
+    return CashSessionMapper.toDomain(reopened);
+  }
+
   private async buildWithMovements(
     row: CashSessionRow,
   ): Promise<CashSessionWithMovements> {
@@ -326,4 +391,14 @@ export class CashSessionsService {
 
 function round2(value: number): number {
   return Math.round(value * 100) / 100;
+}
+
+/** Constant-time string comparison so a wrong master key can't be brute-forced via response timing. */
+function constantTimeEquals(a: string, b: string): boolean {
+  const bufA = Buffer.from(a);
+  const bufB = Buffer.from(b);
+  if (bufA.length !== bufB.length) {
+    return false;
+  }
+  return timingSafeEqual(bufA, bufB);
 }

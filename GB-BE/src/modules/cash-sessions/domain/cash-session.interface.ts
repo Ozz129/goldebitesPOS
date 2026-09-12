@@ -1,6 +1,8 @@
 export enum CashSessionStatus {
   OPEN = 'OPEN',
   CLOSED = 'CLOSED',
+  /** Reopened from CLOSED for an admin correction — invisible to the branch's normal OPEN-session lookup. */
+  RECTIFYING = 'RECTIFYING',
 }
 
 export enum CashMovementType {

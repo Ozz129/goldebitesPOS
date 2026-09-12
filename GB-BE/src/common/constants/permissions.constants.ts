@@ -88,6 +88,11 @@ export const PERMISSIONS: PermissionDefinition[] = [
     module: 'cash',
     description: 'Retirar efectivo de una sesión de caja',
   },
+  {
+    code: 'cash.reopen',
+    module: 'cash',
+    description: 'Rectificar una sesión de caja cerrada (requiere clave maestra)',
+  },
 
   {
     code: 'purchases.read',

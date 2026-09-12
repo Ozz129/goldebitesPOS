@@ -9,10 +9,11 @@ export function useAddCashMovement(branchId: string | null) {
   return useMutation({
     mutationFn: ({ id, payload }: { id: string; payload: CreateCashMovementPayload }) =>
       cashSessionsApi.addMovement(id, payload),
-    onSuccess: () => {
+    onSuccess: (_movement, { id }) => {
       if (branchId) {
         queryClient.invalidateQueries({ queryKey: cashSessionKeys.current(branchId) });
       }
+      queryClient.invalidateQueries({ queryKey: cashSessionKeys.detail(id) });
     },
   });
 }

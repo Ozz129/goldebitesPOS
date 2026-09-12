@@ -233,7 +233,7 @@ export class CashSessionsRepository implements ICashSessionsRepository {
            actual_transfer_amount = $8,
            transfer_difference_amount = $9,
            notes = COALESCE($10, notes)
-       WHERE id = $1 AND business_id = $2 AND status = 'OPEN'
+       WHERE id = $1 AND business_id = $2 AND status IN ('OPEN', 'RECTIFYING')
        RETURNING ${SELECT_COLUMNS}`,
       [
         id,
@@ -247,6 +247,30 @@ export class CashSessionsRepository implements ICashSessionsRepository {
         transferDifferenceAmount,
         notes ?? null,
       ],
+      client,
+    );
+    return result.rows[0] ?? null;
+  }
+
+  async reopenForCorrection(
+    id: string,
+    businessId: string,
+    client?: DbClient,
+  ): Promise<CashSessionRow | null> {
+    const result = await this.db.query<CashSessionRow>(
+      `UPDATE cash_sessions
+       SET status = 'RECTIFYING',
+           closed_by = NULL,
+           closed_at = NULL,
+           expected_closing_amount = NULL,
+           actual_closing_amount = NULL,
+           difference_amount = NULL,
+           expected_transfer_amount = NULL,
+           actual_transfer_amount = NULL,
+           transfer_difference_amount = NULL
+       WHERE id = $1 AND business_id = $2 AND status = 'CLOSED'
+       RETURNING ${SELECT_COLUMNS}`,
+      [id, businessId],
       client,
     );
     return result.rows[0] ?? null;

@@ -11,6 +11,7 @@ describe('CashSessionsController', () => {
       | 'findOne'
       | 'recordMovement'
       | 'close'
+      | 'reopenForCorrection'
     >
   >;
   let controller: CashSessionsController;
@@ -23,6 +24,7 @@ describe('CashSessionsController', () => {
       findOne: jest.fn(),
       recordMovement: jest.fn(),
       close: jest.fn(),
+      reopenForCorrection: jest.fn(),
     };
     controller = new CashSessionsController(
       service as unknown as CashSessionsService,
@@ -96,6 +98,21 @@ describe('CashSessionsController', () => {
       'session-1',
       { actualClosingAmount: 1000 },
       'actor-1',
+    );
+  });
+
+  it('reopen() delegates with the master key, reason, and actor', async () => {
+    service.reopenForCorrection.mockResolvedValue({ id: 'session-1' } as never);
+    await controller.reopen('business-1', 'admin-1', 'session-1', {
+      masterKey: 'super-secret',
+      reason: 'Faltó registrar un ingreso',
+    });
+    expect(service.reopenForCorrection).toHaveBeenCalledWith(
+      'business-1',
+      'session-1',
+      'super-secret',
+      'Faltó registrar un ingreso',
+      'admin-1',
     );
   });
 });

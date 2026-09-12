@@ -161,4 +161,47 @@ describe('CashSessionsRepository (integration)', () => {
     );
     expect(secondAttempt).toBeNull();
   });
+
+  it('reopenForCorrection() only succeeds on a CLOSED session and clears the prior closing snapshot', async () => {
+    const session = await repository.create(
+      { businessId, branchId, openingAmount: 1000 },
+      userId,
+    );
+    await repository.close(session.id, businessId, userId, 1000, 900, -100, 0, null, null, undefined);
+
+    const notClosedYet = await repository.reopenForCorrection(session.id, businessId);
+    expect(notClosedYet?.status).toBe('RECTIFYING');
+    expect(notClosedYet?.closed_at).toBeNull();
+    expect(notClosedYet?.closed_by).toBeNull();
+    expect(notClosedYet?.actual_closing_amount).toBeNull();
+    expect(notClosedYet?.difference_amount).toBeNull();
+
+    // No longer CLOSED, so a second reopen attempt is rejected (race-safety guard).
+    const secondReopen = await repository.reopenForCorrection(session.id, businessId);
+    expect(secondReopen).toBeNull();
+  });
+
+  it('close() accepts a RECTIFYING session (re-closing after an admin correction)', async () => {
+    const session = await repository.create(
+      { businessId, branchId, openingAmount: 1000 },
+      userId,
+    );
+    await repository.close(session.id, businessId, userId, 1000, 900, -100, 0, null, null, undefined);
+    await repository.reopenForCorrection(session.id, businessId);
+
+    const reclosed = await repository.close(
+      session.id,
+      businessId,
+      userId,
+      1000,
+      1000,
+      0,
+      0,
+      null,
+      null,
+      'Se agregó el ingreso que faltaba',
+    );
+    expect(reclosed?.status).toBe('CLOSED');
+    expect(reclosed?.difference_amount).toBe('0.00');
+  });
 });

@@ -8,7 +8,7 @@ import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useSnackbar } from 'notistack';
-import { Wallet, PlusCircle, Lock, Banknote, CreditCard, Landmark, Smartphone, HandCoins, ReceiptText } from 'lucide-react';
+import { Wallet, PlusCircle, Lock, Banknote, CreditCard, Landmark, Smartphone, HandCoins, ReceiptText, RotateCcw } from 'lucide-react';
 import PageHeader from '../../../components/common/PageHeader';
 import StatCard from '../../../components/common/StatCard';
 import DataTable from '../../../components/common/DataTable';
@@ -25,6 +25,7 @@ import { useCashSessions } from '../../../modules/cash-sessions/hooks/use-cash-s
 import { useOpenCashSession } from '../../../modules/cash-sessions/hooks/use-open-cash-session';
 import { useCloseCashSession } from '../../../modules/cash-sessions/hooks/use-close-cash-session';
 import { useAddCashMovement } from '../../../modules/cash-sessions/hooks/use-add-cash-movement';
+import { useReopenCashSession } from '../../../modules/cash-sessions/hooks/use-reopen-cash-session';
 import { normalizeApiError } from '../../../lib/api/api-error';
 import { formatCOP } from '../../../utils/format';
 import { PAYMENT_METHOD_LABELS } from '../../../modules/orders/order-status';
@@ -37,6 +38,8 @@ import type {
 import OpenSessionDialog from '../components/OpenSessionDialog';
 import CloseSessionDialog from '../components/CloseSessionDialog';
 import CashMovementDrawer from '../components/CashMovementDrawer';
+import ReopenSessionDialog from '../components/ReopenSessionDialog';
+import RectifyingSessionCard from '../components/RectifyingSessionCard';
 
 const MOVEMENT_TYPE_LABELS: Record<CashMovementType, string> = {
   OPENING: 'Apertura',
@@ -63,8 +66,9 @@ export default function CashRegisterPage() {
   const branchId = useAuthStore((s) => s.user?.branchId ?? null);
 
   const [openDialogOpen, setOpenDialogOpen] = useState(false);
-  const [closeDialogOpen, setCloseDialogOpen] = useState(false);
-  const [movementDrawerOpen, setMovementDrawerOpen] = useState(false);
+  const [closeTargetId, setCloseTargetId] = useState<string | null>(null);
+  const [movementTargetId, setMovementTargetId] = useState<string | null>(null);
+  const [reopenTargetId, setReopenTargetId] = useState<string | null>(null);
 
   const {
     data: currentSession,
@@ -74,11 +78,14 @@ export default function CashRegisterPage() {
     refetch,
   } = useCurrentCashSession(branchId);
   const { data: historyData } = useCashSessions({ limit: 20, status: 'CLOSED' });
+  const { data: rectifyingData } = useCashSessions({ limit: 5, status: 'RECTIFYING' });
   const openSession = useOpenCashSession();
   const closeSession = useCloseCashSession();
   const addMovement = useAddCashMovement(branchId);
+  const reopenSession = useReopenCashSession();
 
   const closedSessions = historyData?.data ?? [];
+  const rectifyingSessions = rectifyingData?.data ?? [];
 
   const sales = useMemo(
     () => (currentSession?.movements ?? []).filter((m) => m.movementType === 'SALE'),
@@ -186,6 +193,22 @@ export default function CashRegisterPage() {
           '—'
         ),
     },
+    {
+      id: 'rectify',
+      header: '',
+      cell: ({ row }) => (
+        <Can permission="cash.reopen">
+          <Button
+            size="small"
+            color="warning"
+            startIcon={<RotateCcw size={14} />}
+            onClick={() => setReopenTargetId(row.original.id)}
+          >
+            Rectificar
+          </Button>
+        </Can>
+      ),
+    },
   ];
 
   if (!branchId) {
@@ -213,7 +236,7 @@ export default function CashRegisterPage() {
               <Button
                 variant="outlined"
                 startIcon={<PlusCircle size={16} />}
-                onClick={() => setMovementDrawerOpen(true)}
+                onClick={() => setMovementTargetId(currentSession.id)}
               >
                 Registrar movimiento
               </Button>
@@ -221,7 +244,7 @@ export default function CashRegisterPage() {
                 variant="contained"
                 color="error"
                 startIcon={<Lock size={16} />}
-                onClick={() => setCloseDialogOpen(true)}
+                onClick={() => setCloseTargetId(currentSession.id)}
               >
                 Cerrar caja
               </Button>
@@ -235,6 +258,16 @@ export default function CashRegisterPage() {
           )
         }
       />
+
+      {rectifyingSessions.map((session) => (
+        <RectifyingSessionCard
+          key={session.id}
+          session={session}
+          movementColumns={movementColumns}
+          onAddMovement={() => setMovementTargetId(session.id)}
+          onCloseCorrection={() => setCloseTargetId(session.id)}
+        />
+      ))}
 
       {isLoading ? (
         <LoadingSkeleton variant="page" />
@@ -340,19 +373,19 @@ export default function CashRegisterPage() {
       />
 
       <CloseSessionDialog
-        open={closeDialogOpen}
+        open={Boolean(closeTargetId)}
         loading={closeSession.isPending}
-        onClose={() => setCloseDialogOpen(false)}
+        onClose={() => setCloseTargetId(null)}
         onConfirm={(actualClosingAmount, actualTransferAmount, notes) => {
-          if (!currentSession) return;
+          if (!closeTargetId) return;
           closeSession.mutate(
             {
-              id: currentSession.id,
+              id: closeTargetId,
               payload: { actualClosingAmount, actualTransferAmount, notes: notes || undefined },
             },
             {
               onSuccess: (closed) => {
-                setCloseDialogOpen(false);
+                setCloseTargetId(null);
                 const diff = closed.differenceAmount ?? 0;
                 const transferDiff = closed.transferDifferenceAmount;
                 const messages = [
@@ -377,17 +410,36 @@ export default function CashRegisterPage() {
         }}
       />
 
-      <CashMovementDrawer
-        open={movementDrawerOpen}
-        loading={addMovement.isPending}
-        onClose={() => setMovementDrawerOpen(false)}
-        onSubmit={(values) => {
-          if (!currentSession) return;
-          addMovement.mutate(
-            { id: currentSession.id, payload: values },
+      <ReopenSessionDialog
+        open={Boolean(reopenTargetId)}
+        loading={reopenSession.isPending}
+        onClose={() => setReopenTargetId(null)}
+        onConfirm={(masterKey, reason) => {
+          if (!reopenTargetId) return;
+          reopenSession.mutate(
+            { id: reopenTargetId, payload: { masterKey, reason } },
             {
               onSuccess: () => {
-                setMovementDrawerOpen(false);
+                setReopenTargetId(null);
+                enqueueSnackbar('Caja reabierta para corrección', { variant: 'success' });
+              },
+              onError: (error) => enqueueSnackbar(normalizeApiError(error).message, { variant: 'error' }),
+            },
+          );
+        }}
+      />
+
+      <CashMovementDrawer
+        open={Boolean(movementTargetId)}
+        loading={addMovement.isPending}
+        onClose={() => setMovementTargetId(null)}
+        onSubmit={(values) => {
+          if (!movementTargetId) return;
+          addMovement.mutate(
+            { id: movementTargetId, payload: values },
+            {
+              onSuccess: () => {
+                setMovementTargetId(null);
                 enqueueSnackbar('Movimiento registrado correctamente', { variant: 'success' });
               },
               onError: (error) => enqueueSnackbar(normalizeApiError(error).message, { variant: 'error' }),

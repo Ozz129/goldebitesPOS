@@ -8,6 +8,7 @@ import { CloseCashSessionDto } from '../dto/close-cash-session.dto';
 import { CreateCashMovementDto } from '../dto/create-cash-movement.dto';
 import { CurrentCashSessionQueryDto } from '../dto/current-cash-session-query.dto';
 import { OpenCashSessionDto } from '../dto/open-cash-session.dto';
+import { ReopenCashSessionDto } from '../dto/reopen-cash-session.dto';
 import { CashSessionsService } from '../services/cash-sessions.service';
 import { RequiresFeature } from '../../../common/decorators/requires-feature.decorator';
 
@@ -95,5 +96,25 @@ export class CashSessionsController {
     @Body() dto: CloseCashSessionDto,
   ) {
     return this.cashSessionsService.close(businessId, id, dto, actorUserId);
+  }
+
+  @Post(':id/reopen')
+  @Permissions('cash.reopen')
+  @ApiOperation({
+    summary: 'Rectificar caja — reopen a closed session for correction (requires the admin master key)',
+  })
+  reopen(
+    @CurrentBusiness() businessId: string,
+    @CurrentUser('userId') actorUserId: string,
+    @Param('id') id: string,
+    @Body() dto: ReopenCashSessionDto,
+  ) {
+    return this.cashSessionsService.reopenForCorrection(
+      businessId,
+      id,
+      dto.masterKey,
+      dto.reason,
+      actorUserId,
+    );
   }
 }

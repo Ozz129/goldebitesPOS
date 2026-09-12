@@ -15,6 +15,9 @@ export interface AppConfig {
     businessId: string;
     branchId: string;
   };
+  cashSession: {
+    masterKey: string;
+  };
 }
 
 export default registerAs('app', (): AppConfig => ({
@@ -34,5 +37,8 @@ export default registerAs('app', (): AppConfig => ({
     // deployment fixes both here instead of trusting the client.
     businessId: process.env.CAR_SERVICE_BUSINESS_ID ?? '',
     branchId: process.env.CAR_SERVICE_BRANCH_ID ?? '',
+  },
+  cashSession: {
+    masterKey: process.env.CASH_SESSION_MASTER_KEY ?? '',
   },
 }));

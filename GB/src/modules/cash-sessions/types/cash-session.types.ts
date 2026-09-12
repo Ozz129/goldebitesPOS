@@ -1,6 +1,6 @@
 import type { PaymentMethod } from '../../orders/types/payment.types';
 
-export type CashSessionStatus = 'OPEN' | 'CLOSED';
+export type CashSessionStatus = 'OPEN' | 'CLOSED' | 'RECTIFYING';
 
 export type CashMovementType = 'OPENING' | 'SALE' | 'INCOME' | 'EXPENSE' | 'WITHDRAWAL' | 'CLOSING';
 
@@ -58,6 +58,11 @@ export interface CreateCashMovementPayload {
   movementType: ManualCashMovementType;
   amount: number;
   description?: string;
+}
+
+export interface ReopenCashSessionPayload {
+  masterKey: string;
+  reason: string;
 }
 
 export interface CashSessionFilters {

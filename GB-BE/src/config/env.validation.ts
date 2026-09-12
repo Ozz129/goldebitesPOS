@@ -106,6 +106,12 @@ class EnvironmentVariables {
   @IsUUID()
   @IsNotEmpty()
   CAR_SERVICE_BRANCH_ID: string;
+
+  /** "Rectificar caja": shared admin secret required to reopen a closed cash session for
+   *  correction. Empty disables the feature (the endpoint rejects with MASTER_KEY_NOT_CONFIGURED). */
+  @IsString()
+  @IsOptional()
+  CASH_SESSION_MASTER_KEY: string = '';
 }
 
 export function validate(config: Record<string, unknown>) {

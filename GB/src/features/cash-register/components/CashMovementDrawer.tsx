@@ -3,6 +3,7 @@ import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
 import FormDrawer from '../../../components/common/FormDrawer';
+import CurrencyField from '../../../components/common/CurrencyField';
 import type { ManualCashMovementType } from '../../../modules/cash-sessions/types/cash-session.types';
 
 const MANUAL_MOVEMENT_LABELS: Record<ManualCashMovementType, string> = {
@@ -20,7 +21,7 @@ interface CashMovementDrawerProps {
 
 export default function CashMovementDrawer({ open, loading, onClose, onSubmit }: CashMovementDrawerProps) {
   const [movementType, setMovementType] = useState<ManualCashMovementType>('INCOME');
-  const [amount, setAmount] = useState('');
+  const [amount, setAmount] = useState<number | ''>('');
   const [description, setDescription] = useState('');
 
   // Reset the form fields when the drawer transitions from closed to open.
@@ -62,7 +63,7 @@ export default function CashMovementDrawer({ open, loading, onClose, onSubmit }:
             </MenuItem>
           ))}
         </TextField>
-        <TextField label="Monto (COP)" type="number" value={amount} onChange={(e) => setAmount(e.target.value)} />
+        <CurrencyField label="Monto (COP)" value={amount} onChange={setAmount} />
         <TextField
           label="Descripción"
           value={description}

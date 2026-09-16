@@ -9,6 +9,7 @@ export { default as EmptyState } from './EmptyState';
 export { default as ErrorState } from './ErrorState';
 export { default as LoadingSkeleton } from './LoadingSkeleton';
 export { default as CurrencyDisplay } from './CurrencyDisplay';
+export { default as CurrencyField } from './CurrencyField';
 export { default as DateDisplay } from './DateDisplay';
 export { default as SearchInput } from './SearchInput';
 export { default as FilterBar } from './FilterBar';

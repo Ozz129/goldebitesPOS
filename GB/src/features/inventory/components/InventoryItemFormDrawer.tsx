@@ -5,6 +5,7 @@ import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
 import FormDrawer from '../../../components/common/FormDrawer';
+import CurrencyField from '../../../components/common/CurrencyField';
 import { useInventoryItemCategories } from '../../../modules/inventory-item-categories/hooks/use-inventory-item-categories';
 import { inventoryItemSchema, type InventoryItemFormValues } from '../schemas/inventoryItemSchema';
 import type { InventoryItem } from '../../../modules/inventory/types/inventory.types';
@@ -142,7 +143,7 @@ export default function InventoryItemFormDrawer({
             name="currentCost"
             control={control}
             render={({ field }) => (
-              <TextField {...field} label="Costo actual (COP)" type="number" fullWidth />
+              <CurrencyField {...field} value={field.value ?? ''} label="Costo actual (COP)" fullWidth />
             )}
           />
         </Stack>

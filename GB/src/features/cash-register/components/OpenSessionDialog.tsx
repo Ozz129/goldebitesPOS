@@ -7,6 +7,7 @@ import DialogActions from '@mui/material/DialogActions';
 import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
+import CurrencyField from '../../../components/common/CurrencyField';
 import { useAuthStore } from '../../../modules/auth/store/auth.store';
 
 interface OpenSessionDialogProps {
@@ -18,7 +19,7 @@ interface OpenSessionDialogProps {
 
 export default function OpenSessionDialog({ open, loading, onClose, onConfirm }: OpenSessionDialogProps) {
   const user = useAuthStore((s) => s.user);
-  const [amount, setAmount] = useState('200000');
+  const [amount, setAmount] = useState<number | ''>(200000);
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
@@ -28,11 +29,10 @@ export default function OpenSessionDialog({ open, loading, onClose, onConfirm }:
           Registra la base inicial con la que se abre el turno.
         </DialogContentText>
         <Stack spacing={2}>
-          <TextField
+          <CurrencyField
             label="Base inicial (COP)"
-            type="number"
             value={amount}
-            onChange={(e) => setAmount(e.target.value)}
+            onChange={setAmount}
             autoFocus
             fullWidth
           />

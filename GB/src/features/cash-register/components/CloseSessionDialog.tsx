@@ -7,6 +7,7 @@ import DialogActions from '@mui/material/DialogActions';
 import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
+import CurrencyField from '../../../components/common/CurrencyField';
 
 interface CloseSessionDialogProps {
   open: boolean;
@@ -16,8 +17,8 @@ interface CloseSessionDialogProps {
 }
 
 export default function CloseSessionDialog({ open, loading, onClose, onConfirm }: CloseSessionDialogProps) {
-  const [counted, setCounted] = useState('');
-  const [transfers, setTransfers] = useState('');
+  const [counted, setCounted] = useState<number | ''>('');
+  const [transfers, setTransfers] = useState<number | ''>('');
   const [notes, setNotes] = useState('');
 
   // Reset the form fields when the dialog transitions from closed to open.
@@ -40,19 +41,17 @@ export default function CloseSessionDialog({ open, loading, onClose, onConfirm }
           sistema calculará la diferencia frente al valor esperado de cada uno al confirmar el cierre.
         </DialogContentText>
         <Stack spacing={2}>
-          <TextField
+          <CurrencyField
             label="Efectivo contado (COP)"
-            type="number"
             value={counted}
-            onChange={(e) => setCounted(e.target.value)}
+            onChange={setCounted}
             autoFocus
             fullWidth
           />
-          <TextField
+          <CurrencyField
             label="Transferencias recibidas (COP, opcional)"
-            type="number"
             value={transfers}
-            onChange={(e) => setTransfers(e.target.value)}
+            onChange={setTransfers}
             helperText="Déjalo vacío si no vas a verificar las transferencias en este cierre."
             fullWidth
           />

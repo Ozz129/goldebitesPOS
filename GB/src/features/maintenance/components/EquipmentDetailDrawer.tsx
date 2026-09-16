@@ -12,6 +12,7 @@ import { useSnackbar } from 'notistack';
 import DetailDrawer from '../../../components/common/DetailDrawer';
 import StatusChip from '../../../components/common/StatusChip';
 import DateDisplay from '../../../components/common/DateDisplay';
+import CurrencyField from '../../../components/common/CurrencyField';
 import { Can } from '../../../modules/auth/components/can';
 import { formatCOP } from '../../../utils/format';
 import { useEquipmentDetail } from '../../../modules/maintenance/hooks/use-equipment-detail';
@@ -43,7 +44,7 @@ export default function EquipmentDetailDrawer({
 
   const [date, setDate] = useState('');
   const [description, setDescription] = useState('');
-  const [cost, setCost] = useState('');
+  const [cost, setCost] = useState<number | ''>('');
   const [now] = useState(() => Date.now());
 
   if (!equipmentId || !equipment) return null;
@@ -219,12 +220,11 @@ export default function EquipmentDetailDrawer({
                   slotProps={{ inputLabel: { shrink: true } }}
                   sx={{ flex: 1 }}
                 />
-                <TextField
+                <CurrencyField
                   size="small"
-                  type="number"
                   label="Costo"
                   value={cost}
-                  onChange={(e) => setCost(e.target.value)}
+                  onChange={setCost}
                   sx={{ flex: 1 }}
                 />
               </Stack>

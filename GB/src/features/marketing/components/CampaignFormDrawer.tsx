@@ -7,6 +7,7 @@ import MenuItem from '@mui/material/MenuItem';
 import Divider from '@mui/material/Divider';
 import Typography from '@mui/material/Typography';
 import FormDrawer from '../../../components/common/FormDrawer';
+import CurrencyField from '../../../components/common/CurrencyField';
 import { MARKETING_CHANNEL_LABELS, CAMPAIGN_STATUS_LABELS } from '../../../modules/marketing/marketing-status';
 import { campaignSchema, type CampaignFormValues } from '../schemas/campaignSchema';
 import type { Campaign } from '../../../modules/marketing/types/marketing.types';
@@ -98,10 +99,9 @@ export default function CampaignFormDrawer({
           name="budget"
           control={control}
           render={({ field }) => (
-            <TextField
+            <CurrencyField
               {...field}
               label="Presupuesto (COP)"
-              type="number"
               fullWidth
               error={Boolean(errors.budget)}
               helperText={errors.budget?.message}
@@ -150,7 +150,7 @@ export default function CampaignFormDrawer({
             <Controller
               name="spent"
               control={control}
-              render={({ field }) => <TextField {...field} label="Invertido (COP)" type="number" fullWidth />}
+              render={({ field }) => <CurrencyField {...field} value={field.value ?? ''} label="Invertido (COP)" fullWidth />}
             />
 
             <Stack direction="row" spacing={2}>

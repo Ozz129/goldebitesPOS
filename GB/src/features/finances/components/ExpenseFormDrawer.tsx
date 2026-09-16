@@ -5,6 +5,7 @@ import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
 import FormDrawer from '../../../components/common/FormDrawer';
+import CurrencyField from '../../../components/common/CurrencyField';
 import { EXPENSE_CATEGORY_LABELS } from '../../../modules/finances/expense-category';
 import { expenseSchema, type ExpenseFormValues } from '../schemas/expenseSchema';
 import type { Expense } from '../../../modules/finances/types/expense.types';
@@ -93,10 +94,9 @@ export default function ExpenseFormDrawer({
           name="amount"
           control={control}
           render={({ field }) => (
-            <TextField
+            <CurrencyField
               {...field}
               label="Cantidad (COP)"
-              type="number"
               fullWidth
               error={Boolean(errors.amount)}
               helperText={errors.amount?.message}

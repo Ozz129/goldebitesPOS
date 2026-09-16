@@ -11,6 +11,7 @@ import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
 import { Plus, Trash2 } from 'lucide-react';
 import FormDrawer from '../../../components/common/FormDrawer';
+import CurrencyField from '../../../components/common/CurrencyField';
 import {
   purchaseOrderSchema,
   type PurchaseOrderFormValues,
@@ -170,7 +171,7 @@ export default function PurchaseOrderFormDrawer({
                   name={`items.${index}.unitCost`}
                   control={control}
                   render={({ field: costField }) => (
-                    <TextField {...costField} label="Costo unit." type="number" size="small" sx={{ width: 130 }} />
+                    <CurrencyField {...costField} label="Costo unit." size="small" sx={{ width: 130 }} />
                   )}
                 />
                 <IconButton size="small" onClick={() => remove(index)} disabled={fields.length === 1}>

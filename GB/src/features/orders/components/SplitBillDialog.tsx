@@ -6,6 +6,7 @@ import DialogActions from '@mui/material/DialogActions';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
+import CurrencyField from '../../../components/common/CurrencyField';
 import MenuItem from '@mui/material/MenuItem';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
@@ -22,7 +23,7 @@ import type { PaymentMethod } from '../../../modules/orders/types/payment.types'
 
 interface SplitRow {
   key: string;
-  amount: string;
+  amount: number | '';
   paymentMethod: PaymentMethod;
   payerLabel: string;
   status: 'idle' | 'pending' | 'success' | 'error';
@@ -68,7 +69,7 @@ export default function SplitBillDialog({ open, orderId, balanceDue, onClose, on
     setSubmitting(false);
     if (mode === 'equal') {
       const shares = splitEqually(balanceDue, numPeople);
-      setRows(shares.map((amount, i) => ({ ...emptyRow(i), amount: String(amount) })));
+      setRows(shares.map((amount, i) => ({ ...emptyRow(i), amount })));
     } else {
       setRows([emptyRow(0), emptyRow(1)]);
     }
@@ -160,12 +161,11 @@ export default function SplitBillDialog({ open, orderId, balanceDue, onClose, on
                   disabled={row.status === 'success' || submitting}
                   sx={{ flex: 1 }}
                 />
-                <TextField
+                <CurrencyField
                   size="small"
                   label="Monto"
-                  type="number"
                   value={row.amount}
-                  onChange={(e) => updateRow(row.key, { amount: e.target.value })}
+                  onChange={(amount) => updateRow(row.key, { amount })}
                   disabled={mode === 'equal' || row.status === 'success' || submitting}
                   sx={{ width: 130 }}
                 />

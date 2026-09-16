@@ -8,6 +8,7 @@ import MenuItem from '@mui/material/MenuItem';
 import Typography from '@mui/material/Typography';
 import Divider from '@mui/material/Divider';
 import FormDrawer from '../../../components/common/FormDrawer';
+import CurrencyField from '../../../components/common/CurrencyField';
 import CategoryTabs from '../../kiosk-waiter/components/CategoryTabs';
 import ProductGrid from '../../kiosk-waiter/components/ProductGrid';
 import TableNumberPicker from '../../kiosk-waiter/components/TableNumberPicker';
@@ -204,7 +205,7 @@ export default function NewOrderDrawer({ open, onClose, onSubmit }: NewOrderDraw
                   name="deliveryFee"
                   control={control}
                   render={({ field }) => (
-                    <TextField {...field} label="Costo de domicilio (COP)" type="number" fullWidth size="small" />
+                    <CurrencyField {...field} value={field.value ?? ''} label="Costo de domicilio (COP)" fullWidth size="small" />
                   )}
                 />
               </Stack>
@@ -214,7 +215,7 @@ export default function NewOrderDrawer({ open, onClose, onSubmit }: NewOrderDraw
               name="discountAmount"
               control={control}
               render={({ field }) => (
-                <TextField {...field} label="Descuento (COP)" type="number" fullWidth size="small" />
+                <CurrencyField {...field} value={field.value ?? ''} label="Descuento (COP)" fullWidth size="small" />
               )}
             />
 

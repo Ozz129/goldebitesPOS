@@ -5,6 +5,7 @@ import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
 import FormDrawer from '../../../components/common/FormDrawer';
+import CurrencyField from '../../../components/common/CurrencyField';
 import { useRoles } from '../../../modules/roles/hooks/use-roles';
 import { getRoleLabel } from '../../../modules/roles/role-labels';
 import { EMPLOYEE_PAY_FREQUENCY_LABELS } from '../../../modules/employees/employee-status';
@@ -166,11 +167,10 @@ export default function EmployeeFormDrawer({
             name="payRate"
             control={control}
             render={({ field }) => (
-              <TextField
+              <CurrencyField
                 {...field}
                 value={field.value ?? ''}
                 label="Valor"
-                type="number"
                 fullWidth
                 error={Boolean(errors.payRate)}
                 helperText={errors.payRate?.message}

@@ -17,6 +17,7 @@ import { MapPin, ArrowRight, Ban, CreditCard, Users, Printer, Receipt, Pencil, P
 import DetailDrawer from '../../../components/common/DetailDrawer';
 import StatusChip from '../../../components/common/StatusChip';
 import CurrencyDisplay from '../../../components/common/CurrencyDisplay';
+import CurrencyField from '../../../components/common/CurrencyField';
 import DateDisplay from '../../../components/common/DateDisplay';
 import { Can } from '../../../modules/auth/components/can';
 import { useOrder } from '../../../modules/orders/hooks/use-order';
@@ -62,7 +63,7 @@ export default function OrderDetailDrawer({
   const [cancelOpen, setCancelOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('CASH');
-  const [paymentAmount, setPaymentAmount] = useState('');
+  const [paymentAmount, setPaymentAmount] = useState<number | ''>('');
   const [splitBillOpen, setSplitBillOpen] = useState(false);
   const [editItemsOpen, setEditItemsOpen] = useState(false);
   const [addItemsOpen, setAddItemsOpen] = useState(false);
@@ -411,12 +412,11 @@ export default function OrderDetailDrawer({
                       </MenuItem>
                     ))}
                   </TextField>
-                  <TextField
+                  <CurrencyField
                     size="small"
                     label="Monto"
-                    type="number"
                     value={paymentAmount}
-                    onChange={(e) => setPaymentAmount(e.target.value)}
+                    onChange={setPaymentAmount}
                     placeholder={String(balanceDue)}
                     sx={{ width: 140 }}
                   />

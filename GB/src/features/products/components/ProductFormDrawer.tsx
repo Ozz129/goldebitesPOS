@@ -8,6 +8,7 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
 import Alert from '@mui/material/Alert';
 import FormDrawer from '../../../components/common/FormDrawer';
+import CurrencyField from '../../../components/common/CurrencyField';
 import { productSchema, type ProductFormValues } from '../schemas/productSchema';
 import { useProductCategories } from '../../../modules/product-categories/hooks/use-product-categories';
 import { useInventoryItems } from '../../../modules/inventory/hooks/use-inventory-items';
@@ -163,10 +164,9 @@ export default function ProductFormDrawer({
             name="salePrice"
             control={control}
             render={({ field }) => (
-              <TextField
+              <CurrencyField
                 {...field}
                 label="Precio de venta (COP)"
-                type="number"
                 fullWidth
                 error={Boolean(errors.salePrice)}
                 helperText={errors.salePrice?.message}

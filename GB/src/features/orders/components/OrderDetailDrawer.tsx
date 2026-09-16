@@ -18,6 +18,7 @@ import DetailDrawer from '../../../components/common/DetailDrawer';
 import StatusChip from '../../../components/common/StatusChip';
 import CurrencyDisplay from '../../../components/common/CurrencyDisplay';
 import CurrencyField from '../../../components/common/CurrencyField';
+import CashChangeCalculator from './CashChangeCalculator';
 import DateDisplay from '../../../components/common/DateDisplay';
 import { Can } from '../../../modules/auth/components/can';
 import { useOrder } from '../../../modules/orders/hooks/use-order';
@@ -429,6 +430,9 @@ export default function OrderDetailDrawer({
                     Registrar
                   </Button>
                 </Stack>
+                {paymentMethod === 'CASH' && (
+                  <CashChangeCalculator amountDue={paymentAmount === '' ? balanceDue : Number(paymentAmount)} />
+                )}
                 <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
                   Saldo pendiente: {balanceDue}
                 </Typography>

@@ -1,0 +1,22 @@
+import { Controller, Get, Param } from '@nestjs/common';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Public } from '../../../common/decorators/public.decorator';
+import { PublicMenuService } from '../services/public-menu.service';
+
+/**
+ * Read-only, unauthenticated menu view for customers — meant to be linked or
+ * QR-coded (e.g. /menu/:businessId on the frontend). No @Permissions()/
+ * @Roles() on this controller: there is no request.user on a public request.
+ */
+@ApiTags('Public Menu')
+@Public()
+@Controller('public/menu')
+export class PublicMenuController {
+  constructor(private readonly publicMenuService: PublicMenuService) {}
+
+  @Get(':businessId')
+  @ApiOperation({ summary: 'Live menu (active categories and products) for customers to view' })
+  getMenu(@Param('businessId') businessId: string) {
+    return this.publicMenuService.getMenu(businessId);
+  }
+}

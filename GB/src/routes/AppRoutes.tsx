@@ -11,6 +11,7 @@ import { MODULE_PATHS, MODULE_PERMISSIONS } from './navConfig';
 import { KIOSK_PATHS, KIOSK_PERMISSIONS } from './kioskConfig';
 
 const LoginPage = lazy(() => import('../modules/auth/pages/LoginPage'));
+const PublicMenuPage = lazy(() => import('../features/public-menu/pages/PublicMenuPage'));
 
 const DashboardPage = lazy(() => import('../features/dashboard/pages/DashboardPage'));
 const OrdersPage = lazy(() => import('../features/orders/pages/OrdersPage'));
@@ -52,6 +53,14 @@ export default function AppRoutes() {
         element={
           <Loadable>
             <LoginPage />
+          </Loadable>
+        }
+      />
+      <Route
+        path="/menu/:businessId"
+        element={
+          <Loadable>
+            <PublicMenuPage />
           </Loadable>
         }
       />

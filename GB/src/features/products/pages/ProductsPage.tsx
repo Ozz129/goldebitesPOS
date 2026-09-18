@@ -5,7 +5,8 @@ import MenuItem from '@mui/material/MenuItem';
 import Button from '@mui/material/Button';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
-import { Plus } from 'lucide-react';
+import Stack from '@mui/material/Stack';
+import { Plus, QrCode } from 'lucide-react';
 import { useSnackbar } from 'notistack';
 import PageHeader from '../../../components/common/PageHeader';
 import FilterBar from '../../../components/common/FilterBar';
@@ -21,6 +22,7 @@ import { useUpdateProduct } from '../../../modules/products/hooks/use-update-pro
 import { useDeleteProduct } from '../../../modules/products/hooks/use-delete-product';
 import { useSetProductStatus } from '../../../modules/products/hooks/use-set-product-status';
 import { useProductCategories } from '../../../modules/product-categories/hooks/use-product-categories';
+import { useCurrentBusiness } from '../../../modules/businesses/hooks/use-current-business';
 import { useProductRecipe } from '../../../modules/recipes/hooks/use-product-recipe';
 import { useCreateRecipe } from '../../../modules/recipes/hooks/use-create-recipe';
 import { useSetRecipeItems } from '../../../modules/recipes/hooks/use-set-recipe-items';
@@ -31,6 +33,7 @@ import ProductDetailDrawer from '../components/ProductDetailDrawer';
 import ProductFormDrawer from '../components/ProductFormDrawer';
 import ProductRecipeDialog from '../components/ProductRecipeDialog';
 import ProductCategoriesTab from '../components/ProductCategoriesTab';
+import PublicMenuLinkDialog from '../components/PublicMenuLinkDialog';
 import SaucesTab from '../components/SaucesTab';
 import SidesTab from '../components/SidesTab';
 import type { Product } from '../../../modules/products/types/product.types';
@@ -52,6 +55,9 @@ export default function ProductsPage() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
   const [recipeProduct, setRecipeProduct] = useState<Product | null>(null);
+  const [menuLinkOpen, setMenuLinkOpen] = useState(false);
+
+  const { data: currentBusiness } = useCurrentBusiness();
 
   const filters = useMemo(
     () => ({
@@ -175,20 +181,29 @@ export default function ProductsPage() {
         subtitle="Gestiona el catálogo de productos del menú, sus categorías, salsas y acompañantes."
         breadcrumbs={[{ label: 'Productos' }]}
         actions={
-          tab === 'productos' ? (
-            <Can permission="products.create">
-              <Button
-                variant="contained"
-                startIcon={<Plus size={16} />}
-                onClick={() => {
-                  setEditingProduct(null);
-                  setFormOpen(true);
-                }}
-              >
-                Nuevo producto
-              </Button>
-            </Can>
-          ) : undefined
+          <Stack direction="row" spacing={1}>
+            <Button
+              variant="outlined"
+              startIcon={<QrCode size={16} />}
+              onClick={() => setMenuLinkOpen(true)}
+            >
+              Menú público
+            </Button>
+            {tab === 'productos' && (
+              <Can permission="products.create">
+                <Button
+                  variant="contained"
+                  startIcon={<Plus size={16} />}
+                  onClick={() => {
+                    setEditingProduct(null);
+                    setFormOpen(true);
+                  }}
+                >
+                  Nuevo producto
+                </Button>
+              </Can>
+            )}
+          </Stack>
         }
       />
 
@@ -305,6 +320,12 @@ export default function ProductsPage() {
         destructive
         onClose={() => setDeletingProduct(null)}
         onConfirm={handleDelete}
+      />
+
+      <PublicMenuLinkDialog
+        open={menuLinkOpen}
+        businessId={currentBusiness?.id}
+        onClose={() => setMenuLinkOpen(false)}
       />
     </>
   );

@@ -1,0 +1,8 @@
+{
+  "name": "golden-bites-pos",
+  "private": true,
+  "description": "Root-level tooling only — GB (frontend) and GB-BE (backend) are managed independently. See deploy/README.md.",
+  "scripts": {
+    "deploy": "bash deploy/deploy.sh"
+  }
+}

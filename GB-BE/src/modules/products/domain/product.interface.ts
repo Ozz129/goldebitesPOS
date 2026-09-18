@@ -9,6 +9,8 @@ export interface Product {
   currentCost: number;
   imageUrl: string | null;
   isActive: boolean;
+  /** Independent of isActive — whether this product should appear on customer-facing surfaces like the public menu. */
+  isVisible: boolean;
   trackInventory: boolean;
   maxSauces: number;
   maxSides: number;
@@ -27,6 +29,7 @@ export interface ProductRow {
   current_cost: string;
   image_url: string | null;
   is_active: boolean;
+  is_visible: boolean;
   track_inventory: boolean;
   max_sauces: number;
   max_sides: number;

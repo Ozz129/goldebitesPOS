@@ -40,6 +40,13 @@ describe('PublicMenuService', () => {
     await expect(service.getMenu('bogus')).rejects.toThrow(EntityNotFoundException);
   });
 
+  it('only fetches products that are both active and visible — hidden surcharges never reach the public menu', async () => {
+    await service.getMenu(businessId);
+    expect(productsService.findAll).toHaveBeenCalledWith(
+      expect.objectContaining({ isActive: true, isVisible: true }),
+    );
+  });
+
   it('groups active products by category, sorted by name within each category', async () => {
     const menu = await service.getMenu(businessId);
 

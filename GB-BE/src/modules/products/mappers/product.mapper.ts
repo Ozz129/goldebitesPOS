@@ -13,6 +13,7 @@ export class ProductMapper {
       currentCost: parseFloat(row.current_cost),
       imageUrl: row.image_url,
       isActive: row.is_active,
+      isVisible: row.is_visible,
       trackInventory: row.track_inventory,
       maxSauces: row.max_sauces,
       maxSides: row.max_sides,

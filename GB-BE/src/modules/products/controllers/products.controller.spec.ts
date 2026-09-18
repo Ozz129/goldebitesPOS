@@ -12,6 +12,7 @@ describe('ProductsController', () => {
       | 'getMargin'
       | 'update'
       | 'setActive'
+      | 'setVisible'
       | 'softDelete'
     >
   >;
@@ -26,6 +27,7 @@ describe('ProductsController', () => {
       getMargin: jest.fn(),
       update: jest.fn(),
       setActive: jest.fn(),
+      setVisible: jest.fn(),
       softDelete: jest.fn(),
     };
     controller = new ProductsController(service as unknown as ProductsService);
@@ -48,6 +50,7 @@ describe('ProductsController', () => {
       sortOrder: 'DESC' as never,
       categoryId: 'cat-1',
       isActive: true,
+      isVisible: true,
       search: 'burger',
     });
     expect(service.findAll).toHaveBeenCalledWith({
@@ -56,6 +59,7 @@ describe('ProductsController', () => {
       limit: 20,
       categoryId: 'cat-1',
       isActive: true,
+      isVisible: true,
       search: 'burger',
     });
   });
@@ -100,6 +104,19 @@ describe('ProductsController', () => {
       isActive: false,
     });
     expect(service.setActive).toHaveBeenCalledWith(
+      'business-1',
+      'p1',
+      false,
+      'actor-1',
+    );
+  });
+
+  it('setVisibility() delegates', async () => {
+    service.setVisible.mockResolvedValue({ id: 'p1' } as never);
+    await controller.setVisibility('business-1', 'actor-1', 'p1', {
+      isVisible: false,
+    });
+    expect(service.setVisible).toHaveBeenCalledWith(
       'business-1',
       'p1',
       false,

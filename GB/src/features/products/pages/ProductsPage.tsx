@@ -21,6 +21,7 @@ import { useCreateProduct } from '../../../modules/products/hooks/use-create-pro
 import { useUpdateProduct } from '../../../modules/products/hooks/use-update-product';
 import { useDeleteProduct } from '../../../modules/products/hooks/use-delete-product';
 import { useSetProductStatus } from '../../../modules/products/hooks/use-set-product-status';
+import { useSetProductVisibility } from '../../../modules/products/hooks/use-set-product-visibility';
 import { useProductCategories } from '../../../modules/product-categories/hooks/use-product-categories';
 import { useCurrentBusiness } from '../../../modules/businesses/hooks/use-current-business';
 import { useProductRecipe } from '../../../modules/recipes/hooks/use-product-recipe';
@@ -76,6 +77,7 @@ export default function ProductsPage() {
   const updateProduct = useUpdateProduct();
   const deleteProduct = useDeleteProduct();
   const setProductStatus = useSetProductStatus();
+  const setProductVisibility = useSetProductVisibility();
   const { data: editingRecipe } = useProductRecipe(editingProduct?.id ?? null);
   const createRecipe = useCreateRecipe();
   const setRecipeItems = useSetRecipeItems();
@@ -167,6 +169,22 @@ export default function ProductsPage() {
           enqueueSnackbar(updated.isActive ? 'Producto activado' : 'Producto desactivado', {
             variant: 'success',
           });
+          setSelectedProduct(updated);
+        },
+        onError: (error) => enqueueSnackbar(normalizeApiError(error).message, { variant: 'error' }),
+      },
+    );
+  };
+
+  const handleToggleVisibility = (product: Product) => {
+    setProductVisibility.mutate(
+      { id: product.id, isVisible: !product.isVisible },
+      {
+        onSuccess: (updated) => {
+          enqueueSnackbar(
+            updated.isVisible ? 'Producto visible en el menú público' : 'Producto oculto del menú público',
+            { variant: 'success' },
+          );
           setSelectedProduct(updated);
         },
         onError: (error) => enqueueSnackbar(normalizeApiError(error).message, { variant: 'error' }),
@@ -297,6 +315,7 @@ export default function ProductsPage() {
           setDeletingProduct(p);
         }}
         onToggleStatus={handleToggleStatus}
+        onToggleVisibility={handleToggleVisibility}
         onManageRecipe={(p) => {
           setSelectedProduct(null);
           setRecipeProduct(p);

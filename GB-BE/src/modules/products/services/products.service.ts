@@ -137,6 +137,32 @@ export class ProductsService {
     return ProductMapper.toDomain(row);
   }
 
+  /** Independent of setActive — whether this product shows up on customer-facing surfaces like the public menu. */
+  async setVisible(
+    businessId: string,
+    id: string,
+    isVisible: boolean,
+    actorUserId?: string,
+  ): Promise<Product> {
+    await this.getOwnedOrFail(businessId, id);
+    const row = await this.productsRepository.setVisible(
+      id,
+      businessId,
+      isVisible,
+    );
+    if (!row) {
+      throw new EntityNotFoundException('Product', id);
+    }
+    await this.auditService.record({
+      businessId,
+      userId: actorUserId,
+      entityType: 'product',
+      entityId: id,
+      action: isVisible ? 'SHOW' : 'HIDE',
+    });
+    return ProductMapper.toDomain(row);
+  }
+
   async softDelete(
     businessId: string,
     id: string,

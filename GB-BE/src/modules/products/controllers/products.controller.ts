@@ -18,6 +18,7 @@ import { RawResponse } from '../../../common/decorators/raw-response.decorator';
 import { CreateProductDto } from '../dto/create-product.dto';
 import { ProductQueryDto } from '../dto/product-query.dto';
 import { SetProductStatusDto } from '../dto/set-product-status.dto';
+import { SetProductVisibilityDto } from '../dto/set-product-visibility.dto';
 import { UpdateProductDto } from '../dto/update-product.dto';
 import { ProductsService } from '../services/products.service';
 import { RequiresFeature } from '../../../common/decorators/requires-feature.decorator';
@@ -53,6 +54,7 @@ export class ProductsController {
       limit: query.limit,
       categoryId: query.categoryId,
       isActive: query.isActive,
+      isVisible: query.isVisible,
       search: query.search,
     });
   }
@@ -105,6 +107,23 @@ export class ProductsController {
       businessId,
       id,
       dto.isActive,
+      actorUserId,
+    );
+  }
+
+  @Patch(':id/visibility')
+  @Permissions('products.update')
+  @ApiOperation({ summary: 'Show or hide a product on customer-facing surfaces like the public menu' })
+  setVisibility(
+    @CurrentBusiness() businessId: string,
+    @CurrentUser('userId') actorUserId: string,
+    @Param('id') id: string,
+    @Body() dto: SetProductVisibilityDto,
+  ) {
+    return this.productsService.setVisible(
+      businessId,
+      id,
+      dto.isVisible,
       actorUserId,
     );
   }

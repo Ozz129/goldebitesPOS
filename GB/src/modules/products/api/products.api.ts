@@ -37,6 +37,13 @@ export const productsApi = {
     return data.data;
   },
 
+  async setProductVisibility(id: string, isVisible: boolean): Promise<Product> {
+    const { data } = await apiClient.patch<ApiResponse<Product>>(`/products/${id}/visibility`, {
+      isVisible,
+    });
+    return data.data;
+  },
+
   async deleteProduct(id: string): Promise<void> {
     await apiClient.delete(`/products/${id}`);
   },

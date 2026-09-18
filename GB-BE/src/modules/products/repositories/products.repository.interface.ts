@@ -26,6 +26,11 @@ export interface IProductsRepository {
     businessId: string,
     isActive: boolean,
   ): Promise<ProductRow | null>;
+  setVisible(
+    id: string,
+    businessId: string,
+    isVisible: boolean,
+  ): Promise<ProductRow | null>;
   setCurrentCost(
     id: string,
     businessId: string,

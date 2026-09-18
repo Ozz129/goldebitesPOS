@@ -4,7 +4,7 @@ import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
 import Alert from '@mui/material/Alert';
-import { Pencil, Trash2, Power, Boxes } from 'lucide-react';
+import { Pencil, Trash2, Power, Boxes, Eye, EyeOff } from 'lucide-react';
 import DetailDrawer from '../../../components/common/DetailDrawer';
 import CurrencyDisplay from '../../../components/common/CurrencyDisplay';
 import StatusChip from '../../../components/common/StatusChip';
@@ -19,6 +19,7 @@ interface ProductDetailDrawerProps {
   onEdit: (product: Product) => void;
   onDelete: (product: Product) => void;
   onToggleStatus: (product: Product) => void;
+  onToggleVisibility: (product: Product) => void;
   onManageRecipe: (product: Product) => void;
 }
 
@@ -28,6 +29,7 @@ export default function ProductDetailDrawer({
   onEdit,
   onDelete,
   onToggleStatus,
+  onToggleVisibility,
   onManageRecipe,
 }: ProductDetailDrawerProps) {
   const { data: recipe, isLoading: recipeLoading } = useProductRecipe(product?.id ?? null);
@@ -46,6 +48,12 @@ export default function ProductDetailDrawer({
       footer={
         <Stack direction="row" spacing={1.5} sx={{ justifyContent: 'flex-end' }}>
           <Can permission="products.update">
+            <Button
+              startIcon={product.isVisible ? <EyeOff size={16} /> : <Eye size={16} />}
+              onClick={() => onToggleVisibility(product)}
+            >
+              {product.isVisible ? 'Ocultar del menú' : 'Mostrar en menú'}
+            </Button>
             <Button startIcon={<Power size={16} />} onClick={() => onToggleStatus(product)}>
               {product.isActive ? 'Desactivar' : 'Activar'}
             </Button>
@@ -103,6 +111,10 @@ export default function ProductDetailDrawer({
           <StatusChip
             label={product.isActive ? 'Activo' : 'Inactivo'}
             tone={product.isActive ? 'success' : 'neutral'}
+          />
+          <StatusChip
+            label={product.isVisible ? 'Visible en menú público' : 'Oculto del menú público'}
+            tone={product.isVisible ? 'gold' : 'neutral'}
           />
           <StatusChip
             label={product.trackInventory ? 'Controla inventario' : 'No controla inventario'}

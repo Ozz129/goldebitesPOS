@@ -13,6 +13,7 @@ describe('ProductsService', () => {
     findAvailableForSale: jest.Mock;
     update: jest.Mock;
     setActive: jest.Mock;
+    setVisible: jest.Mock;
     setCurrentCost: jest.Mock;
     softDelete: jest.Mock;
     existsBySku: jest.Mock;
@@ -35,6 +36,7 @@ describe('ProductsService', () => {
       current_cost: '0.00',
       image_url: null,
       is_active: true,
+      is_visible: true,
       track_inventory: true,
       max_sauces: 0,
       max_sides: 0,
@@ -53,6 +55,7 @@ describe('ProductsService', () => {
       findAvailableForSale: jest.fn(),
       update: jest.fn(),
       setActive: jest.fn(),
+      setVisible: jest.fn(),
       setCurrentCost: jest.fn(),
       softDelete: jest.fn(),
       existsBySku: jest.fn(),
@@ -160,6 +163,42 @@ describe('ProductsService', () => {
 
       expect(products).toHaveLength(1);
       expect(products[0].id).toBe('product-1');
+    });
+  });
+
+  describe('setVisible', () => {
+    it('hides a product independently of isActive, recording a HIDE audit action', async () => {
+      repository.findById.mockResolvedValue(makeRow());
+      repository.setVisible.mockResolvedValue(makeRow({ is_visible: false }));
+
+      const product = await service.setVisible(businessId, 'product-1', false, 'user-1');
+
+      expect(repository.setVisible).toHaveBeenCalledWith('product-1', businessId, false);
+      expect(product.isVisible).toBe(false);
+      expect(product.isActive).toBe(true);
+      expect(auditService.record).toHaveBeenCalledWith(
+        expect.objectContaining({ entityType: 'product', action: 'HIDE' }),
+      );
+    });
+
+    it('records a SHOW audit action when making a product visible again', async () => {
+      repository.findById.mockResolvedValue(makeRow({ is_visible: false }));
+      repository.setVisible.mockResolvedValue(makeRow({ is_visible: true }));
+
+      await service.setVisible(businessId, 'product-1', true, 'user-1');
+
+      expect(auditService.record).toHaveBeenCalledWith(
+        expect.objectContaining({ action: 'SHOW' }),
+      );
+    });
+
+    it('throws EntityNotFoundException when nothing was updated', async () => {
+      repository.findById.mockResolvedValue(makeRow());
+      repository.setVisible.mockResolvedValue(null);
+
+      await expect(service.setVisible(businessId, 'product-1', false)).rejects.toThrow(
+        EntityNotFoundException,
+      );
     });
   });
 });

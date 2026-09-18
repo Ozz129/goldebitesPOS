@@ -29,5 +29,6 @@ export interface ProductQuery {
   limit: number;
   categoryId?: string;
   isActive?: boolean;
+  isVisible?: boolean;
   search?: string;
 }

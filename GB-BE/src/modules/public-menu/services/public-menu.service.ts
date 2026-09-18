@@ -18,13 +18,16 @@ export class PublicMenuService {
    * Live, always-current menu (no "generate" step) — reflects whatever
    * products/categories are active right now. No @Permissions()/@RequiresFeature()
    * here: this endpoint is @Public(), there's no request.user to check them against.
+   * Filters on isVisible in addition to isActive: some active products (e.g.
+   * internal surcharges the team adds when invoicing) stay usable for staff
+   * but are deliberately hidden from this customer-facing view.
    */
   async getMenu(businessId: string): Promise<PublicMenu> {
     const business = await this.businessesService.findById(businessId);
 
     const [categoriesResult, productsResult] = await Promise.all([
       this.productCategoriesService.findAll({ businessId, isActive: true, page: 1, limit: 200 }),
-      this.productsService.findAll({ businessId, isActive: true, page: 1, limit: 500 }),
+      this.productsService.findAll({ businessId, isActive: true, isVisible: true, page: 1, limit: 500 }),
     ]);
 
     const productsByCategory = new Map<string | null, PublicMenuProduct[]>();

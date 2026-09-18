@@ -11,7 +11,7 @@ import {
 import { IProductsRepository } from './products.repository.interface';
 
 const SELECT_COLUMNS = `id, business_id, category_id, name, description, sku, sale_price,
-  current_cost, image_url, is_active, track_inventory, max_sauces, max_sides, created_at, updated_at, deleted_at`;
+  current_cost, image_url, is_active, is_visible, track_inventory, max_sauces, max_sides, created_at, updated_at, deleted_at`;
 
 interface CountRow {
   count: string;
@@ -74,6 +74,11 @@ export class ProductsRepository implements IProductsRepository {
     if (query.isActive !== undefined) {
       params.push(query.isActive);
       conditions.push(`is_active = $${params.length}`);
+    }
+
+    if (query.isVisible !== undefined) {
+      params.push(query.isVisible);
+      conditions.push(`is_visible = $${params.length}`);
     }
 
     if (query.search) {
@@ -164,6 +169,20 @@ export class ProductsRepository implements IProductsRepository {
        WHERE id = $1 AND business_id = $2 AND deleted_at IS NULL
        RETURNING ${SELECT_COLUMNS}`,
       [id, businessId, isActive],
+    );
+    return result.rows[0] ?? null;
+  }
+
+  async setVisible(
+    id: string,
+    businessId: string,
+    isVisible: boolean,
+  ): Promise<ProductRow | null> {
+    const result = await this.db.query<ProductRow>(
+      `UPDATE products SET is_visible = $3
+       WHERE id = $1 AND business_id = $2 AND deleted_at IS NULL
+       RETURNING ${SELECT_COLUMNS}`,
+      [id, businessId, isVisible],
     );
     return result.rows[0] ?? null;
   }

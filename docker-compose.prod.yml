@@ -35,6 +35,7 @@ services:
         VITE_API_BASE_URL: /api/v1
     ports:
       - '80:80'
+      - '443:443'
     volumes:
       - certbot_webroot:/var/www/certbot
       - certbot_certs:/etc/letsencrypt:ro

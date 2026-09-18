@@ -2,7 +2,7 @@ import 'dotenv/config';
 import { randomUUID } from 'node:crypto';
 import { Pool } from 'pg';
 import { DatabaseService } from '../../../database/database.service';
-import { InventoryQueryField, InventoryQueryOperator } from '../domain/inventory-query.types';
+import { InventoryQueryField, InventoryQueryIntent, InventoryQueryOperator } from '../domain/inventory-query.types';
 import { InventoryItemsRepository } from './inventory-items.repository';
 
 /**
@@ -159,6 +159,7 @@ describe('InventoryItemsRepository (integration)', () => {
         businessId,
         branchId,
         conditions: [{ field: InventoryQueryField.CATEGORY_ID, operator: InventoryQueryOperator.EQUALS, value: categoryId }],
+        intent: InventoryQueryIntent.DETAIL,
         page: 1,
         limit: 50,
       });
@@ -202,6 +203,7 @@ describe('InventoryItemsRepository (integration)', () => {
           { field: InventoryQueryField.NAME, operator: InventoryQueryOperator.CONTAINS, value: uniqueTag },
           { field: InventoryQueryField.CURRENT_STOCK, operator: InventoryQueryOperator.LESS_THAN, value: 10 },
         ],
+        intent: InventoryQueryIntent.DETAIL,
         page: 1,
         limit: 50,
       });
@@ -216,6 +218,7 @@ describe('InventoryItemsRepository (integration)', () => {
       const { rows } = await repository.queryAdvanced({
         businessId,
         conditions: [{ field: InventoryQueryField.SKU, operator: InventoryQueryOperator.IS_EMPTY }],
+        intent: InventoryQueryIntent.DETAIL,
         page: 1,
         limit: 200,
       });
@@ -223,6 +226,96 @@ describe('InventoryItemsRepository (integration)', () => {
       const ids = rows.map((r) => r.id);
       expect(ids).toContain(withoutSku.id);
       expect(ids).not.toContain(withSku.id);
+    });
+  });
+
+  describe('queryAggregate()', () => {
+    let branchId: string;
+
+    beforeAll(async () => {
+      const branch = await pool.query<{ id: string }>(
+        `INSERT INTO branches (business_id, name) VALUES ($1, $2) RETURNING id`,
+        [businessId, `Aggregate Branch ${randomUUID()}`],
+      );
+      branchId = branch.rows[0].id;
+    });
+
+    it('COUNT / SUM_STOCK / TOTAL_VALUE / AVERAGE_COST match a manually computed baseline', async () => {
+      const uniqueTag = randomUUID().slice(0, 8);
+      const itemA = await repository.create({
+        businessId,
+        name: `Aggregate-${uniqueTag} A`,
+        unit: 'unidad',
+        currentCost: 10,
+      });
+      const itemB = await repository.create({
+        businessId,
+        name: `Aggregate-${uniqueTag} B`,
+        unit: 'unidad',
+        currentCost: 20,
+      });
+      await pool.query(
+        `INSERT INTO inventory_movements (business_id, branch_id, inventory_item_id, movement_type, quantity)
+         VALUES ($1, $2, $3, 'INITIAL_STOCK', 3)`,
+        [businessId, branchId, itemA.id],
+      );
+      await pool.query(
+        `INSERT INTO inventory_movements (business_id, branch_id, inventory_item_id, movement_type, quantity)
+         VALUES ($1, $2, $3, 'INITIAL_STOCK', 7)`,
+        [businessId, branchId, itemB.id],
+      );
+
+      const conditions = [
+        { field: InventoryQueryField.NAME, operator: InventoryQueryOperator.CONTAINS, value: uniqueTag },
+      ];
+
+      const count = await repository.queryAggregate({
+        businessId,
+        branchId,
+        conditions,
+        intent: InventoryQueryIntent.COUNT,
+      });
+      expect(count.value).toBe(2);
+
+      const sumStock = await repository.queryAggregate({
+        businessId,
+        branchId,
+        conditions,
+        intent: InventoryQueryIntent.SUM_STOCK,
+      });
+      expect(sumStock.value).toBe(10);
+
+      const totalValue = await repository.queryAggregate({
+        businessId,
+        branchId,
+        conditions,
+        intent: InventoryQueryIntent.TOTAL_VALUE,
+      });
+      expect(totalValue.value).toBe(3 * 10 + 7 * 20);
+
+      const averageCost = await repository.queryAggregate({
+        businessId,
+        branchId,
+        conditions,
+        intent: InventoryQueryIntent.AVERAGE_COST,
+      });
+      expect(averageCost.value).toBe(15);
+    });
+
+    it('returns 0 for every aggregate when nothing matches', async () => {
+      const conditions = [
+        { field: InventoryQueryField.NAME, operator: InventoryQueryOperator.CONTAINS, value: `no-match-${randomUUID()}` },
+      ];
+
+      const count = await repository.queryAggregate({ businessId, conditions, intent: InventoryQueryIntent.COUNT });
+      expect(count.value).toBe(0);
+
+      const totalValue = await repository.queryAggregate({
+        businessId,
+        conditions,
+        intent: InventoryQueryIntent.TOTAL_VALUE,
+      });
+      expect(totalValue.value).toBe(0);
     });
   });
 });

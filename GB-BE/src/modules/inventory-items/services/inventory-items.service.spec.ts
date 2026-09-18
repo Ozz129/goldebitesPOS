@@ -15,6 +15,7 @@ describe('InventoryItemsService', () => {
     softDelete: jest.Mock;
     existsBySku: jest.Mock;
     queryAdvanced: jest.Mock;
+    queryAggregate: jest.Mock;
   };
   let auditService: { record: jest.Mock };
   let service: InventoryItemsService;
@@ -54,6 +55,7 @@ describe('InventoryItemsService', () => {
       softDelete: jest.fn(),
       existsBySku: jest.fn(),
       queryAdvanced: jest.fn(),
+      queryAggregate: jest.fn(),
     };
     auditService = { record: jest.fn() };
     service = new InventoryItemsService(repository, auditService as never);

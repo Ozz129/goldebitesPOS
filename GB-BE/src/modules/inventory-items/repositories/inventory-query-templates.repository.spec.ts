@@ -2,7 +2,7 @@ import 'dotenv/config';
 import { randomUUID } from 'node:crypto';
 import { Pool } from 'pg';
 import { DatabaseService } from '../../../database/database.service';
-import { InventoryQueryField, InventoryQueryOperator } from '../domain/inventory-query.types';
+import { InventoryQueryField, InventoryQueryIntent, InventoryQueryOperator } from '../domain/inventory-query.types';
 import { InventoryQueryTemplatesRepository } from './inventory-query-templates.repository';
 
 /** Integration test against the real test database (golden_bites_test). */
@@ -42,16 +42,36 @@ describe('InventoryQueryTemplatesRepository (integration)', () => {
       { field: InventoryQueryField.CURRENT_STOCK, operator: InventoryQueryOperator.LESS_THAN, value: 10 },
     ];
 
-    const created = await repository.create({ businessId, name: 'Bajo stock bebidas', conditions }, undefined);
+    const created = await repository.create(
+      { businessId, name: 'Bajo stock bebidas', conditions, intent: InventoryQueryIntent.DETAIL },
+      undefined,
+    );
     expect(created.conditions).toEqual(conditions);
+    expect(created.intent).toBe(InventoryQueryIntent.DETAIL);
 
     const fetched = await repository.findById(created.id, businessId);
     expect(fetched?.conditions).toEqual(conditions);
   });
 
+  it('persists the intent column', async () => {
+    const created = await repository.create(
+      {
+        businessId,
+        name: 'Conteo bebidas',
+        conditions: [{ field: InventoryQueryField.NAME, operator: InventoryQueryOperator.CONTAINS, value: 'a' }],
+        intent: InventoryQueryIntent.COUNT,
+      },
+      undefined,
+    );
+    expect(created.intent).toBe(InventoryQueryIntent.COUNT);
+
+    const fetched = await repository.findById(created.id, businessId);
+    expect(fetched?.intent).toBe(InventoryQueryIntent.COUNT);
+  });
+
   it('findAll() only returns templates for the given business, ordered by name', async () => {
-    await repository.create({ businessId, name: 'Z template', conditions: [{ field: InventoryQueryField.NAME, operator: InventoryQueryOperator.CONTAINS, value: 'a' }] }, undefined);
-    await repository.create({ businessId, name: 'A template', conditions: [{ field: InventoryQueryField.NAME, operator: InventoryQueryOperator.CONTAINS, value: 'b' }] }, undefined);
+    await repository.create({ businessId, name: 'Z template', conditions: [{ field: InventoryQueryField.NAME, operator: InventoryQueryOperator.CONTAINS, value: 'a' }], intent: InventoryQueryIntent.DETAIL }, undefined);
+    await repository.create({ businessId, name: 'A template', conditions: [{ field: InventoryQueryField.NAME, operator: InventoryQueryOperator.CONTAINS, value: 'b' }], intent: InventoryQueryIntent.DETAIL }, undefined);
 
     const rows = await repository.findAll(businessId);
     const names = rows.map((r) => r.name);
@@ -60,7 +80,7 @@ describe('InventoryQueryTemplatesRepository (integration)', () => {
 
   it('delete() removes the template and returns false for an already-deleted id', async () => {
     const created = await repository.create(
-      { businessId, name: 'To delete', conditions: [{ field: InventoryQueryField.NAME, operator: InventoryQueryOperator.CONTAINS, value: 'x' }] },
+      { businessId, name: 'To delete', conditions: [{ field: InventoryQueryField.NAME, operator: InventoryQueryOperator.CONTAINS, value: 'x' }], intent: InventoryQueryIntent.DETAIL },
       undefined,
     );
 

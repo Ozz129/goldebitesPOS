@@ -7,7 +7,9 @@ import {
   CreateInventoryQueryTemplateData,
   INVENTORY_QUERY_FIELD_TYPE,
   INVENTORY_QUERY_OPERATORS_BY_TYPE,
+  InventoryQueryAggregateResult,
   InventoryQueryCondition,
+  InventoryQueryIntent,
   InventoryQueryOperator,
   InventoryQueryResultItem,
   InventoryQueryTemplate,
@@ -29,8 +31,15 @@ export class InventoryQueriesService {
     private readonly auditService: AuditService,
   ) {}
 
-  async run(data: RunInventoryQueryData): Promise<PaginatedResult<InventoryQueryResultItem>> {
+  async run(
+    data: RunInventoryQueryData,
+  ): Promise<PaginatedResult<InventoryQueryResultItem> | InventoryQueryAggregateResult> {
     this.validateConditions(data.conditions);
+
+    if (data.intent !== InventoryQueryIntent.DETAIL) {
+      return this.inventoryItemsRepository.queryAggregate(data);
+    }
+
     const { rows, total } = await this.inventoryItemsRepository.queryAdvanced(data);
     return {
       data: rows.map((row) => InventoryQueryResultMapper.toDomain(row)),
@@ -81,12 +90,19 @@ export class InventoryQueriesService {
     branchId: string | undefined,
     page: number,
     limit: number,
-  ): Promise<PaginatedResult<InventoryQueryResultItem>> {
+  ): Promise<PaginatedResult<InventoryQueryResultItem> | InventoryQueryAggregateResult> {
     const template = await this.templatesRepository.findById(id, businessId);
     if (!template) {
       throw new EntityNotFoundException('InventoryQueryTemplate', id);
     }
-    return this.run({ businessId, branchId, conditions: template.conditions, page, limit });
+    return this.run({
+      businessId,
+      branchId,
+      conditions: template.conditions,
+      intent: template.intent,
+      page,
+      limit,
+    });
   }
 
   private validateConditions(conditions: InventoryQueryCondition[]): void {

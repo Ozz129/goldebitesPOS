@@ -4,7 +4,7 @@ import { DbClient } from '../../../database/types/database.types';
 import { CreateInventoryQueryTemplateData, InventoryQueryTemplateRow } from '../domain/inventory-query.types';
 import { IInventoryQueryTemplatesRepository } from './inventory-query-templates.repository.interface';
 
-const SELECT_COLUMNS = `id, business_id, name, conditions, created_by, created_at, updated_at`;
+const SELECT_COLUMNS = `id, business_id, name, conditions, intent, created_by, created_at, updated_at`;
 
 @Injectable()
 export class InventoryQueryTemplatesRepository implements IInventoryQueryTemplatesRepository {
@@ -16,10 +16,10 @@ export class InventoryQueryTemplatesRepository implements IInventoryQueryTemplat
     client?: DbClient,
   ): Promise<InventoryQueryTemplateRow> {
     const result = await this.db.query<InventoryQueryTemplateRow>(
-      `INSERT INTO inventory_query_templates (business_id, name, conditions, created_by)
-       VALUES ($1, $2, $3::jsonb, $4)
+      `INSERT INTO inventory_query_templates (business_id, name, conditions, intent, created_by)
+       VALUES ($1, $2, $3::jsonb, $4, $5)
        RETURNING ${SELECT_COLUMNS}`,
-      [data.businessId, data.name, JSON.stringify(data.conditions), createdBy ?? null],
+      [data.businessId, data.name, JSON.stringify(data.conditions), data.intent, createdBy ?? null],
       client,
     );
     return result.rows[0];

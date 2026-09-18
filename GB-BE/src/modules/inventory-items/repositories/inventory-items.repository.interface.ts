@@ -5,7 +5,11 @@ import {
   InventoryItemQuery,
   UpdateInventoryItemData,
 } from '../domain/inventory-item.types';
-import { InventoryQueryResultRow, RunInventoryQueryData } from '../domain/inventory-query.types';
+import {
+  InventoryQueryAggregateResult,
+  InventoryQueryResultRow,
+  RunInventoryQueryData,
+} from '../domain/inventory-query.types';
 
 export interface IInventoryItemsRepository {
   create(
@@ -40,6 +44,9 @@ export interface IInventoryItemsRepository {
   queryAdvanced(
     data: RunInventoryQueryData,
   ): Promise<{ rows: InventoryQueryResultRow[]; total: number }>;
+  queryAggregate(
+    data: Omit<RunInventoryQueryData, 'page' | 'limit'>,
+  ): Promise<InventoryQueryAggregateResult>;
 }
 
 export const INVENTORY_ITEMS_REPOSITORY = Symbol('INVENTORY_ITEMS_REPOSITORY');

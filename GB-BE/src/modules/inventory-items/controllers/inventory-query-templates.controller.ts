@@ -32,7 +32,7 @@ export class InventoryQueryTemplatesController {
     @Body() dto: CreateInventoryQueryTemplateDto,
   ) {
     return this.inventoryQueriesService.createTemplate(
-      { businessId, name: dto.name, conditions: dto.conditions },
+      { businessId, name: dto.name, conditions: dto.conditions, intent: dto.intent },
       actorUserId,
     );
   }

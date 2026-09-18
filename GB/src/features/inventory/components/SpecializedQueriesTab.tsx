@@ -26,21 +26,36 @@ import { useRunInventoryQuery } from '../../../modules/inventory/hooks/use-run-i
 import { useRunInventoryQueryTemplate } from '../../../modules/inventory/hooks/use-run-inventory-query-template';
 import { useSaveInventoryQueryTemplate } from '../../../modules/inventory/hooks/use-save-inventory-query-template';
 import { useDeleteInventoryQueryTemplate } from '../../../modules/inventory/hooks/use-delete-inventory-query-template';
+import { isPaginatedQueryResult } from '../../../modules/inventory/api/inventory-query.api';
 import { normalizeApiError } from '../../../lib/api/api-error';
 import { formatCOP } from '../../../utils/format';
 import {
   INVENTORY_QUERY_FIELD_LABELS,
   INVENTORY_QUERY_FIELD_TYPE,
+  INVENTORY_QUERY_INTENT_LABELS,
   INVENTORY_QUERY_OPERATOR_LABELS,
   INVENTORY_QUERY_OPERATORS_BY_TYPE,
 } from '../../../modules/inventory/types/inventory-query.types';
 import type {
   InventoryQueryCondition,
   InventoryQueryField,
+  InventoryQueryIntent,
   InventoryQueryResultItem,
+  InventoryQueryTemplate,
 } from '../../../modules/inventory/types/inventory-query.types';
 
 const FIELD_OPTIONS = Object.keys(INVENTORY_QUERY_FIELD_LABELS) as InventoryQueryField[];
+const INTENT_OPTIONS = Object.keys(INVENTORY_QUERY_INTENT_LABELS) as InventoryQueryIntent[];
+
+type QueryResultState =
+  | { intent: 'detail'; items: InventoryQueryResultItem[] }
+  | { intent: Exclude<InventoryQueryIntent, 'detail'>; value: number };
+
+function formatAggregateValue(intent: Exclude<InventoryQueryIntent, 'detail'>, value: number): string {
+  if (intent === 'totalValue' || intent === 'averageCost') return formatCOP(value);
+  if (intent === 'count') return String(Math.round(value));
+  return new Intl.NumberFormat('es-CO', { maximumFractionDigits: 3 }).format(value);
+}
 
 function defaultCondition(field: InventoryQueryField = 'name'): InventoryQueryCondition {
   const type = INVENTORY_QUERY_FIELD_TYPE[field];
@@ -100,7 +115,8 @@ export default function SpecializedQueriesTab() {
   const canManage = hasPermission('inventory.manage');
 
   const [conditions, setConditions] = useState<InventoryQueryCondition[]>([defaultCondition()]);
-  const [results, setResults] = useState<InventoryQueryResultItem[] | null>(null);
+  const [intent, setIntent] = useState<InventoryQueryIntent>('detail');
+  const [result, setResult] = useState<QueryResultState | null>(null);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [templateName, setTemplateName] = useState('');
 
@@ -123,19 +139,31 @@ export default function SpecializedQueriesTab() {
 
   const handleSearch = () => {
     runQuery.mutate(
-      { conditions, branchId, limit: 100 },
+      { conditions, intent, branchId, limit: 100 },
       {
-        onSuccess: (result) => setResults(result.data),
+        onSuccess: (response) => {
+          if (isPaginatedQueryResult(response)) {
+            setResult({ intent: 'detail', items: response.data });
+          } else {
+            setResult({ intent: response.data.intent, value: response.data.value });
+          }
+        },
         onError: (error) => enqueueSnackbar(normalizeApiError(error).message, { variant: 'error' }),
       },
     );
   };
 
-  const handleRunTemplate = (id: string) => {
+  const handleRunTemplate = (template: InventoryQueryTemplate) => {
     runTemplate.mutate(
-      { id, branchId },
+      { id: template.id, branchId },
       {
-        onSuccess: (result) => setResults(result.data),
+        onSuccess: (response) => {
+          if (isPaginatedQueryResult(response)) {
+            setResult({ intent: 'detail', items: response.data });
+          } else {
+            setResult({ intent: response.data.intent, value: response.data.value });
+          }
+        },
         onError: (error) => enqueueSnackbar(normalizeApiError(error).message, { variant: 'error' }),
       },
     );
@@ -144,7 +172,7 @@ export default function SpecializedQueriesTab() {
   const handleSaveTemplate = () => {
     if (!templateName.trim()) return;
     saveTemplate.mutate(
-      { name: templateName.trim(), conditions },
+      { name: templateName.trim(), conditions, intent },
       {
         onSuccess: () => {
           enqueueSnackbar('Plantilla guardada correctamente', { variant: 'success' });
@@ -176,7 +204,7 @@ export default function SpecializedQueriesTab() {
                 key={template.id}
                 label={template.name}
                 icon={<Play size={13} />}
-                onClick={() => handleRunTemplate(template.id)}
+                onClick={() => handleRunTemplate(template)}
                 onDelete={canManage ? () => handleDeleteTemplate(template.id) : undefined}
                 deleteIcon={<Trash2 size={13} />}
                 sx={{ fontWeight: 600 }}
@@ -185,6 +213,24 @@ export default function SpecializedQueriesTab() {
           </Stack>
         </Box>
       )}
+
+      <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
+        Intención
+      </Typography>
+      <TextField
+        select
+        size="small"
+        label="¿Qué quieres obtener?"
+        value={intent}
+        onChange={(e) => setIntent(e.target.value as InventoryQueryIntent)}
+        sx={{ minWidth: 280, mb: 2.5 }}
+      >
+        {INTENT_OPTIONS.map((option) => (
+          <MenuItem key={option} value={option}>
+            {INVENTORY_QUERY_INTENT_LABELS[option]}
+          </MenuItem>
+        ))}
+      </TextField>
 
       <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
         Constructor de condiciones
@@ -264,14 +310,14 @@ export default function SpecializedQueriesTab() {
         </Can>
       </Stack>
 
-      {results !== null && (
+      {result !== null && result.intent === 'detail' && (
         <>
           <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
-            Resultados {results.length > 0 && `(${results.length})`}
+            Resultados {result.items.length > 0 && `(${result.items.length})`}
           </Typography>
           <DataTable
             columns={columns}
-            data={results}
+            data={result.items}
             emptyTitle="Sin resultados"
             emptyDescription="Ningún insumo cumple con las condiciones armadas."
             pageSize={10}
@@ -279,7 +325,18 @@ export default function SpecializedQueriesTab() {
         </>
       )}
 
-      {results === null && (
+      {result !== null && result.intent !== 'detail' && (
+        <Box sx={{ p: 3, borderRadius: 2, border: '1px solid', borderColor: 'divider', maxWidth: 320 }}>
+          <Typography variant="body2" color="text.secondary">
+            {INVENTORY_QUERY_INTENT_LABELS[result.intent]}
+          </Typography>
+          <Typography variant="h4" sx={{ fontWeight: 800, mt: 0.5 }}>
+            {formatAggregateValue(result.intent, result.value)}
+          </Typography>
+        </Box>
+      )}
+
+      {result === null && (
         <Stack sx={{ alignItems: 'center', py: 4, opacity: 0.6 }}>
           <Sparkles size={28} />
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>

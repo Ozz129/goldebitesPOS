@@ -26,6 +26,16 @@ export type InventoryQueryOperator =
   | 'between'
   | 'in';
 
+export type InventoryQueryIntent = 'detail' | 'count' | 'sumStock' | 'totalValue' | 'averageCost';
+
+export const INVENTORY_QUERY_INTENT_LABELS: Record<InventoryQueryIntent, string> = {
+  detail: 'Detalle (lista de resultados)',
+  count: 'Conteo (cuántos coinciden)',
+  sumStock: 'Suma de stock',
+  totalValue: 'Valor total del inventario (stock × costo)',
+  averageCost: 'Costo promedio',
+};
+
 export type InventoryQueryFieldType = 'text' | 'number' | 'boolean' | 'date' | 'category';
 
 export const INVENTORY_QUERY_FIELD_TYPE: Record<InventoryQueryField, InventoryQueryFieldType> = {
@@ -106,11 +116,17 @@ export interface InventoryQueryResultItem {
   createdAt: string;
 }
 
+export interface InventoryQueryAggregateResult {
+  intent: Exclude<InventoryQueryIntent, 'detail'>;
+  value: number;
+}
+
 export interface InventoryQueryTemplate {
   id: string;
   businessId: string;
   name: string;
   conditions: InventoryQueryCondition[];
+  intent: InventoryQueryIntent;
   createdBy: string | null;
   createdAt: string;
   updatedAt: string;
@@ -118,6 +134,7 @@ export interface InventoryQueryTemplate {
 
 export interface RunInventoryQueryPayload {
   conditions: InventoryQueryCondition[];
+  intent: InventoryQueryIntent;
   branchId?: string;
   page?: number;
   limit?: number;
@@ -126,4 +143,5 @@ export interface RunInventoryQueryPayload {
 export interface CreateInventoryQueryTemplatePayload {
   name: string;
   conditions: InventoryQueryCondition[];
+  intent: InventoryQueryIntent;
 }

@@ -1,6 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { ArrayMinSize, IsArray, IsInt, IsOptional, IsUUID, Max, Min, ValidateNested } from 'class-validator';
+import { ArrayMinSize, IsArray, IsEnum, IsInt, IsOptional, IsUUID, Max, Min, ValidateNested } from 'class-validator';
+import { InventoryQueryIntent } from '../domain/inventory-query.types';
 import { InventoryQueryConditionDto } from './inventory-query-condition.dto';
 
 export class RunInventoryQueryDto {
@@ -9,6 +10,11 @@ export class RunInventoryQueryDto {
   @ValidateNested({ each: true })
   @Type(() => InventoryQueryConditionDto)
   conditions: InventoryQueryConditionDto[];
+
+  @ApiPropertyOptional({ enum: InventoryQueryIntent, default: InventoryQueryIntent.DETAIL })
+  @IsOptional()
+  @IsEnum(InventoryQueryIntent)
+  intent: InventoryQueryIntent = InventoryQueryIntent.DETAIL;
 
   @ApiPropertyOptional({ description: 'Scopes the stock (currentStock) join to one branch' })
   @IsOptional()

@@ -28,6 +28,19 @@ export enum InventoryQueryOperator {
   IN = 'in',
 }
 
+export enum InventoryQueryIntent {
+  /** The matching rows themselves. */
+  DETAIL = 'detail',
+  /** How many rows match. */
+  COUNT = 'count',
+  /** Sum of currentStock across matching rows. */
+  SUM_STOCK = 'sumStock',
+  /** Sum of currentStock * currentCost across matching rows — total money value. */
+  TOTAL_VALUE = 'totalValue',
+  /** Average currentCost across matching rows. */
+  AVERAGE_COST = 'averageCost',
+}
+
 export type InventoryQueryFieldType = 'text' | 'number' | 'boolean' | 'date' | 'category';
 
 /** Every field's type — drives which operators are valid for it (see OPERATORS_BY_TYPE). */
@@ -88,8 +101,14 @@ export interface RunInventoryQueryData {
   businessId: string;
   branchId?: string;
   conditions: InventoryQueryCondition[];
+  intent: InventoryQueryIntent;
   page: number;
   limit: number;
+}
+
+export interface InventoryQueryAggregateResult {
+  intent: InventoryQueryIntent;
+  value: number;
 }
 
 export interface InventoryQueryResultItem {
@@ -131,6 +150,7 @@ export interface InventoryQueryTemplate {
   businessId: string;
   name: string;
   conditions: InventoryQueryCondition[];
+  intent: InventoryQueryIntent;
   createdBy: string | null;
   createdAt: Date;
   updatedAt: Date;
@@ -141,6 +161,7 @@ export interface InventoryQueryTemplateRow {
   business_id: string;
   name: string;
   conditions: InventoryQueryCondition[];
+  intent: InventoryQueryIntent;
   created_by: string | null;
   created_at: Date;
   updated_at: Date;
@@ -150,4 +171,5 @@ export interface CreateInventoryQueryTemplateData {
   businessId: string;
   name: string;
   conditions: InventoryQueryCondition[];
+  intent: InventoryQueryIntent;
 }

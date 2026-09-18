@@ -1,9 +1,9 @@
 import { BusinessRuleException, EntityNotFoundException } from '../../../common/exceptions';
-import { InventoryQueryField, InventoryQueryOperator } from '../domain/inventory-query.types';
+import { InventoryQueryField, InventoryQueryIntent, InventoryQueryOperator } from '../domain/inventory-query.types';
 import { InventoryQueriesService } from './inventory-queries.service';
 
 describe('InventoryQueriesService', () => {
-  let inventoryItemsRepository: { queryAdvanced: jest.Mock };
+  let inventoryItemsRepository: { queryAdvanced: jest.Mock; queryAggregate: jest.Mock };
   let templatesRepository: {
     create: jest.Mock;
     findAll: jest.Mock;
@@ -16,7 +16,10 @@ describe('InventoryQueriesService', () => {
   const businessId = 'business-1';
 
   beforeEach(() => {
-    inventoryItemsRepository = { queryAdvanced: jest.fn().mockResolvedValue({ rows: [], total: 0 }) };
+    inventoryItemsRepository = {
+      queryAdvanced: jest.fn().mockResolvedValue({ rows: [], total: 0 }),
+      queryAggregate: jest.fn().mockResolvedValue({ intent: InventoryQueryIntent.COUNT, value: 0 }),
+    };
     templatesRepository = {
       create: jest.fn(),
       findAll: jest.fn(),
@@ -39,6 +42,7 @@ describe('InventoryQueriesService', () => {
           conditions: [
             { field: InventoryQueryField.MINIMUM_STOCK, operator: InventoryQueryOperator.CONTAINS, value: 5 },
           ],
+          intent: InventoryQueryIntent.DETAIL,
           page: 1,
           limit: 20,
         }),
@@ -53,6 +57,7 @@ describe('InventoryQueriesService', () => {
           conditions: [
             { field: InventoryQueryField.CURRENT_COST, operator: InventoryQueryOperator.BETWEEN, value: 1000 },
           ],
+          intent: InventoryQueryIntent.DETAIL,
           page: 1,
           limit: 20,
         }),
@@ -64,6 +69,7 @@ describe('InventoryQueriesService', () => {
         service.run({
           businessId,
           conditions: [{ field: InventoryQueryField.CATEGORY_ID, operator: InventoryQueryOperator.IN, values: [] }],
+          intent: InventoryQueryIntent.DETAIL,
           page: 1,
           limit: 20,
         }),
@@ -75,6 +81,7 @@ describe('InventoryQueriesService', () => {
         service.run({
           businessId,
           conditions: [{ field: InventoryQueryField.NAME, operator: InventoryQueryOperator.CONTAINS }],
+          intent: InventoryQueryIntent.DETAIL,
           page: 1,
           limit: 20,
         }),
@@ -86,6 +93,7 @@ describe('InventoryQueriesService', () => {
         service.run({
           businessId,
           conditions: [{ field: InventoryQueryField.SKU, operator: InventoryQueryOperator.IS_EMPTY }],
+          intent: InventoryQueryIntent.DETAIL,
           page: 1,
           limit: 20,
         }),
@@ -99,11 +107,50 @@ describe('InventoryQueriesService', () => {
         { field: InventoryQueryField.CURRENT_STOCK, operator: InventoryQueryOperator.LESS_THAN, value: 10 },
       ];
 
-      await service.run({ businessId, conditions, page: 1, limit: 20 });
+      await service.run({ businessId, conditions, intent: InventoryQueryIntent.DETAIL, page: 1, limit: 20 });
 
       expect(inventoryItemsRepository.queryAdvanced).toHaveBeenCalledWith(
         expect.objectContaining({ businessId, conditions, page: 1, limit: 20 }),
       );
+    });
+  });
+
+  describe('run — intent branching', () => {
+    it('DETAIL delegates to queryAdvanced and returns a paginated result', async () => {
+      inventoryItemsRepository.queryAdvanced.mockResolvedValue({ rows: [], total: 0 });
+      const result = await service.run({
+        businessId,
+        conditions: [{ field: InventoryQueryField.NAME, operator: InventoryQueryOperator.CONTAINS, value: 'a' }],
+        intent: InventoryQueryIntent.DETAIL,
+        page: 1,
+        limit: 20,
+      });
+
+      expect(inventoryItemsRepository.queryAdvanced).toHaveBeenCalled();
+      expect(inventoryItemsRepository.queryAggregate).not.toHaveBeenCalled();
+      expect(result).toEqual(expect.objectContaining({ data: [], meta: expect.anything() }));
+    });
+
+    it.each([
+      InventoryQueryIntent.COUNT,
+      InventoryQueryIntent.SUM_STOCK,
+      InventoryQueryIntent.TOTAL_VALUE,
+      InventoryQueryIntent.AVERAGE_COST,
+    ])('%s delegates to queryAggregate and returns the raw aggregate result', async (intent) => {
+      inventoryItemsRepository.queryAggregate.mockResolvedValue({ intent, value: 42 });
+      const result = await service.run({
+        businessId,
+        conditions: [{ field: InventoryQueryField.NAME, operator: InventoryQueryOperator.CONTAINS, value: 'a' }],
+        intent,
+        page: 1,
+        limit: 20,
+      });
+
+      expect(inventoryItemsRepository.queryAggregate).toHaveBeenCalledWith(
+        expect.objectContaining({ businessId, intent }),
+      );
+      expect(inventoryItemsRepository.queryAdvanced).not.toHaveBeenCalled();
+      expect(result).toEqual({ intent, value: 42 });
     });
   });
 
@@ -115,6 +162,7 @@ describe('InventoryQueriesService', () => {
             businessId,
             name: 'Bad template',
             conditions: [{ field: InventoryQueryField.IS_ACTIVE, operator: InventoryQueryOperator.CONTAINS, value: true }],
+            intent: InventoryQueryIntent.DETAIL,
           },
           'user-1',
         ),
@@ -128,6 +176,7 @@ describe('InventoryQueriesService', () => {
         business_id: businessId,
         name: 'Bajo stock',
         conditions: [{ field: InventoryQueryField.CURRENT_STOCK, operator: InventoryQueryOperator.LESS_THAN, value: 5 }],
+        intent: InventoryQueryIntent.DETAIL,
         created_by: 'user-1',
         created_at: new Date(),
         updated_at: new Date(),
@@ -138,6 +187,7 @@ describe('InventoryQueriesService', () => {
           businessId,
           name: 'Bajo stock',
           conditions: [{ field: InventoryQueryField.CURRENT_STOCK, operator: InventoryQueryOperator.LESS_THAN, value: 5 }],
+          intent: InventoryQueryIntent.DETAIL,
         },
         'user-1',
       );
@@ -160,6 +210,7 @@ describe('InventoryQueriesService', () => {
         name: 'Legacy template',
         // Simulates a template saved before a field/operator combo was made invalid.
         conditions: [{ field: InventoryQueryField.MINIMUM_STOCK, operator: InventoryQueryOperator.CONTAINS, value: 5 }],
+        intent: InventoryQueryIntent.DETAIL,
         created_by: null,
         created_at: new Date(),
         updated_at: new Date(),
@@ -175,6 +226,27 @@ describe('InventoryQueriesService', () => {
       await expect(service.runTemplate(businessId, 'missing-id', undefined, 1, 20)).rejects.toThrow(
         EntityNotFoundException,
       );
+    });
+
+    it('runTemplate uses the template\'s own stored intent (e.g. COUNT) rather than DETAIL', async () => {
+      templatesRepository.findById.mockResolvedValue({
+        id: 'template-1',
+        business_id: businessId,
+        name: 'Conteo bebidas',
+        conditions: [{ field: InventoryQueryField.NAME, operator: InventoryQueryOperator.CONTAINS, value: 'a' }],
+        intent: InventoryQueryIntent.COUNT,
+        created_by: null,
+        created_at: new Date(),
+        updated_at: new Date(),
+      });
+      inventoryItemsRepository.queryAggregate.mockResolvedValue({ intent: InventoryQueryIntent.COUNT, value: 7 });
+
+      const result = await service.runTemplate(businessId, 'template-1', undefined, 1, 20);
+
+      expect(inventoryItemsRepository.queryAggregate).toHaveBeenCalledWith(
+        expect.objectContaining({ intent: InventoryQueryIntent.COUNT }),
+      );
+      expect(result).toEqual({ intent: InventoryQueryIntent.COUNT, value: 7 });
     });
   });
 });

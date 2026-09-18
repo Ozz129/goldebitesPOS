@@ -33,6 +33,7 @@ export class InventoryQueryTemplateMapper {
       businessId: row.business_id,
       name: row.name,
       conditions: row.conditions,
+      intent: row.intent,
       createdBy: row.created_by,
       createdAt: row.created_at,
       updatedAt: row.updated_at,

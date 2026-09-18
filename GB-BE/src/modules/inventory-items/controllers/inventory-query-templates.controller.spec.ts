@@ -1,4 +1,4 @@
-import { InventoryQueryField, InventoryQueryOperator } from '../domain/inventory-query.types';
+import { InventoryQueryField, InventoryQueryIntent, InventoryQueryOperator } from '../domain/inventory-query.types';
 import { InventoryQueryTemplatesController } from './inventory-query-templates.controller';
 import { InventoryQueriesService } from '../services/inventory-queries.service';
 
@@ -28,10 +28,14 @@ describe('InventoryQueryTemplatesController', () => {
     service.createTemplate.mockResolvedValue({} as never);
     const conditions = [{ field: InventoryQueryField.NAME, operator: InventoryQueryOperator.CONTAINS, value: 'a' }];
 
-    await controller.create('business-1', 'actor-1', { name: 'Mi consulta', conditions });
+    await controller.create('business-1', 'actor-1', {
+      name: 'Mi consulta',
+      conditions,
+      intent: InventoryQueryIntent.DETAIL,
+    });
 
     expect(service.createTemplate).toHaveBeenCalledWith(
-      { businessId: 'business-1', name: 'Mi consulta', conditions },
+      { businessId: 'business-1', name: 'Mi consulta', conditions, intent: InventoryQueryIntent.DETAIL },
       'actor-1',
     );
   });

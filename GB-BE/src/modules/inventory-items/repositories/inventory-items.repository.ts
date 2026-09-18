@@ -9,8 +9,10 @@ import {
   UpdateInventoryItemData,
 } from '../domain/inventory-item.types';
 import {
+  InventoryQueryAggregateResult,
   InventoryQueryCondition,
   InventoryQueryField,
+  InventoryQueryIntent,
   InventoryQueryOperator,
   InventoryQueryResultRow,
   RunInventoryQueryData,
@@ -210,6 +212,54 @@ export class InventoryItemsRepository implements IInventoryItemsRepository {
   async queryAdvanced(
     data: RunInventoryQueryData,
   ): Promise<{ rows: InventoryQueryResultRow[]; total: number }> {
+    const { fromClause, params } = this.buildFromWhere(data);
+
+    const countResult = await this.db.query<{ count: string }>(
+      `SELECT COUNT(*)::text AS count ${fromClause}`,
+      params,
+    );
+    const total = parseInt(countResult.rows[0]?.count ?? '0', 10);
+
+    const dataParams = [...params, data.limit, getOffset(data.page, data.limit)];
+    const rowsResult = await this.db.query<InventoryQueryResultRow>(
+      `SELECT ii.id, ii.category_id, cat.name AS category_name, ii.name, ii.sku, ii.unit,
+              ii.minimum_stock, ii.current_cost, COALESCE(stock.stock, 0)::text AS current_stock,
+              ii.serial_number, ii.brand, ii.model, ii.is_active, ii.created_at
+       ${fromClause}
+       ORDER BY ii.name
+       LIMIT $${dataParams.length - 1} OFFSET $${dataParams.length}`,
+      dataParams,
+    );
+
+    return { rows: rowsResult.rows, total };
+  }
+
+  async queryAggregate(
+    data: Omit<RunInventoryQueryData, 'page' | 'limit'>,
+  ): Promise<InventoryQueryAggregateResult> {
+    const { fromClause, params } = this.buildFromWhere(data);
+
+    const AGGREGATE_EXPRESSION: Record<Exclude<InventoryQueryIntent, InventoryQueryIntent.DETAIL>, string> = {
+      [InventoryQueryIntent.COUNT]: 'COUNT(*)',
+      [InventoryQueryIntent.SUM_STOCK]: 'COALESCE(SUM(COALESCE(stock.stock, 0)), 0)',
+      [InventoryQueryIntent.TOTAL_VALUE]: 'COALESCE(SUM(COALESCE(stock.stock, 0) * ii.current_cost), 0)',
+      [InventoryQueryIntent.AVERAGE_COST]: 'COALESCE(AVG(ii.current_cost), 0)',
+    };
+
+    const expression = AGGREGATE_EXPRESSION[data.intent as Exclude<InventoryQueryIntent, InventoryQueryIntent.DETAIL>];
+
+    const result = await this.db.query<{ value: string }>(
+      `SELECT ${expression}::text AS value ${fromClause}`,
+      params,
+    );
+
+    return { intent: data.intent, value: parseFloat(result.rows[0]?.value ?? '0') };
+  }
+
+  /** Shared FROM/JOIN/WHERE for both row listing and aggregation — never duplicate this. */
+  private buildFromWhere(
+    data: Pick<RunInventoryQueryData, 'businessId' | 'branchId' | 'conditions'>,
+  ): { fromClause: string; params: unknown[] } {
     const conditions: string[] = ['ii.business_id = $1', 'ii.deleted_at IS NULL'];
     const params: unknown[] = [data.businessId];
 
@@ -242,24 +292,7 @@ export class InventoryItemsRepository implements IInventoryItemsRepository {
       WHERE ${whereClause}
     `;
 
-    const countResult = await this.db.query<{ count: string }>(
-      `SELECT COUNT(*)::text AS count ${fromClause}`,
-      params,
-    );
-    const total = parseInt(countResult.rows[0]?.count ?? '0', 10);
-
-    const dataParams = [...params, data.limit, getOffset(data.page, data.limit)];
-    const rowsResult = await this.db.query<InventoryQueryResultRow>(
-      `SELECT ii.id, ii.category_id, cat.name AS category_name, ii.name, ii.sku, ii.unit,
-              ii.minimum_stock, ii.current_cost, COALESCE(stock.stock, 0)::text AS current_stock,
-              ii.serial_number, ii.brand, ii.model, ii.is_active, ii.created_at
-       ${fromClause}
-       ORDER BY ii.name
-       LIMIT $${dataParams.length - 1} OFFSET $${dataParams.length}`,
-      dataParams,
-    );
-
-    return { rows: rowsResult.rows, total };
+    return { fromClause, params };
   }
 
   /** Maps one already-validated condition to a SQL fragment, pushing its value(s) as params. */

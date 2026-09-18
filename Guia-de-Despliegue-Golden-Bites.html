@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Guía de despliegue — Golden Bites POS</title>
+<style>
+  @page { size: A4; margin: 20mm 18mm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "Helvetica Neue", Arial, sans-serif;
+    color: #1a1a1a;
+    font-size: 10.5pt;
+    line-height: 1.55;
+  }
+  h1 { font-size: 20pt; margin: 0 0 4pt; color: #0f172a; }
+  .subtitle { color: #64748b; font-size: 10pt; margin-bottom: 18pt; }
+  h2 {
+    font-size: 13pt;
+    margin: 20pt 0 8pt;
+    padding-bottom: 4pt;
+    border-bottom: 1.5pt solid #e2e8f0;
+    color: #0f172a;
+    page-break-after: avoid;
+  }
+  h3 { font-size: 11pt; margin: 12pt 0 4pt; color: #0f172a; page-break-after: avoid; }
+  p { margin: 6pt 0; }
+  code {
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    background: #f1f5f9;
+    padding: 1pt 4pt;
+    border-radius: 3pt;
+    font-size: 9.3pt;
+    color: #b91c1c;
+  }
+  pre {
+    background: #0f172a;
+    color: #e2e8f0;
+    padding: 10pt 12pt;
+    border-radius: 6pt;
+    font-size: 9pt;
+    line-height: 1.5;
+    overflow-x: auto;
+    page-break-inside: avoid;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  pre code { background: none; color: inherit; padding: 0; }
+  .comment { color: #94a3b8; }
+  ul, ol { margin: 6pt 0; padding-left: 20pt; }
+  li { margin: 3pt 0; }
+  table { border-collapse: collapse; width: 100%; margin: 8pt 0; font-size: 9.5pt; }
+  th, td { border: 1pt solid #e2e8f0; padding: 5pt 8pt; text-align: left; vertical-align: top; }
+  th { background: #f8fafc; font-weight: 600; }
+  .box {
+    border: 1pt solid #e2e8f0;
+    border-left: 3pt solid #64748b;
+    background: #f8fafc;
+    padding: 8pt 12pt;
+    border-radius: 4pt;
+    margin: 10pt 0;
+    page-break-inside: avoid;
+  }
+  .box.warn { border-left-color: #d97706; background: #fffbeb; }
+  .box.danger { border-left-color: #dc2626; background: #fef2f2; }
+  .box strong { display: block; margin-bottom: 3pt; }
+  .step {
+    display: flex;
+    gap: 10pt;
+    margin: 10pt 0;
+    page-break-inside: avoid;
+  }
+  .step-num {
+    flex: 0 0 20pt;
+    height: 20pt;
+    border-radius: 50%;
+    background: #0f172a;
+    color: white;
+    font-size: 10pt;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .step-body { flex: 1; padding-top: 1pt; }
+  .step-body h3 { margin-top: 0; }
+  .meta-table td:first-child { font-weight: 600; width: 32%; color: #475569; }
+  .toc { margin: 14pt 0 4pt; }
+  .toc a { color: #1a1a1a; text-decoration: none; }
+  .footer-note { color: #94a3b8; font-size: 8.5pt; margin-top: 24pt; }
+  .section-break { page-break-before: always; }
+</style>
+</head>
+<body>
+
+<h1>Guía de despliegue — Golden Bites POS</h1>
+<div class="subtitle">Procedimiento estándar para llevar cambios de GitHub a producción · Actualizado 2026-09-03</div>
+
+<h2>1. Datos del servidor</h2>
+<table class="meta-table">
+  <tr><td>Proveedor</td><td>Oracle Cloud (Ampere/VM.Standard.E5.Flex, Ubuntu 24.04)</td></tr>
+  <tr><td>Dominio</td><td><code>goldenbites.duckdns.org</code></td></tr>
+  <tr><td>IP actual</td><td><code>157.137.220.21</code> (puede cambiar — confirmar con <code>dig +short goldenbites.duckdns.org</code>)</td></tr>
+  <tr><td>Usuario SSH</td><td><code>ubuntu</code></td></tr>
+  <tr><td>Llave SSH</td><td><code>~/.ssh/golden_bites_oracle</code></td></tr>
+  <tr><td>Ruta del proyecto en el servidor</td><td><code>/opt/golden-bites/app</code></td></tr>
+  <tr><td>Repositorio</td><td><code>git@github.com:Ozz129/goldebitesPOS.git</code>, rama <code>main</code></td></tr>
+</table>
+
+<div class="box">
+  <strong>Arquitectura</strong>
+  Tres contenedores Docker Compose (<code>docker-compose.prod.yml</code>): <code>postgres</code> (datos en volumen persistente
+  <code>golden_bites_pg_data</code>), <code>backend</code> (NestJS, puerto interno 3000), y <code>frontend</code>
+  (build de React servido por Nginx en el puerto 80, que también hace de proxy reverso de <code>/api/</code> hacia el backend).
+</div>
+
+<h2>2. Despliegue estándar (cambios de código)</h2>
+
+<div class="step">
+  <div class="step-num">1</div>
+  <div class="step-body">
+    <h3>Verificar en local antes de subir</h3>
+    <p>Antes de comitear: typecheck de ambos proyectos, build de ambos, y la suite de tests del backend.</p>
+    <pre><code><span class="comment"># Backend</span>
+cd GB-BE && npx tsc --noEmit -p tsconfig.json && npm test && npm run build
+
+<span class="comment"># Frontend</span>
+cd GB && npx tsc --noEmit -p tsconfig.json && npm run build</code></pre>
+  </div>
+</div>
+
+<div class="step">
+  <div class="step-num">2</div>
+  <div class="step-body">
+    <h3>Commit y push</h3>
+    <pre><code>git add -A
+git commit -m "mensaje descriptivo"
+git push origin main</code></pre>
+  </div>
+</div>
+
+<div class="step">
+  <div class="step-num">3</div>
+  <div class="step-body">
+    <h3>Conectarse al servidor y traer los cambios</h3>
+    <pre><code>ssh -i ~/.ssh/golden_bites_oracle ubuntu@157.137.220.21
+cd /opt/golden-bites/app
+git pull origin main</code></pre>
+  </div>
+</div>
+
+<div class="step">
+  <div class="step-num">4</div>
+  <div class="step-body">
+    <h3>Reconstruir las imágenes que cambiaron</h3>
+    <p>Solo reconstruye lo necesario: si solo cambió el frontend, basta con <code>frontend</code>; si cambió el backend (o ambos), incluye <code>backend</code>.</p>
+    <pre><code>sudo docker compose -f docker-compose.prod.yml build backend frontend</code></pre>
+  </div>
+</div>
+
+<div class="step">
+  <div class="step-num">5</div>
+  <div class="step-body">
+    <h3>Reiniciar los contenedores</h3>
+    <pre><code>sudo docker compose -f docker-compose.prod.yml up -d backend frontend</code></pre>
+    <div class="box warn">
+      <strong>Nota esperada</strong>
+      Docker mostrará advertencias <code>"DB_NAME"/"DB_USER"/"DB_PASSWORD" variable is not set</code> — es
+      inofensivo (no existe un archivo <code>.env</code> de nivel superior para la interpolación de esas variables
+      en el YAML; el backend igual carga sus credenciales reales desde <code>.env.production</code> vía
+      <code>env_file</code>). También es normal que <code>postgres</code> aparezca como <code>Recreate</code>: sus
+      datos viven en el volumen <code>golden_bites_pg_data</code>, no en el contenedor, así que no se pierden.
+    </div>
+  </div>
+</div>
+
+<div class="step">
+  <div class="step-num">6</div>
+  <div class="step-body">
+    <h3>Correr migraciones nuevas de base de datos (si las hay)</h3>
+    <p>El runner es idempotente: las migraciones ya aplicadas se saltan automáticamente.</p>
+    <pre><code>sudo docker compose -f docker-compose.prod.yml exec backend node dist/database/migration-runner.js</code></pre>
+  </div>
+</div>
+
+<div class="step">
+  <div class="step-num">7</div>
+  <div class="step-body">
+    <h3>Verificar que todo quedó sano</h3>
+    <pre><code>curl -s -o /dev/null -w "frontend: %{http_code}\n" http://goldenbites.duckdns.org/
+curl -s -o /dev/null -w "api: %{http_code}\n" http://goldenbites.duckdns.org/api/v1/health
+sudo docker compose -f docker-compose.prod.yml ps
+sudo docker compose -f docker-compose.prod.yml logs backend --tail 30</code></pre>
+    <p>Ambos <code>curl</code> deben devolver <code>200</code>, y los tres contenedores deben verse <code>Up</code>
+    (postgres además <code>healthy</code>).</p>
+  </div>
+</div>
+
+<h2 class="section-break">3. Comandos útiles de mantenimiento</h2>
+<table>
+  <tr><th>Qué</th><th>Comando</th></tr>
+  <tr><td>Ver logs en vivo del backend</td><td><code>sudo docker compose -f docker-compose.prod.yml logs -f backend</code></td></tr>
+  <tr><td>Ver logs en vivo del frontend/Nginx</td><td><code>sudo docker compose -f docker-compose.prod.yml logs -f frontend</code></td></tr>
+  <tr><td>Estado de los contenedores</td><td><code>sudo docker compose -f docker-compose.prod.yml ps</code></td></tr>
+  <tr><td>Entrar a una consola de Postgres</td><td><code>sudo docker compose -f docker-compose.prod.yml exec postgres psql -U &lt;usuario&gt; -d &lt;base&gt;</code></td></tr>
+  <tr><td>Reiniciar un solo servicio</td><td><code>sudo docker compose -f docker-compose.prod.yml restart backend</code></td></tr>
+  <tr><td>Ver commit desplegado actualmente</td><td><code>git log --oneline -1</code> (dentro de <code>/opt/golden-bites/app</code>)</td></tr>
+</table>
+
+<h2>4. Rollback (revertir un despliegue problemático)</h2>
+<div class="step">
+  <div class="step-num">1</div>
+  <div class="step-body">
+    <h3>Volver al commit anterior en el servidor</h3>
+    <pre><code>cd /opt/golden-bites/app
+git log --oneline -5              <span class="comment"># identificar el commit bueno anterior</span>
+git checkout &lt;hash-del-commit-bueno&gt;
+sudo docker compose -f docker-compose.prod.yml build backend frontend
+sudo docker compose -f docker-compose.prod.yml up -d backend frontend</code></pre>
+  </div>
+</div>
+<div class="box danger">
+  <strong>Cuidado con las migraciones</strong>
+  El runner de migraciones no tiene "down" automático. Si el despliegue problemático incluía una migración de
+  base de datos, revertir el código no revierte el esquema — hay que evaluar caso por caso si la migración es
+  segura de dejar aplicada o si se necesita un script manual de reversión. Cuando termines de investigar,
+  vuelve a <code>git checkout main</code> para no quedar en un HEAD desprendido.
+</div>
+
+<h2>5. Acceso administrativo</h2>
+<table class="meta-table">
+  <tr><td>Panel de administración de plataforma</td><td><code>http://goldenbites.duckdns.org/plataforma</code></td></tr>
+  <tr><td>Usuario superadmin</td><td><code>superadmin@goldenbitespos.local</code></td></tr>
+  <tr><td>Contraseña</td><td>Temporal, definida durante la puesta en marcha — cámbiala desde el panel si aún no lo has hecho.</td></tr>
+</table>
+
+<h2>6. Pendientes conocidos de infraestructura</h2>
+<ul>
+  <li>Migrar la VM del shape pago actual (<code>VM.Standard.E5.Flex</code>) al shape gratuito Ampere
+    (<code>VM.Standard.A1.Flex</code>) cuando Oracle tenga capacidad disponible.</li>
+  <li>Configurar HTTPS/SSL con Let's Encrypt (el sitio corre en HTTP plano hoy).</li>
+  <li>Configurar respaldos automáticos de la base de datos.</li>
+  <li>El login (<code>findRawByEmailAcrossBusinesses</code>) asume que un correo no se repite entre dos empresas
+    distintas — si eso llega a pasar, ambos logins fallarían. No resuelto todavía.</li>
+</ul>
+
+<div class="footer-note">Golden Bites POS — documento interno de operaciones.</div>
+
+</body>
+</html>

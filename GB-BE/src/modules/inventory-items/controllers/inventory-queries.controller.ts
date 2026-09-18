@@ -21,6 +21,7 @@ export class InventoryQueriesController {
       businessId,
       branchId: dto.branchId,
       conditions: dto.conditions,
+      intent: dto.intent,
       page: dto.page,
       limit: dto.limit,
     });

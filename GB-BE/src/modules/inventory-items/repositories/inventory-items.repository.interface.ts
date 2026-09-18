@@ -5,6 +5,7 @@ import {
   InventoryItemQuery,
   UpdateInventoryItemData,
 } from '../domain/inventory-item.types';
+import { InventoryQueryResultRow, RunInventoryQueryData } from '../domain/inventory-query.types';
 
 export interface IInventoryItemsRepository {
   create(
@@ -36,6 +37,9 @@ export interface IInventoryItemsRepository {
     sku: string,
     excludeId?: string,
   ): Promise<boolean>;
+  queryAdvanced(
+    data: RunInventoryQueryData,
+  ): Promise<{ rows: InventoryQueryResultRow[]; total: number }>;
 }
 
 export const INVENTORY_ITEMS_REPOSITORY = Symbol('INVENTORY_ITEMS_REPOSITORY');

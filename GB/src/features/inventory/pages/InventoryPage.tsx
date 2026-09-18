@@ -6,6 +6,8 @@ import Button from '@mui/material/Button';
 import LinearProgress from '@mui/material/LinearProgress';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
+import Tabs from '@mui/material/Tabs';
+import Tab from '@mui/material/Tab';
 import { type ColumnDef } from '@tanstack/react-table';
 import { Boxes, PackagePlus, AlertTriangle, Wallet2, Plus, Tags } from 'lucide-react';
 import { useSnackbar } from 'notistack';
@@ -34,11 +36,15 @@ import InventoryDetailDrawer from '../components/InventoryDetailDrawer';
 import InventoryMovementDrawer from '../components/InventoryMovementDrawer';
 import InventoryItemFormDrawer from '../components/InventoryItemFormDrawer';
 import InventoryCategoryManagerDialog from '../components/InventoryCategoryManagerDialog';
+import SpecializedQueriesTab from '../components/SpecializedQueriesTab';
+
+type TabKey = 'inventario' | 'consultas';
 
 export default function InventoryPage() {
   const { enqueueSnackbar } = useSnackbar();
   const branchId = useAuthStore((s) => s.user?.branchId ?? undefined);
 
+  const [tab, setTab] = useState<TabKey>('inventario');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'todos' | 'activos' | 'inactivos'>('activos');
   const [categoryFilter, setCategoryFilter] = useState<string>('todas');
@@ -264,6 +270,15 @@ export default function InventoryPage() {
         }
       />
 
+      <Tabs value={tab} onChange={(_, value: TabKey) => setTab(value)} sx={{ mb: 2 }}>
+        <Tab value="inventario" label="Inventario" />
+        <Tab value="consultas" label="Consultas especializadas" />
+      </Tabs>
+
+      {tab === 'consultas' && <SpecializedQueriesTab />}
+
+      {tab === 'inventario' && (
+        <>
       <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <StatCard label="Valor total en inventario" value={formatCOP(totalValue)} icon={Wallet2} />
@@ -331,6 +346,8 @@ export default function InventoryPage() {
           emptyDescription="Ajusta la búsqueda o los filtros seleccionados."
           pageSize={10}
         />
+      )}
+        </>
       )}
 
       <InventoryDetailDrawer

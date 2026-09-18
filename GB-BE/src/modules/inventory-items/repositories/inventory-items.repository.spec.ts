@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { randomUUID } from 'node:crypto';
 import { Pool } from 'pg';
 import { DatabaseService } from '../../../database/database.service';
+import { InventoryQueryField, InventoryQueryOperator } from '../domain/inventory-query.types';
 import { InventoryItemsRepository } from './inventory-items.repository';
 
 /**
@@ -35,9 +36,12 @@ describe('InventoryItemsRepository (integration)', () => {
   });
 
   afterAll(async () => {
+    await pool.query('DELETE FROM inventory_movements WHERE business_id = $1', [businessId]);
     await pool.query('DELETE FROM inventory_items WHERE business_id = $1', [
       businessId,
     ]);
+    await pool.query('DELETE FROM inventory_item_categories WHERE business_id = $1', [businessId]);
+    await pool.query('DELETE FROM branches WHERE business_id = $1', [businessId]);
     await pool.query('DELETE FROM businesses WHERE id = $1', [businessId]);
     await pool.end();
   });
@@ -112,5 +116,113 @@ describe('InventoryItemsRepository (integration)', () => {
     });
     expect(updated?.current_cost).toBe('6.99');
     expect(updated?.name).toBe('Oil');
+  });
+
+  describe('queryAdvanced()', () => {
+    let branchId: string;
+    let categoryId: string;
+
+    beforeAll(async () => {
+      const branch = await pool.query<{ id: string }>(
+        `INSERT INTO branches (business_id, name) VALUES ($1, $2) RETURNING id`,
+        [businessId, `Test Branch ${randomUUID()}`],
+      );
+      branchId = branch.rows[0].id;
+
+      const category = await pool.query<{ id: string }>(
+        `INSERT INTO inventory_item_categories (business_id, name) VALUES ($1, $2) RETURNING id`,
+        [businessId, `Bebidas ${randomUUID()}`],
+      );
+      categoryId = category.rows[0].id;
+    });
+
+    it('filters by category (equals) and computes currentStock from movements', async () => {
+      const item = await repository.create({
+        businessId,
+        categoryId,
+        name: `Soda ${randomUUID()}`,
+        unit: 'unidad',
+        minimumStock: 5,
+      });
+      await pool.query(
+        `INSERT INTO inventory_movements (business_id, branch_id, inventory_item_id, movement_type, quantity)
+         VALUES ($1, $2, $3, 'INITIAL_STOCK', 20)`,
+        [businessId, branchId, item.id],
+      );
+      await pool.query(
+        `INSERT INTO inventory_movements (business_id, branch_id, inventory_item_id, movement_type, quantity)
+         VALUES ($1, $2, $3, 'ADJUSTMENT_OUT', 6)`,
+        [businessId, branchId, item.id],
+      );
+
+      const { rows, total } = await repository.queryAdvanced({
+        businessId,
+        branchId,
+        conditions: [{ field: InventoryQueryField.CATEGORY_ID, operator: InventoryQueryOperator.EQUALS, value: categoryId }],
+        page: 1,
+        limit: 50,
+      });
+
+      const found = rows.find((row) => row.id === item.id);
+      expect(found).toBeDefined();
+      expect(found?.category_name).toContain('Bebidas');
+      expect(found?.current_stock).toBe('14.000');
+      expect(total).toBeGreaterThanOrEqual(1);
+    });
+
+    it('combines multiple conditions with AND (name contains + stock below minimum)', async () => {
+      const uniqueTag = randomUUID().slice(0, 8);
+      const lowStockItem = await repository.create({
+        businessId,
+        name: `Unique-${uniqueTag} Low`,
+        unit: 'unidad',
+        minimumStock: 100,
+      });
+      const highStockItem = await repository.create({
+        businessId,
+        name: `Unique-${uniqueTag} High`,
+        unit: 'unidad',
+        minimumStock: 1,
+      });
+      await pool.query(
+        `INSERT INTO inventory_movements (business_id, branch_id, inventory_item_id, movement_type, quantity)
+         VALUES ($1, $2, $3, 'INITIAL_STOCK', 5)`,
+        [businessId, branchId, lowStockItem.id],
+      );
+      await pool.query(
+        `INSERT INTO inventory_movements (business_id, branch_id, inventory_item_id, movement_type, quantity)
+         VALUES ($1, $2, $3, 'INITIAL_STOCK', 500)`,
+        [businessId, branchId, highStockItem.id],
+      );
+
+      const { rows } = await repository.queryAdvanced({
+        businessId,
+        branchId,
+        conditions: [
+          { field: InventoryQueryField.NAME, operator: InventoryQueryOperator.CONTAINS, value: uniqueTag },
+          { field: InventoryQueryField.CURRENT_STOCK, operator: InventoryQueryOperator.LESS_THAN, value: 10 },
+        ],
+        page: 1,
+        limit: 50,
+      });
+
+      expect(rows.map((r) => r.id)).toEqual([lowStockItem.id]);
+    });
+
+    it('"isEmpty" matches items without a SKU', async () => {
+      const withSku = await repository.create({ businessId, name: `HasSku ${randomUUID()}`, unit: 'kg', sku: `SKU-${randomUUID()}` });
+      const withoutSku = await repository.create({ businessId, name: `NoSku ${randomUUID()}`, unit: 'kg' });
+
+      const { rows } = await repository.queryAdvanced({
+        businessId,
+        conditions: [{ field: InventoryQueryField.SKU, operator: InventoryQueryOperator.IS_EMPTY }],
+        page: 1,
+        limit: 200,
+      });
+
+      const ids = rows.map((r) => r.id);
+      expect(ids).toContain(withoutSku.id);
+      expect(ids).not.toContain(withSku.id);
+    });
   });
 });

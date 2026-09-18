@@ -8,4 +8,5 @@ export const inventoryKeys = {
   stock: (filters: StockFilters) => [...inventoryKeys.all, 'stock', filters] as const,
   lowStock: (branchId?: string) => [...inventoryKeys.all, 'low-stock', branchId ?? 'all'] as const,
   movements: (filters: MovementFilters) => [...inventoryKeys.all, 'movements', filters] as const,
+  queryTemplates: () => [...inventoryKeys.all, 'query-templates'] as const,
 };

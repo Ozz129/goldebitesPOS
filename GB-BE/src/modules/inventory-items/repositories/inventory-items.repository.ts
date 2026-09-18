@@ -8,7 +8,30 @@ import {
   InventoryItemQuery,
   UpdateInventoryItemData,
 } from '../domain/inventory-item.types';
+import {
+  InventoryQueryCondition,
+  InventoryQueryField,
+  InventoryQueryOperator,
+  InventoryQueryResultRow,
+  RunInventoryQueryData,
+} from '../domain/inventory-query.types';
 import { IInventoryItemsRepository } from './inventory-items.repository.interface';
+
+/** Column/expression for each field — the ONLY thing ever interpolated into SQL for a query condition. */
+const FIELD_COLUMN: Record<InventoryQueryField, string> = {
+  [InventoryQueryField.NAME]: 'ii.name',
+  [InventoryQueryField.SKU]: 'ii.sku',
+  [InventoryQueryField.CATEGORY_ID]: 'ii.category_id',
+  [InventoryQueryField.UNIT]: 'ii.unit',
+  [InventoryQueryField.BRAND]: 'ii.brand',
+  [InventoryQueryField.MODEL]: 'ii.model',
+  [InventoryQueryField.SERIAL_NUMBER]: 'ii.serial_number',
+  [InventoryQueryField.MINIMUM_STOCK]: 'ii.minimum_stock',
+  [InventoryQueryField.CURRENT_COST]: 'ii.current_cost',
+  [InventoryQueryField.CURRENT_STOCK]: 'COALESCE(stock.stock, 0)',
+  [InventoryQueryField.IS_ACTIVE]: 'ii.is_active',
+  [InventoryQueryField.CREATED_AT]: 'ii.created_at',
+};
 
 const SELECT_COLUMNS = `id, business_id, category_id, name, sku, unit, minimum_stock, current_cost, serial_number, brand, model, is_active, created_at, updated_at, deleted_at`;
 
@@ -182,5 +205,102 @@ export class InventoryItemsRepository implements IInventoryItemsRepository {
       [businessId, sku, excludeId ?? null],
     );
     return result.rows.length > 0;
+  }
+
+  async queryAdvanced(
+    data: RunInventoryQueryData,
+  ): Promise<{ rows: InventoryQueryResultRow[]; total: number }> {
+    const conditions: string[] = ['ii.business_id = $1', 'ii.deleted_at IS NULL'];
+    const params: unknown[] = [data.businessId];
+
+    for (const condition of data.conditions) {
+      conditions.push(this.buildConditionClause(condition, params));
+    }
+
+    const whereClause = conditions.join(' AND ');
+    // params.length is captured now — condition-building above may have pushed several
+    // params, so the stock subquery's own $1 (business_id) is safe to reuse, but the
+    // branch filter (if any) needs its own placeholder appended after all conditions.
+    let stockBranchFilter = '';
+    if (data.branchId) {
+      params.push(data.branchId);
+      stockBranchFilter = ` AND branch_id = $${params.length}`;
+    }
+
+    const fromClause = `
+      FROM inventory_items ii
+      LEFT JOIN inventory_item_categories cat ON cat.id = ii.category_id
+      LEFT JOIN (
+        SELECT inventory_item_id, SUM(
+          CASE WHEN movement_type IN ('PURCHASE', 'ADJUSTMENT_IN', 'TRANSFER_IN', 'RETURN', 'INITIAL_STOCK')
+            THEN quantity ELSE -quantity END
+        ) AS stock
+        FROM inventory_movements
+        WHERE business_id = $1${stockBranchFilter}
+        GROUP BY inventory_item_id
+      ) stock ON stock.inventory_item_id = ii.id
+      WHERE ${whereClause}
+    `;
+
+    const countResult = await this.db.query<{ count: string }>(
+      `SELECT COUNT(*)::text AS count ${fromClause}`,
+      params,
+    );
+    const total = parseInt(countResult.rows[0]?.count ?? '0', 10);
+
+    const dataParams = [...params, data.limit, getOffset(data.page, data.limit)];
+    const rowsResult = await this.db.query<InventoryQueryResultRow>(
+      `SELECT ii.id, ii.category_id, cat.name AS category_name, ii.name, ii.sku, ii.unit,
+              ii.minimum_stock, ii.current_cost, COALESCE(stock.stock, 0)::text AS current_stock,
+              ii.serial_number, ii.brand, ii.model, ii.is_active, ii.created_at
+       ${fromClause}
+       ORDER BY ii.name
+       LIMIT $${dataParams.length - 1} OFFSET $${dataParams.length}`,
+      dataParams,
+    );
+
+    return { rows: rowsResult.rows, total };
+  }
+
+  /** Maps one already-validated condition to a SQL fragment, pushing its value(s) as params. */
+  private buildConditionClause(condition: InventoryQueryCondition, params: unknown[]): string {
+    const column = FIELD_COLUMN[condition.field];
+
+    switch (condition.operator) {
+      case InventoryQueryOperator.EQUALS:
+        params.push(condition.value);
+        return `${column} = $${params.length}`;
+      case InventoryQueryOperator.NOT_EQUALS:
+        params.push(condition.value);
+        return `${column} != $${params.length}`;
+      case InventoryQueryOperator.CONTAINS:
+        params.push(`%${condition.value}%`);
+        return `${column} ILIKE $${params.length}`;
+      case InventoryQueryOperator.STARTS_WITH:
+        params.push(`${condition.value}%`);
+        return `${column} ILIKE $${params.length}`;
+      case InventoryQueryOperator.IS_EMPTY:
+        return `(${column} IS NULL OR ${column}::text = '')`;
+      case InventoryQueryOperator.IS_NOT_EMPTY:
+        return `(${column} IS NOT NULL AND ${column}::text != '')`;
+      case InventoryQueryOperator.GREATER_THAN:
+        params.push(condition.value);
+        return `${column} > $${params.length}`;
+      case InventoryQueryOperator.GREATER_OR_EQUAL:
+        params.push(condition.value);
+        return `${column} >= $${params.length}`;
+      case InventoryQueryOperator.LESS_THAN:
+        params.push(condition.value);
+        return `${column} < $${params.length}`;
+      case InventoryQueryOperator.LESS_OR_EQUAL:
+        params.push(condition.value);
+        return `${column} <= $${params.length}`;
+      case InventoryQueryOperator.BETWEEN:
+        params.push(condition.value, condition.value2);
+        return `${column} BETWEEN $${params.length - 1} AND $${params.length}`;
+      case InventoryQueryOperator.IN:
+        params.push(condition.values);
+        return `${column} = ANY($${params.length}::uuid[])`;
+    }
   }
 }

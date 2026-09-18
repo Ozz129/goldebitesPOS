@@ -54,7 +54,11 @@ export const FEATURE_MODULES: FeatureModuleDefinition[] = [
   { key: 'suppliers', label: 'Proveedores' },
   { key: 'customers', label: 'Clientes' },
   { key: 'loyalty', label: 'Fidelización' },
-  { key: 'finances', label: 'Finanzas' },
+  {
+    key: 'finances',
+    label: 'Finanzas',
+    subFeatures: [{ key: 'finances.reimbursements', label: 'Obligaciones de reembolso' }],
+  },
   { key: 'employees', label: 'Personal' },
   { key: 'checklists', label: 'Checklists' },
   { key: 'waste', label: 'Mermas' },

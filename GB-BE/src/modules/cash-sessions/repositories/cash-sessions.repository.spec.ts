@@ -127,6 +127,22 @@ describe('CashSessionsRepository (integration)', () => {
     expect(expected).toBe(58000);
   });
 
+  it('getExpectedClosingAmount() also subtracts REIMBURSEMENT movements, same as EXPENSE/WITHDRAWAL', async () => {
+    const session = await repository.create(
+      { businessId, branchId, openingAmount: 50000 },
+      userId,
+    );
+
+    await repository.addMovement({
+      cashSessionId: session.id,
+      movementType: CashMovementType.REIMBURSEMENT,
+      amount: 15000,
+    });
+
+    const expected = await repository.getExpectedClosingAmount(session.id);
+    expect(expected).toBe(35000);
+  });
+
   it('close() only succeeds while the session is OPEN', async () => {
     const session = await repository.create(
       { businessId, branchId, openingAmount: 1000 },

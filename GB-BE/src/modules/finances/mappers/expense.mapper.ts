@@ -17,6 +17,9 @@ export class ExpenseMapper {
       responsible: row.responsible,
       amount: parseFloat(row.amount),
       expenseDate: row.expense_date,
+      paymentSource: row.payment_source,
+      payerEmployeeId: row.payer_employee_id,
+      payerName: row.payer_name,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     };

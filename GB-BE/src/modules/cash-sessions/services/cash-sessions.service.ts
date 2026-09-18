@@ -143,10 +143,12 @@ export class CashSessionsService {
   async getOpenSessionOrFail(
     businessId: string,
     branchId: string,
+    client?: DbClient,
   ): Promise<CashSession> {
     const row = await this.sessionsRepository.findOpenForBranch(
       businessId,
       branchId,
+      client,
     );
     if (!row) {
       throw new CashSessionClosedException();
@@ -206,6 +208,23 @@ export class CashSessionsService {
     client?: DbClient,
   ): Promise<void> {
     await this.sessionsRepository.addMovement(data, client);
+  }
+
+  /**
+   * Low-level movement insert for another module composing its own transaction
+   * (e.g. a reimbursement payout, alongside its own ledger row and audit entry).
+   * Unlike the standalone recordMovement(), this does not check session status
+   * or write its own audit entry — the caller already validated the session
+   * (e.g. via getOpenSessionOrFail in the same transaction) and owns the audit
+   * trail for the operation as a whole, same as OPENING/CLOSING movements
+   * created inside open()/close() don't get their own separate audit entry.
+   */
+  async recordMovementInTransaction(
+    data: RecordCashMovementData,
+    client: DbClient,
+  ): Promise<CashMovement> {
+    const row = await this.sessionsRepository.addMovement(data, client);
+    return CashSessionMapper.movementToDomain(row);
   }
 
   /**

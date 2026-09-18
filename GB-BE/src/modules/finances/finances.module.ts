@@ -1,16 +1,27 @@
 import { Module } from '@nestjs/common';
 import { AuditModule } from '../audit/audit.module';
+import { CashSessionsModule } from '../cash-sessions/cash-sessions.module';
+import { EmployeesModule } from '../employees/employees.module';
 import { ExpensesController } from './controllers/expenses.controller';
+import { ReimbursementsController } from './controllers/reimbursements.controller';
 import { ExpensesRepository } from './repositories/expenses.repository';
 import { EXPENSES_REPOSITORY } from './repositories/expenses.repository.interface';
+import { ReimbursementObligationsRepository } from './repositories/reimbursement-obligations.repository';
+import { REIMBURSEMENT_OBLIGATIONS_REPOSITORY } from './repositories/reimbursement-obligations.repository.interface';
+import { ReimbursementPaymentsRepository } from './repositories/reimbursement-payments.repository';
+import { REIMBURSEMENT_PAYMENTS_REPOSITORY } from './repositories/reimbursement-payments.repository.interface';
 import { ExpensesService } from './services/expenses.service';
+import { ReimbursementsService } from './services/reimbursements.service';
 
 @Module({
-  imports: [AuditModule],
-  controllers: [ExpensesController],
+  imports: [AuditModule, CashSessionsModule, EmployeesModule],
+  controllers: [ExpensesController, ReimbursementsController],
   providers: [
     ExpensesService,
+    ReimbursementsService,
     { provide: EXPENSES_REPOSITORY, useClass: ExpensesRepository },
+    { provide: REIMBURSEMENT_OBLIGATIONS_REPOSITORY, useClass: ReimbursementObligationsRepository },
+    { provide: REIMBURSEMENT_PAYMENTS_REPOSITORY, useClass: ReimbursementPaymentsRepository },
   ],
 })
 export class FinancesModule {}

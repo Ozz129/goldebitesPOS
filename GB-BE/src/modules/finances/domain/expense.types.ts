@@ -6,6 +6,12 @@ export enum ExpenseCategory {
   OTHER = 'OTHER',
 }
 
+/** Whether an expense drew from Golden Bites' own funds, or from someone's personal money (creates a reimbursement obligation instead). */
+export enum ExpensePaymentSource {
+  BUSINESS_FUNDS = 'BUSINESS_FUNDS',
+  PERSONAL_MONEY = 'PERSONAL_MONEY',
+}
+
 export interface CreateExpenseData {
   businessId: string;
   branchId?: string;
@@ -15,6 +21,9 @@ export interface CreateExpenseData {
   responsible: string;
   amount: number;
   expenseDate: string;
+  paymentSource: ExpensePaymentSource;
+  payerEmployeeId?: string;
+  payerName?: string;
 }
 
 export interface UpdateExpenseData {

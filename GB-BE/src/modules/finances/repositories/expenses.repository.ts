@@ -14,7 +14,7 @@ import {
 } from '../domain/expense.types';
 import { IExpensesRepository } from './expenses.repository.interface';
 
-const SELECT_COLUMNS = `id, business_id, branch_id, category, name, description, responsible, amount, expense_date, created_at, updated_at, deleted_at`;
+const SELECT_COLUMNS = `id, business_id, branch_id, category, name, description, responsible, amount, expense_date, payment_source, payer_employee_id, payer_name, created_at, updated_at, deleted_at`;
 
 interface CountRow {
   count: string;
@@ -29,8 +29,8 @@ export class ExpensesRepository implements IExpensesRepository {
     client?: DbClient,
   ): Promise<ExpenseRow> {
     const result = await this.db.query<ExpenseRow>(
-      `INSERT INTO expenses (business_id, branch_id, category, name, description, responsible, amount, expense_date)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      `INSERT INTO expenses (business_id, branch_id, category, name, description, responsible, amount, expense_date, payment_source, payer_employee_id, payer_name)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
        RETURNING ${SELECT_COLUMNS}`,
       [
         data.businessId,
@@ -41,6 +41,9 @@ export class ExpensesRepository implements IExpensesRepository {
         data.responsible,
         data.amount,
         data.expenseDate,
+        data.paymentSource,
+        data.payerEmployeeId ?? null,
+        data.payerName ?? null,
       ],
       client,
     );

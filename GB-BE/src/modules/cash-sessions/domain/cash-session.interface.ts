@@ -12,6 +12,7 @@ export enum CashMovementType {
   EXPENSE = 'EXPENSE',
   WITHDRAWAL = 'WITHDRAWAL',
   CLOSING = 'CLOSING',
+  REIMBURSEMENT = 'REIMBURSEMENT',
 }
 
 export enum PaymentMethod {

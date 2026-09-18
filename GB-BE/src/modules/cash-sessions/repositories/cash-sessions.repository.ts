@@ -180,7 +180,7 @@ export class CashSessionsRepository implements ICashSessionsRepository {
          CASE
            WHEN cm.movement_type = 'SALE' AND cm.payment_method = 'CASH' THEN cm.amount
            WHEN cm.movement_type = 'INCOME' THEN cm.amount
-           WHEN cm.movement_type IN ('EXPENSE', 'WITHDRAWAL') THEN -cm.amount
+           WHEN cm.movement_type IN ('EXPENSE', 'WITHDRAWAL', 'REIMBURSEMENT') THEN -cm.amount
            ELSE 0
          END
        ), 0))::text AS expected

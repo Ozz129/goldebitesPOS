@@ -10,7 +10,7 @@ import {
   MaxLength,
   MinLength,
 } from 'class-validator';
-import { ExpenseCategory } from '../domain/expense.types';
+import { ExpenseCategory, ExpensePaymentSource } from '../domain/expense.types';
 
 export class CreateExpenseDto {
   @ApiProperty({ enum: ExpenseCategory })
@@ -48,4 +48,24 @@ export class CreateExpenseDto {
   @IsOptional()
   @IsUUID()
   branchId?: string;
+
+  @ApiPropertyOptional({
+    enum: ExpensePaymentSource,
+    default: ExpensePaymentSource.BUSINESS_FUNDS,
+    description: 'BUSINESS_FUNDS (default) draws from Golden Bites funds; PERSONAL_MONEY creates a reimbursement obligation instead.',
+  })
+  @IsOptional()
+  @IsEnum(ExpensePaymentSource)
+  paymentSource: ExpensePaymentSource = ExpensePaymentSource.BUSINESS_FUNDS;
+
+  @ApiPropertyOptional({ description: 'An existing employee who paid personally — required (or payerName) when paymentSource is PERSONAL_MONEY.' })
+  @IsOptional()
+  @IsUUID()
+  payerEmployeeId?: string;
+
+  @ApiPropertyOptional({ maxLength: 150, description: 'Free-text name of who paid personally, for a payer not registered as an employee (e.g. a partner).' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(150)
+  payerName?: string;
 }

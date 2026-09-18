@@ -13,6 +13,7 @@ describe('CustomersService', () => {
     createAddress: jest.Mock;
     findAddresses: jest.Mock;
     deleteAddress: jest.Mock;
+    adjustLoyaltyPoints: jest.Mock;
   };
   let transactionService: { execute: jest.Mock };
   let auditService: { record: jest.Mock };
@@ -52,6 +53,7 @@ describe('CustomersService', () => {
       createAddress: jest.fn(),
       findAddresses: jest.fn().mockResolvedValue([]),
       deleteAddress: jest.fn(),
+      adjustLoyaltyPoints: jest.fn(),
     };
     transactionService = {
       execute: jest.fn((work: (client: unknown) => Promise<unknown>) =>

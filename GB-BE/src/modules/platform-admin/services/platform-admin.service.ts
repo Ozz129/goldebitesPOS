@@ -9,6 +9,10 @@ import {
   BusinessFeaturesService,
   FeatureStatus,
 } from '../../business-features/services/business-features.service';
+import {
+  PlatformFeatureFlagsService,
+  PlatformFeatureFlagStatus,
+} from '../../platform-feature-flags/services/platform-feature-flags.service';
 import { RolesService } from '../../roles/services/roles.service';
 import { UsersService } from '../../users/services/users.service';
 import { CreatePlatformBusinessDto } from '../dto/create-platform-business.dto';
@@ -32,6 +36,7 @@ export class PlatformAdminService {
     private readonly rolesService: RolesService,
     private readonly usersService: UsersService,
     private readonly businessFeaturesService: BusinessFeaturesService,
+    private readonly platformFeatureFlagsService: PlatformFeatureFlagsService,
     private readonly auditService: AuditService,
   ) {}
 
@@ -132,6 +137,7 @@ export class PlatformAdminService {
     businessId: string,
     featureKey: string,
     enabled: boolean,
+    actorUserId: string,
   ): Promise<void> {
     await this.businessesService.findById(businessId);
     await this.businessFeaturesService.setFeature(
@@ -139,5 +145,39 @@ export class PlatformAdminService {
       featureKey,
       enabled,
     );
+
+    // entity_id is a UUID column — feature keys ("inventory.specializedQueries")
+    // aren't UUIDs, so the key travels in newValues instead, not entityId.
+    await this.auditService.record({
+      businessId,
+      userId: actorUserId,
+      entityType: 'business_feature',
+      action: enabled ? 'PLATFORM_ENABLE_FEATURE' : 'PLATFORM_DISABLE_FEATURE',
+      newValues: { featureKey, enabled },
+    });
+  }
+
+  /** Platform-wide catalog — applies to every business at once, independent of business_features. */
+  async getFeatureFlags(): Promise<PlatformFeatureFlagStatus[]> {
+    return this.platformFeatureFlagsService.getCatalog();
+  }
+
+  async setFeatureFlag(
+    featureKey: string,
+    enabled: boolean,
+    actorUserId: string,
+    actorBusinessId: string,
+  ): Promise<void> {
+    await this.platformFeatureFlagsService.setFlag(featureKey, enabled);
+
+    // Attributed to the actor's own business (the platform's) — there's no
+    // natural "target" business for a genuinely global toggle.
+    await this.auditService.record({
+      businessId: actorBusinessId,
+      userId: actorUserId,
+      entityType: 'platform_feature_flag',
+      action: enabled ? 'PLATFORM_ENABLE_GLOBAL_FEATURE' : 'PLATFORM_DISABLE_GLOBAL_FEATURE',
+      newValues: { featureKey, enabled },
+    });
   }
 }

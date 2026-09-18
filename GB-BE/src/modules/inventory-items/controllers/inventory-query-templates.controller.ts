@@ -11,7 +11,7 @@ import { InventoryQueriesService } from '../services/inventory-queries.service';
 
 @ApiTags('Inventory Queries')
 @ApiBearerAuth()
-@RequiresFeature('inventory')
+@RequiresFeature('inventory.specializedQueries')
 @Controller('inventory-query-templates')
 export class InventoryQueryTemplatesController {
   constructor(private readonly inventoryQueriesService: InventoryQueriesService) {}

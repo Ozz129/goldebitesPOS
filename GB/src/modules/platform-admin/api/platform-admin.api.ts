@@ -5,6 +5,7 @@ import type {
   BusinessUserSummary,
   CreatePlatformBusinessPayload,
   FeatureStatus,
+  PlatformFeatureFlagStatus,
 } from '../types/platform-admin.types';
 
 export const platformAdminApi = {
@@ -41,5 +42,14 @@ export const platformAdminApi = {
       `/platform-admin/businesses/${businessId}/users/${userId}/reset-password`,
     );
     return data.data;
+  },
+
+  async getFeatureFlags(): Promise<PlatformFeatureFlagStatus[]> {
+    const { data } = await apiClient.get<ApiResponse<PlatformFeatureFlagStatus[]>>('/platform-admin/feature-flags');
+    return data.data;
+  },
+
+  async setFeatureFlag(featureKey: string, enabled: boolean): Promise<void> {
+    await apiClient.put(`/platform-admin/feature-flags/${featureKey}`, { enabled });
   },
 };

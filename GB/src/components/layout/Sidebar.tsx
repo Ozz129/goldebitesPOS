@@ -5,7 +5,7 @@ import Typography from '@mui/material/Typography';
 import List from '@mui/material/List';
 import Tooltip from '@mui/material/Tooltip';
 import IconButton from '@mui/material/IconButton';
-import { ChevronsLeft, ChevronsRight, Crown, Building2 } from 'lucide-react';
+import { ChevronsLeft, ChevronsRight, Crown, Building2, Flag } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { alpha } from '@mui/material/styles';
 import { MODULE_PERMISSIONS, NAV_ENTRIES } from '../../routes/navConfig';
@@ -88,6 +88,12 @@ function SidebarContent({ collapsed, onNavigate }: { collapsed: boolean; onNavig
                 item={{ kind: 'item', label: 'Administración de plataforma', path: '/plataforma', icon: Building2 }}
                 collapsed={collapsed}
                 active={location.pathname === '/plataforma'}
+                onNavigate={onNavigate}
+              />
+              <SidebarItem
+                item={{ kind: 'item', label: 'Feature Flags', path: '/plataforma/feature-flags', icon: Flag }}
+                collapsed={collapsed}
+                active={location.pathname === '/plataforma/feature-flags'}
                 onNavigate={onNavigate}
               />
             </Box>

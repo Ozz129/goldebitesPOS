@@ -16,6 +16,16 @@ export interface FeatureStatus {
   key: string;
   label: string;
   enabled: boolean;
+  subFeatures?: FeatureStatus[];
+}
+
+/** Platform-wide flag — applies to every business at once, independent of FeatureStatus (per-business). */
+export interface PlatformFeatureFlagStatus {
+  key: string;
+  label: string;
+  enabled: boolean;
+  moduleKey: string;
+  moduleLabel: string;
 }
 
 export interface BusinessUserSummary {

@@ -62,16 +62,35 @@ export default function BusinessFeaturesDrawer({ business, onClose }: BusinessFe
               sesión (o al refrescar el token).
             </Typography>
             {features.map((feature) => (
-              <FormControlLabel
-                key={feature.key}
-                control={
-                  <Checkbox
-                    checked={feature.enabled}
-                    onChange={(e) => setFeature.mutate({ featureKey: feature.key, enabled: e.target.checked })}
+              <div key={feature.key}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={feature.enabled}
+                      onChange={(e) => setFeature.mutate({ featureKey: feature.key, enabled: e.target.checked })}
+                    />
+                  }
+                  label={feature.label}
+                />
+                {feature.subFeatures?.map((sub) => (
+                  <FormControlLabel
+                    key={sub.key}
+                    sx={{ ml: 3, display: 'flex' }}
+                    control={
+                      <Checkbox
+                        checked={sub.enabled}
+                        disabled={!feature.enabled}
+                        onChange={(e) => setFeature.mutate({ featureKey: sub.key, enabled: e.target.checked })}
+                      />
+                    }
+                    label={
+                      <Typography variant="body2" color={feature.enabled ? 'text.primary' : 'text.disabled'}>
+                        {sub.label}
+                      </Typography>
+                    }
                   />
-                }
-                label={feature.label}
-              />
+                ))}
+              </div>
             ))}
 
             <Divider sx={{ my: 2 }} />

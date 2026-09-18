@@ -19,6 +19,7 @@ import DataTable from '../../../components/common/DataTable';
 import StatusChip from '../../../components/common/StatusChip';
 import ErrorState from '../../../components/common/ErrorState';
 import { Can } from '../../../modules/auth/components/can';
+import { usePermissions } from '../../../modules/auth/hooks/use-permissions';
 import { useAuthStore } from '../../../modules/auth/store/auth.store';
 import { useInventoryItems } from '../../../modules/inventory/hooks/use-inventory-items';
 import { useStock } from '../../../modules/inventory/hooks/use-stock';
@@ -43,6 +44,8 @@ type TabKey = 'inventario' | 'consultas';
 export default function InventoryPage() {
   const { enqueueSnackbar } = useSnackbar();
   const branchId = useAuthStore((s) => s.user?.branchId ?? undefined);
+  const { hasFeature } = usePermissions();
+  const specializedQueriesEnabled = hasFeature('inventory.specializedQueries');
 
   const [tab, setTab] = useState<TabKey>('inventario');
   const [search, setSearch] = useState('');
@@ -272,10 +275,10 @@ export default function InventoryPage() {
 
       <Tabs value={tab} onChange={(_, value: TabKey) => setTab(value)} sx={{ mb: 2 }}>
         <Tab value="inventario" label="Inventario" />
-        <Tab value="consultas" label="Consultas especializadas" />
+        {specializedQueriesEnabled && <Tab value="consultas" label="Consultas especializadas" />}
       </Tabs>
 
-      {tab === 'consultas' && <SpecializedQueriesTab />}
+      {tab === 'consultas' && specializedQueriesEnabled && <SpecializedQueriesTab />}
 
       {tab === 'inventario' && (
         <>

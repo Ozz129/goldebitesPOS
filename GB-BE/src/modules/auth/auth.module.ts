@@ -5,6 +5,7 @@ import { PassportModule } from '@nestjs/passport';
 import { AppConfig } from '../../config/app.config';
 import { AuditModule } from '../audit/audit.module';
 import { BusinessFeaturesModule } from '../business-features/business-features.module';
+import { PlatformFeatureFlagsModule } from '../platform-feature-flags/platform-feature-flags.module';
 import { RolesModule } from '../roles/roles.module';
 import { UsersModule } from '../users/users.module';
 import { AuthController } from './controllers/auth.controller';
@@ -23,6 +24,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     UsersModule,
     RolesModule,
     BusinessFeaturesModule,
+    PlatformFeatureFlagsModule,
     AuditModule,
     JwtModule.registerAsync({
       inject: [ConfigService],

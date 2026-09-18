@@ -19,6 +19,7 @@ import EmptyState from '../../../components/common/EmptyState';
 import ErrorState from '../../../components/common/ErrorState';
 import LoadingSkeleton from '../../../components/common/LoadingSkeleton';
 import { Can } from '../../../modules/auth/components/can';
+import { HasFeature } from '../../../modules/auth/components/has-feature';
 import { useAuthStore } from '../../../modules/auth/store/auth.store';
 import { useCurrentCashSession } from '../../../modules/cash-sessions/hooks/use-current-cash-session';
 import { useCashSessions } from '../../../modules/cash-sessions/hooks/use-cash-sessions';
@@ -197,16 +198,18 @@ export default function CashRegisterPage() {
       id: 'rectify',
       header: '',
       cell: ({ row }) => (
-        <Can permission="cash.reopen">
-          <Button
-            size="small"
-            color="warning"
-            startIcon={<RotateCcw size={14} />}
-            onClick={() => setReopenTargetId(row.original.id)}
-          >
-            Rectificar
-          </Button>
-        </Can>
+        <HasFeature feature="cash-register.rectification">
+          <Can permission="cash.reopen">
+            <Button
+              size="small"
+              color="warning"
+              startIcon={<RotateCcw size={14} />}
+              onClick={() => setReopenTargetId(row.original.id)}
+            >
+              Rectificar
+            </Button>
+          </Can>
+        </HasFeature>
       ),
     },
   ];

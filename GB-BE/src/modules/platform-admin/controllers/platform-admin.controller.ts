@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Param, Post, Put } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { CurrentBusiness } from '../../../common/decorators/current-business.decorator';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { RequirePlatformAdmin } from '../../../common/decorators/require-platform-admin.decorator';
 import { CreatePlatformBusinessDto } from '../dto/create-platform-business.dto';
@@ -66,8 +67,9 @@ export class PlatformAdminController {
   }
 
   @Put('businesses/:id/features/:key')
-  @ApiOperation({ summary: 'Enable or disable a module for a business' })
+  @ApiOperation({ summary: 'Enable or disable a module or sub-feature for a business' })
   setFeature(
+    @CurrentUser('userId') actorUserId: string,
     @Param('id') businessId: string,
     @Param('key') featureKey: string,
     @Body() dto: SetFeatureDto,
@@ -76,6 +78,29 @@ export class PlatformAdminController {
       businessId,
       featureKey,
       dto.enabled,
+      actorUserId,
+    );
+  }
+
+  @Get('feature-flags')
+  @ApiOperation({ summary: 'Get the platform-wide feature flag catalog — applies to every business at once' })
+  getFeatureFlags() {
+    return this.platformAdminService.getFeatureFlags();
+  }
+
+  @Put('feature-flags/:key')
+  @ApiOperation({ summary: 'Enable or disable a feature platform-wide, for every business' })
+  setFeatureFlag(
+    @CurrentUser('userId') actorUserId: string,
+    @CurrentBusiness() businessId: string,
+    @Param('key') featureKey: string,
+    @Body() dto: SetFeatureDto,
+  ) {
+    return this.platformAdminService.setFeatureFlag(
+      featureKey,
+      dto.enabled,
+      actorUserId,
+      businessId,
     );
   }
 }

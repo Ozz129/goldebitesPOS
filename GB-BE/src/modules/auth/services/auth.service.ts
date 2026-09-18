@@ -14,6 +14,7 @@ import { AppConfig } from '../../../config/app.config';
 import { TransactionService } from '../../../database/transaction.service';
 import { AuditService } from '../../audit/services/audit.service';
 import { BusinessFeaturesService } from '../../business-features/services/business-features.service';
+import { PlatformFeatureFlagsService } from '../../platform-feature-flags/services/platform-feature-flags.service';
 import { RolesService } from '../../roles/services/roles.service';
 import { UserRow } from '../../users/domain/user.interface';
 import { UserStatus } from '../../users/domain/user.types';
@@ -50,6 +51,7 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly rolesService: RolesService,
     private readonly businessFeaturesService: BusinessFeaturesService,
+    private readonly platformFeatureFlagsService: PlatformFeatureFlagsService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly transactionService: TransactionService,
@@ -282,8 +284,16 @@ export class AuthService {
       user.business_id,
       user.role_id,
     );
-    const enabledFeatures = await this.businessFeaturesService.getEnabledKeys(
-      user.business_id,
+    // enabledFeatures is the intersection of two independent axes: what the
+    // business has enabled for itself (BusinessFeaturesService) AND what the
+    // platform hasn't killed globally for everyone (PlatformFeatureFlagsService).
+    const [businessEnabledKeys, globallyEnabledKeys] = await Promise.all([
+      this.businessFeaturesService.getEnabledKeys(user.business_id),
+      this.platformFeatureFlagsService.getEnabledKeys(),
+    ]);
+    const globallyEnabledSet = new Set(globallyEnabledKeys);
+    const enabledFeatures = businessEnabledKeys.filter((key) =>
+      globallyEnabledSet.has(key),
     );
 
     const payload: JwtPayload = {

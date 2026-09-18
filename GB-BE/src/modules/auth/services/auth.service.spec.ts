@@ -15,6 +15,7 @@ describe('AuthService', () => {
   };
   let rolesService: { findOne: jest.Mock };
   let businessFeaturesService: { getEnabledKeys: jest.Mock };
+  let platformFeatureFlagsService: { getEnabledKeys: jest.Mock };
   let jwtService: { sign: jest.Mock };
   let configService: { getOrThrow: jest.Mock };
   let transactionService: { execute: jest.Mock };
@@ -81,6 +82,9 @@ describe('AuthService', () => {
     businessFeaturesService = {
       getEnabledKeys: jest.fn().mockResolvedValue([]),
     };
+    platformFeatureFlagsService = {
+      getEnabledKeys: jest.fn().mockResolvedValue([]),
+    };
     jwtService = { sign: jest.fn().mockReturnValue('signed.jwt.token') };
     configService = { getOrThrow: jest.fn().mockReturnValue(appConfig) };
     transactionService = {
@@ -106,6 +110,7 @@ describe('AuthService', () => {
       usersService as never,
       rolesService as never,
       businessFeaturesService as never,
+      platformFeatureFlagsService as never,
       jwtService as never,
       configService as never,
       transactionService as never,
@@ -135,6 +140,27 @@ describe('AuthService', () => {
       expect(loginAttemptRepository.record).toHaveBeenCalledWith(
         expect.objectContaining({ success: true }),
       );
+    });
+
+    it('enabledFeatures is the intersection of the business catalog and the platform-wide flags — a key the business enabled but the platform killed globally is excluded', async () => {
+      usersService.findRawByEmailAcrossBusinesses.mockResolvedValue([
+        makeUserRow(),
+      ]);
+      usersService.verifyPassword.mockResolvedValue(true);
+      businessFeaturesService.getEnabledKeys.mockResolvedValue([
+        'inventory',
+        'inventory.specializedQueries',
+      ]);
+      platformFeatureFlagsService.getEnabledKeys.mockResolvedValue(['inventory']);
+
+      await service.login(
+        { email: 'ada@goldenbites.local', password: 'correct-password' },
+        {},
+      );
+
+      const [payload] = jwtService.sign.mock.calls[0];
+      expect(payload.enabledFeatures).toEqual(['inventory']);
+      expect(payload.enabledFeatures).not.toContain('inventory.specializedQueries');
     });
 
     it('rejects when no user matches the email', async () => {

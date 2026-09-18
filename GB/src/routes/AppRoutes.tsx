@@ -35,6 +35,7 @@ const AnalyticsPage = lazy(() => import('../features/analytics/pages/AnalyticsPa
 const SettingsPage = lazy(() => import('../features/settings/pages/SettingsPage'));
 const RolesPage = lazy(() => import('../features/roles/pages/RolesPage'));
 const PlatformAdminPage = lazy(() => import('../features/platform-admin/pages/PlatformAdminPage'));
+const FeatureFlagsPage = lazy(() => import('../features/platform-admin/pages/FeatureFlagsPage'));
 const WaiterKioskPage = lazy(() => import('../features/kiosk-waiter/pages/WaiterKioskPage'));
 const KitchenKioskPage = lazy(() => import('../features/kiosk-kitchen/pages/KitchenKioskPage'));
 const CarServiceKioskPage = lazy(() => import('../features/kiosk-car-service/pages/CarServiceKioskPage'));
@@ -282,6 +283,14 @@ export default function AppRoutes() {
               element={
                 <Loadable>
                   <PlatformAdminPage />
+                </Loadable>
+              }
+            />
+            <Route
+              path="/plataforma/feature-flags"
+              element={
+                <Loadable>
+                  <FeatureFlagsPage />
                 </Loadable>
               }
             />

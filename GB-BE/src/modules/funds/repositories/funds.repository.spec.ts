@@ -110,6 +110,38 @@ describe('FundsRepository (integration)', () => {
     ).rejects.toThrow();
   });
 
+  it('AC-11: rolls back every write in the transaction when a later step fails', async () => {
+    const sourceId = randomUUID();
+
+    await expect(
+      transactionService.execute(async (client) => {
+        const fund = await repository.getOrCreateFundForUpdate(businessId, null, FundType.NEXT_OPENING_FUND, client);
+        await repository.insertMovement(
+          {
+            fundId: fund.id,
+            direction: FundMovementDirection.CREDIT,
+            amount: 50,
+            balanceBefore: 0,
+            balanceAfter: 50,
+            sourceType: 'TEST_ROLLBACK',
+            sourceId,
+          },
+          client,
+        );
+        // A real write already happened in this transaction above — now force
+        // a failure so we can prove the whole transaction, not just the last
+        // statement, gets rolled back.
+        throw new Error('forced failure after insert');
+      }),
+    ).rejects.toThrow('forced failure after insert');
+
+    const movement = await pool.query(
+      `SELECT 1 FROM fund_movements WHERE source_type = 'TEST_ROLLBACK' AND source_id = $1`,
+      [sourceId],
+    );
+    expect(movement.rows).toHaveLength(0);
+  });
+
   it('markInitialized() sets initialized_at/by/notes, and findFund() reflects it', async () => {
     const fund = await transactionService.execute((client) =>
       repository.getOrCreateFundForUpdate(businessId, null, FundType.BANK_ACCOUNT, client),

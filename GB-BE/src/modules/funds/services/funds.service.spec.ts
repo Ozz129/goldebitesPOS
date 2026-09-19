@@ -1,4 +1,4 @@
-import { BusinessRuleException, EntityNotFoundException } from '../../../common/exceptions';
+import { BusinessRuleException, ConflictException, EntityNotFoundException } from '../../../common/exceptions';
 import { FundMovementRow, FundRow } from '../domain/fund.interface';
 import { FundMovementDirection, FundType } from '../domain/fund.types';
 import { FundsService } from './funds.service';
@@ -13,6 +13,7 @@ describe('FundsService', () => {
     insertMovement: jest.Mock;
   };
   let branchesService: { findAll: jest.Mock; findOne: jest.Mock };
+  let cashSessionsService: { hasOpenSession: jest.Mock };
   let transactionService: { execute: jest.Mock };
   let auditService: { record: jest.Mock };
   let service: FundsService;
@@ -66,6 +67,9 @@ describe('FundsService', () => {
       findAll: jest.fn().mockResolvedValue({ data: [{ id: branchId }], meta: { total: 1 } }),
       findOne: jest.fn().mockResolvedValue({ id: branchId }),
     };
+    cashSessionsService = {
+      hasOpenSession: jest.fn().mockResolvedValue(false),
+    };
     transactionService = {
       execute: jest.fn((work: (client: unknown) => Promise<unknown>) => work({})),
     };
@@ -73,6 +77,7 @@ describe('FundsService', () => {
     service = new FundsService(
       fundsRepository as never,
       branchesService as never,
+      cashSessionsService as never,
       transactionService as never,
       auditService as never,
     );
@@ -152,6 +157,26 @@ describe('FundsService', () => {
       await expect(
         service.initializeReserve({ businessId, branchId, amount: 0, notes: 'x', actorUserId }),
       ).rejects.toThrow(BusinessRuleException);
+    });
+
+    it('AC-01: rejects initialization while the branch has an open cash session', async () => {
+      cashSessionsService.hasOpenSession.mockResolvedValue(true);
+
+      await expect(
+        service.initializeReserve({ businessId, branchId, amount: 100000, notes: 'x', actorUserId }),
+      ).rejects.toThrow(BusinessRuleException);
+      expect(cashSessionsService.hasOpenSession).toHaveBeenCalledWith(businessId, branchId);
+      expect(fundsRepository.getOrCreateFundForUpdate).not.toHaveBeenCalled();
+    });
+
+    it('AC-01: does not consult CashSessionsService when the business has no active branches', async () => {
+      branchesService.findAll.mockResolvedValue({ data: [], meta: { total: 0 } });
+      fundsRepository.getOrCreateFundForUpdate.mockResolvedValue(makeFundRow({ branch_id: null }));
+      fundsRepository.insertMovement.mockResolvedValue(makeMovementRow());
+
+      await service.initializeReserve({ businessId, amount: 50000, notes: 'x', actorUserId });
+
+      expect(cashSessionsService.hasOpenSession).not.toHaveBeenCalled();
     });
   });
 
@@ -253,11 +278,15 @@ describe('FundsService', () => {
       expect(fundsRepository.insertMovement).not.toHaveBeenCalled();
     });
 
-    it('is idempotent: the same sourceType+sourceId never applies twice, returns the existing movement', async () => {
+    it('is idempotent: retrying the exact same operation returns the existing movement without re-inserting', async () => {
       fundsRepository.getOrCreateFundForUpdate.mockResolvedValue(
         makeFundRow({ initialized_at: new Date() }),
       );
-      const existing = makeMovementRow({ id: 'already-applied' });
+      const existing = makeMovementRow({
+        id: 'already-applied',
+        direction: FundMovementDirection.CREDIT,
+        amount: '1000.00',
+      });
       fundsRepository.findMovementBySource.mockResolvedValue(existing);
 
       const movement = await service.credit({
@@ -271,6 +300,56 @@ describe('FundsService', () => {
       });
 
       expect(movement.id).toBe('already-applied');
+      expect(fundsRepository.insertMovement).not.toHaveBeenCalled();
+    });
+
+    it('AC-09: rejects reusing the same source with a different amount instead of silently returning the old movement', async () => {
+      fundsRepository.getOrCreateFundForUpdate.mockResolvedValue(
+        makeFundRow({ initialized_at: new Date() }),
+      );
+      const existing = makeMovementRow({
+        id: 'already-applied',
+        direction: FundMovementDirection.CREDIT,
+        amount: '1000.00',
+      });
+      fundsRepository.findMovementBySource.mockResolvedValue(existing);
+
+      await expect(
+        service.credit({
+          businessId,
+          branchId,
+          fundType: FundType.CASH_RESERVE,
+          amount: 2000,
+          sourceType: 'EXPENSE',
+          sourceId: 'expense-4',
+          actorUserId,
+        }),
+      ).rejects.toThrow(ConflictException);
+      expect(fundsRepository.insertMovement).not.toHaveBeenCalled();
+    });
+
+    it('AC-09: rejects reusing the same source with a different direction', async () => {
+      fundsRepository.getOrCreateFundForUpdate.mockResolvedValue(
+        makeFundRow({ initialized_at: new Date() }),
+      );
+      const existing = makeMovementRow({
+        id: 'already-applied',
+        direction: FundMovementDirection.CREDIT,
+        amount: '1000.00',
+      });
+      fundsRepository.findMovementBySource.mockResolvedValue(existing);
+
+      await expect(
+        service.debit({
+          businessId,
+          branchId,
+          fundType: FundType.CASH_RESERVE,
+          amount: 1000,
+          sourceType: 'EXPENSE',
+          sourceId: 'expense-4',
+          actorUserId,
+        }),
+      ).rejects.toThrow(ConflictException);
       expect(fundsRepository.insertMovement).not.toHaveBeenCalled();
     });
 

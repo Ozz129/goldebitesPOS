@@ -1,9 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { BusinessRuleException, EntityNotFoundException } from '../../../common/exceptions';
+import { BusinessRuleException, ConflictException, EntityNotFoundException } from '../../../common/exceptions';
 import { DbClient } from '../../../database/types/database.types';
 import { TransactionService } from '../../../database/transaction.service';
 import { AuditService } from '../../audit/services/audit.service';
 import { BranchesService } from '../../branches/services/branches.service';
+import { CashSessionsService } from '../../cash-sessions/services/cash-sessions.service';
 import { FundBalance, FundMovement, FundRow } from '../domain/fund.interface';
 import { ApplyFundMovementData, FundMovementDirection, FundType, InitializeFundData } from '../domain/fund.types';
 import { FundMovementMapper } from '../mappers/fund.mapper';
@@ -20,12 +21,24 @@ export class FundsService {
     @Inject(FUNDS_REPOSITORY)
     private readonly fundsRepository: IFundsRepository,
     private readonly branchesService: BranchesService,
+    private readonly cashSessionsService: CashSessionsService,
     private readonly transactionService: TransactionService,
     private readonly auditService: AuditService,
   ) {}
 
   async initializeReserve(data: InitializeFundData): Promise<FundMovement> {
     const branchId = await this.resolveLocationBranchId(FundType.CASH_RESERVE, data.businessId, data.branchId);
+    if (branchId) {
+      // AC-01: the reserve's opening count must not double-count cash that's
+      // already being tracked by an open Caja operativa at the same branch.
+      const hasOpenSession = await this.cashSessionsService.hasOpenSession(data.businessId, branchId);
+      if (hasOpenSession) {
+        throw new BusinessRuleException(
+          'Cannot initialize Reserva de efectivo while this branch has an open cash session — close it first so the count is not double-counted as operational cash',
+          'OPEN_CASH_SESSION',
+        );
+      }
+    }
     return this.initializeFund(data, FundType.CASH_RESERVE, branchId, 'RESERVE_INITIALIZATION', 'INITIALIZE_RESERVE');
   }
 
@@ -135,17 +148,25 @@ export class FundsService {
         throw new EntityNotFoundException('Fund', data.fundType);
       }
 
-      if (data.sourceId) {
-        const existingMovement = await this.fundsRepository.findMovementBySource(
-          fund.id,
-          data.sourceType,
-          data.sourceId,
-          client,
-        );
-        if (existingMovement) {
-          // Idempotent: the same source already applied — return it instead of double-applying.
-          return FundMovementMapper.toDomain(existingMovement);
+      // BR-06/AC-09: sourceType+sourceId is mandatory (see ApplyFundMovementData),
+      // so this lookup always runs — the same source can never double-apply.
+      const existingMovement = await this.fundsRepository.findMovementBySource(
+        fund.id,
+        data.sourceType,
+        data.sourceId,
+        client,
+      );
+      if (existingMovement) {
+        const isSameOperation =
+          existingMovement.direction === direction && parseFloat(existingMovement.amount) === data.amount;
+        if (!isSameOperation) {
+          throw new ConflictException(
+            `Source ${data.sourceType}:${data.sourceId} was already applied to this fund with a different amount or direction`,
+            'FUND_MOVEMENT_SOURCE_CONFLICT',
+          );
         }
+        // Idempotent retry: the exact same operation already applied — return it instead of double-applying.
+        return FundMovementMapper.toDomain(existingMovement);
       }
 
       const movementRow = await this.insertMovementLocked(

@@ -57,7 +57,10 @@ export const FEATURE_MODULES: FeatureModuleDefinition[] = [
   {
     key: 'finances',
     label: 'Finanzas',
-    subFeatures: [{ key: 'finances.reimbursements', label: 'Obligaciones de reembolso' }],
+    subFeatures: [
+      { key: 'finances.reimbursements', label: 'Obligaciones de reembolso' },
+      { key: 'finances.funds', label: 'Fondos (Reserva, Banco)' },
+    ],
   },
   { key: 'employees', label: 'Personal' },
   { key: 'checklists', label: 'Checklists' },

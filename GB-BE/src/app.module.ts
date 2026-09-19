@@ -29,6 +29,7 @@ import { DocumentScansModule } from './modules/document-scans/document-scans.mod
 import { DocumentsModule } from './modules/documents/documents.module';
 import { EmployeesModule } from './modules/employees/employees.module';
 import { FinancesModule } from './modules/finances/finances.module';
+import { FundsModule } from './modules/funds/funds.module';
 import { GoodsReceiptsModule } from './modules/goods-receipts/goods-receipts.module';
 import { HealthModule } from './modules/health/health.module';
 import { InventoryCountsModule } from './modules/inventory-counts/inventory-counts.module';
@@ -114,6 +115,7 @@ import { WasteModule } from './modules/waste/waste.module';
     BusinessFeaturesModule,
     PlatformAdminModule,
     FinancesModule,
+    FundsModule,
     TabletKioskModule,
     PublicMenuModule,
   ],

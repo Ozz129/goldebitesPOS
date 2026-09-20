@@ -13,6 +13,10 @@ export interface Expense {
   paymentSource: ExpensePaymentSource;
   payerEmployeeId: string | null;
   payerName: string | null;
+  /** Pointer to this expense's current effect in the ledger — see 059_evolve_expense_payment_source.sql. */
+  cashSessionId: string | null;
+  cashMovementId: string | null;
+  fundMovementId: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -30,6 +34,9 @@ export interface ExpenseRow {
   payment_source: ExpensePaymentSource;
   payer_employee_id: string | null;
   payer_name: string | null;
+  cash_session_id: string | null;
+  cash_movement_id: string | null;
+  fund_movement_id: string | null;
   created_at: Date;
   updated_at: Date;
   deleted_at: Date | null;

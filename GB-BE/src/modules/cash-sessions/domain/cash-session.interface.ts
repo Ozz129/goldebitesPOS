@@ -13,6 +13,8 @@ export enum CashMovementType {
   WITHDRAWAL = 'WITHDRAWAL',
   CLOSING = 'CLOSING',
   REIMBURSEMENT = 'REIMBURSEMENT',
+  /** Reverses a previous EXPENSE when a source reclassification moves an expense away from Caja operativa — only ever produced by that flow, never entered manually. */
+  EXPENSE_REVERSAL = 'EXPENSE_REVERSAL',
 }
 
 export enum PaymentMethod {

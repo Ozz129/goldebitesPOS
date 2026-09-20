@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { AuditModule } from '../audit/audit.module';
 import { CashSessionsModule } from '../cash-sessions/cash-sessions.module';
 import { EmployeesModule } from '../employees/employees.module';
+import { FundsModule } from '../funds/funds.module';
 import { ExpensesController } from './controllers/expenses.controller';
 import { ReimbursementsController } from './controllers/reimbursements.controller';
 import { ExpensesRepository } from './repositories/expenses.repository';
@@ -14,7 +15,7 @@ import { ExpensesService } from './services/expenses.service';
 import { ReimbursementsService } from './services/reimbursements.service';
 
 @Module({
-  imports: [AuditModule, CashSessionsModule, EmployeesModule],
+  imports: [AuditModule, CashSessionsModule, EmployeesModule, FundsModule],
   controllers: [ExpensesController, ReimbursementsController],
   providers: [
     ExpensesService,

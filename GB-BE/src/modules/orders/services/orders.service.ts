@@ -619,6 +619,18 @@ export class OrdersService {
         businessId,
         item.productId,
       );
+      if (!product.is_active) {
+        // Re-checked at order time, not just when a menu/catalog was first
+        // loaded — a product can be deactivated in the window between a
+        // customer/kiosk fetching the menu and actually submitting the order.
+        // isVisible is deliberately NOT checked here: a hidden-but-active
+        // product (e.g. an internal invoicing surcharge) must stay orderable
+        // by staff even though it's excluded from the public menu.
+        throw new BusinessRuleException(
+          `Product "${product.name}" is not active and cannot be ordered`,
+          'ORDER_ITEM_PRODUCT_INACTIVE',
+        );
+      }
       const unitPrice = parseFloat(product.sale_price);
       const discountAmount = item.discountAmount ?? 0;
       const totalPrice = round2(unitPrice * item.quantity - discountAmount);

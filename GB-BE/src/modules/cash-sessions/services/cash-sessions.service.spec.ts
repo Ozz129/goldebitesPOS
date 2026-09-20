@@ -16,6 +16,7 @@ describe('CashSessionsService', () => {
     create: jest.Mock;
     findById: jest.Mock;
     findOpenForBranch: jest.Mock;
+    findAllOpen: jest.Mock;
     findAll: jest.Mock;
     addMovement: jest.Mock;
     updateMovementPaymentMethod: jest.Mock;
@@ -61,6 +62,7 @@ describe('CashSessionsService', () => {
       create: jest.fn(),
       findById: jest.fn(),
       findOpenForBranch: jest.fn(),
+      findAllOpen: jest.fn().mockResolvedValue([]),
       findAll: jest.fn().mockResolvedValue({ rows: [], total: 0 }),
       addMovement: jest.fn(),
       updateMovementPaymentMethod: jest.fn(),
@@ -136,6 +138,18 @@ describe('CashSessionsService', () => {
       await expect(
         service.getOpenSessionOrFail(businessId, branchId),
       ).rejects.toThrow(CashSessionClosedException);
+    });
+  });
+
+  describe('findAllOpen', () => {
+    it('delegates to the repository and maps every row', async () => {
+      repository.findAllOpen.mockResolvedValue([makeRow(), makeRow({ id: 'session-2', branch_id: 'branch-2' })]);
+
+      const sessions = await service.findAllOpen(businessId, undefined);
+
+      expect(repository.findAllOpen).toHaveBeenCalledWith(businessId, undefined, undefined);
+      expect(sessions).toHaveLength(2);
+      expect(sessions[1].id).toBe('session-2');
     });
   });
 

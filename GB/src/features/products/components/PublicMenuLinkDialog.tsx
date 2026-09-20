@@ -27,11 +27,13 @@ export default function PublicMenuLinkDialog({ open, businessId, onClose }: Publ
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle sx={{ fontWeight: 700 }}>Menú público</DialogTitle>
+      <DialogTitle sx={{ fontWeight: 700 }}>Vista previa del menú</DialogTitle>
       <DialogContent>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          Comparte este enlace con tus clientes (por ejemplo, en un código QR en las mesas). Muestra
-          los productos activos con precio y descripción, y se actualiza solo cuando cambias el catálogo.
+          Vista previa general del catálogo — muestra los productos activos y visibles con precio y
+          descripción, y se actualiza sola cuando cambias el catálogo. No identifica una sucursal ni una
+          mesa, y no inicia una visita: para enlaces que sí fijan mesa (los gallos NFC), ve a
+          Configuración → Sedes → Administrar mesas y NFC.
         </Typography>
         <TextField
           fullWidth

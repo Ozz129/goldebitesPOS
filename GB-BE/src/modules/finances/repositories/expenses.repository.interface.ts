@@ -10,6 +10,15 @@ import {
   UpdateExpenseData,
 } from '../domain/expense.types';
 
+export interface UpdateExpenseSourceData {
+  paymentSource: string;
+  payerEmployeeId?: string | null;
+  payerName?: string | null;
+  cashSessionId: string | null;
+  cashMovementId: string | null;
+  fundMovementId: string | null;
+}
+
 export interface IExpensesRepository {
   create(data: CreateExpenseData, client?: DbClient): Promise<ExpenseRow>;
   findById(
@@ -23,6 +32,12 @@ export interface IExpensesRepository {
     businessId: string,
     data: UpdateExpenseData,
   ): Promise<ExpenseRow | null>;
+  /** BR-08: the only way payment_source (and its pointer columns) ever changes — never via update(). */
+  updateSource(
+    id: string,
+    data: UpdateExpenseSourceData,
+    client: DbClient,
+  ): Promise<ExpenseRow>;
   softDelete(id: string, businessId: string): Promise<ExpenseRow | null>;
   getSummaryByCategory(
     query: ExpenseSummaryQuery,

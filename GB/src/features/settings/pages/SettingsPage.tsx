@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
@@ -10,7 +11,7 @@ import Chip from '@mui/material/Chip';
 import Switch from '@mui/material/Switch';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Box from '@mui/material/Box';
-import { ChevronDown, Check, X, Upload, Trash2 } from 'lucide-react';
+import { ChevronDown, Check, X, Upload, Trash2, Nfc } from 'lucide-react';
 import { useSnackbar } from 'notistack';
 import PageHeader from '../../../components/common/PageHeader';
 import StatusChip from '../../../components/common/StatusChip';
@@ -32,6 +33,7 @@ import { PAYMENT_METHOD_LABELS, type PaymentMethod, type Channel, CHANNEL_LABELS
 import { ORDER_STATUS_LABELS, ORDER_STATUS_SEQUENCE } from '../../../modules/orders/order-status';
 
 export default function SettingsPage() {
+  const navigate = useNavigate();
   const settings = useSettingsStore();
   const themeMode = useUiStore((s) => s.themeMode);
   const toggleThemeMode = useUiStore((s) => s.toggleThemeMode);
@@ -236,6 +238,14 @@ export default function SettingsPage() {
                 <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
                   <Can permission="branches.manage">
                     <BranchTableCountField branch={branch} />
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      startIcon={<Nfc size={16} />}
+                      onClick={() => navigate(`/configuracion/sedes/${branch.id}/mesas-nfc`)}
+                    >
+                      Administrar mesas y NFC
+                    </Button>
                   </Can>
                   <StatusChip
                     label={branch.isActive ? 'Activa' : 'Inactiva'}

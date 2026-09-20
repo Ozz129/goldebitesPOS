@@ -18,6 +18,7 @@ import { RawResponse } from '../../../common/decorators/raw-response.decorator';
 import { CreateExpenseDto } from '../dto/create-expense.dto';
 import { ExpenseQueryDto } from '../dto/expense-query.dto';
 import { ExpenseSummaryQueryDto } from '../dto/expense-summary-query.dto';
+import { ReclassifyExpenseSourceDto } from '../dto/reclassify-expense-source.dto';
 import { UpdateExpenseDto } from '../dto/update-expense.dto';
 import { ExpensesService } from '../services/expenses.service';
 import { RequiresFeature } from '../../../common/decorators/requires-feature.decorator';
@@ -52,6 +53,7 @@ export class ExpensesController {
       page: query.page,
       limit: query.limit,
       category: query.category,
+      paymentSource: query.paymentSource,
       dateFrom: query.dateFrom,
       dateTo: query.dateTo,
     });
@@ -81,6 +83,18 @@ export class ExpensesController {
     @Body() dto: UpdateExpenseDto,
   ) {
     return this.expensesService.update(businessId, id, dto, actorUserId);
+  }
+
+  @Patch(':id/reclassify-source')
+  @Permissions('finances.manage')
+  @ApiOperation({ summary: 'Correct an expense\'s payment source via an audited reclassification (BR-08)' })
+  reclassifySource(
+    @CurrentBusiness() businessId: string,
+    @CurrentUser('userId') actorUserId: string,
+    @Param('id') id: string,
+    @Body() dto: ReclassifyExpenseSourceDto,
+  ) {
+    return this.expensesService.reclassifySource(businessId, id, { ...dto, actorUserId });
   }
 
   @Delete(':id')

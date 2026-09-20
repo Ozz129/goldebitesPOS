@@ -12,9 +12,9 @@ import {
   ExpenseSummaryQuery,
   UpdateExpenseData,
 } from '../domain/expense.types';
-import { IExpensesRepository } from './expenses.repository.interface';
+import { IExpensesRepository, UpdateExpenseSourceData } from './expenses.repository.interface';
 
-const SELECT_COLUMNS = `id, business_id, branch_id, category, name, description, responsible, amount, expense_date, payment_source, payer_employee_id, payer_name, created_at, updated_at, deleted_at`;
+const SELECT_COLUMNS = `id, business_id, branch_id, category, name, description, responsible, amount, expense_date, payment_source, payer_employee_id, payer_name, cash_session_id, cash_movement_id, fund_movement_id, created_at, updated_at, deleted_at`;
 
 interface CountRow {
   count: string;
@@ -73,6 +73,11 @@ export class ExpensesRepository implements IExpensesRepository {
     if (query.category) {
       params.push(query.category);
       conditions.push(`category = $${params.length}`);
+    }
+
+    if (query.paymentSource) {
+      params.push(query.paymentSource);
+      conditions.push(`payment_source = $${params.length}`);
     }
 
     if (query.dateFrom) {
@@ -139,6 +144,35 @@ export class ExpensesRepository implements IExpensesRepository {
       ],
     );
     return result.rows[0] ?? null;
+  }
+
+  async updateSource(
+    id: string,
+    data: UpdateExpenseSourceData,
+    client: DbClient,
+  ): Promise<ExpenseRow> {
+    const result = await this.db.query<ExpenseRow>(
+      `UPDATE expenses
+       SET payment_source = $2,
+           payer_employee_id = $3,
+           payer_name = $4,
+           cash_session_id = $5,
+           cash_movement_id = $6,
+           fund_movement_id = $7
+       WHERE id = $1
+       RETURNING ${SELECT_COLUMNS}`,
+      [
+        id,
+        data.paymentSource,
+        data.payerEmployeeId ?? null,
+        data.payerName ?? null,
+        data.cashSessionId,
+        data.cashMovementId,
+        data.fundMovementId,
+      ],
+      client,
+    );
+    return result.rows[0];
   }
 
   async softDelete(id: string, businessId: string): Promise<ExpenseRow | null> {

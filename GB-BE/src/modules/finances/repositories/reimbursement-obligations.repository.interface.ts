@@ -17,6 +17,12 @@ export interface IReimbursementObligationsRepository {
     businessId: string,
     client?: DbClient,
   ): Promise<ReimbursementObligationRow | null>;
+  /** The active (non-voided) obligation for an expense, if any — at most one can exist at a time (see 061_relax_reimbursement_obligation_expense_uniqueness.sql). */
+  findActiveByExpenseId(
+    expenseId: string,
+    businessId: string,
+    client?: DbClient,
+  ): Promise<ReimbursementObligationRow | null>;
   findAll(
     query: ReimbursementObligationQuery,
   ): Promise<{ rows: ReimbursementObligationRow[]; total: number }>;
@@ -29,6 +35,7 @@ export interface IReimbursementObligationsRepository {
     id: string,
     voidedBy: string,
     reason: string,
+    client?: DbClient,
   ): Promise<ReimbursementObligationRow | null>;
   getSummary(businessId: string): Promise<ReimbursementObligationSummary>;
 }

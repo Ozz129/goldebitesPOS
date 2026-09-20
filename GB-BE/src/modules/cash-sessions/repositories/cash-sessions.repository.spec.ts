@@ -74,7 +74,7 @@ describe('CashSessionsRepository (integration)', () => {
     ]);
     await pool.query('DELETE FROM users WHERE business_id = $1', [businessId]);
     await pool.query('DELETE FROM roles WHERE business_id = $1', [businessId]);
-    await pool.query('DELETE FROM branches WHERE id = $1', [branchId]);
+    await pool.query('DELETE FROM branches WHERE business_id = $1', [businessId]);
     await pool.query('DELETE FROM businesses WHERE id = $1', [businessId]);
     await pool.end();
   });
@@ -141,6 +141,53 @@ describe('CashSessionsRepository (integration)', () => {
 
     const expected = await repository.getExpectedClosingAmount(session.id);
     expect(expected).toBe(35000);
+  });
+
+  it('getExpectedClosingAmount() adds EXPENSE_REVERSAL back, undoing a prior EXPENSE (GOL-6 reclassification)', async () => {
+    const session = await repository.create(
+      { businessId, branchId, openingAmount: 50000 },
+      userId,
+    );
+
+    await repository.addMovement({
+      cashSessionId: session.id,
+      movementType: CashMovementType.EXPENSE,
+      amount: 8000,
+    });
+    await repository.addMovement({
+      cashSessionId: session.id,
+      movementType: CashMovementType.EXPENSE_REVERSAL,
+      amount: 8000,
+    });
+
+    const expected = await repository.getExpectedClosingAmount(session.id);
+    expect(expected).toBe(50000);
+  });
+
+  it('findAllOpen() returns only OPEN sessions for the business, optionally scoped to a branch', async () => {
+    // Dedicated branches, isolated from the shared `branchId` other tests in
+    // this file leave open sessions on — the scoped assertion below needs a
+    // branch with exactly one open session, nothing left over.
+    const branchA = await pool.query<{ id: string }>(
+      `INSERT INTO branches (business_id, name) VALUES ($1, $2) RETURNING id`,
+      [businessId, `Branch A ${randomUUID()}`],
+    );
+    const branchB = await pool.query<{ id: string }>(
+      `INSERT INTO branches (business_id, name) VALUES ($1, $2) RETURNING id`,
+      [businessId, `Branch B ${randomUUID()}`],
+    );
+    const openHere = await repository.create({ businessId, branchId: branchA.rows[0].id, openingAmount: 1000 }, userId);
+    const openElsewhere = await repository.create({ businessId, branchId: branchB.rows[0].id, openingAmount: 1000 }, userId);
+    const closed = await repository.create({ businessId, branchId: branchA.rows[0].id, openingAmount: 1000 }, userId);
+    await repository.close(closed.id, businessId, userId, 1000, 1000, 0, 0, null, null, undefined);
+
+    const allOpen = await repository.findAllOpen(businessId);
+    const allOpenIds = allOpen.map((row) => row.id);
+    expect(allOpenIds).toEqual(expect.arrayContaining([openHere.id, openElsewhere.id]));
+    expect(allOpenIds).not.toContain(closed.id);
+
+    const scoped = await repository.findAllOpen(businessId, branchA.rows[0].id);
+    expect(scoped.map((row) => row.id)).toEqual([openHere.id]);
   });
 
   it('close() only succeeds while the session is OPEN', async () => {

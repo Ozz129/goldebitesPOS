@@ -1,13 +1,18 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDateString, IsEnum, IsOptional } from 'class-validator';
 import { PaginationQueryDto } from '../../../common/pagination/pagination-query.dto';
-import { ExpenseCategory } from '../domain/expense.types';
+import { ExpenseCategory, ExpensePaymentSource } from '../domain/expense.types';
 
 export class ExpenseQueryDto extends PaginationQueryDto {
   @ApiPropertyOptional({ enum: ExpenseCategory })
   @IsOptional()
   @IsEnum(ExpenseCategory)
   category?: ExpenseCategory;
+
+  @ApiPropertyOptional({ enum: ExpensePaymentSource, description: 'Filters by source, including UNSPECIFIED_HISTORICAL (AC-09).' })
+  @IsOptional()
+  @IsEnum(ExpensePaymentSource)
+  paymentSource?: ExpensePaymentSource;
 
   @ApiPropertyOptional()
   @IsOptional()

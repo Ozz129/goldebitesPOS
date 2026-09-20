@@ -42,6 +42,7 @@ import { KitchenModule } from './modules/kitchen/kitchen.module';
 import { LoyaltyModule } from './modules/loyalty/loyalty.module';
 import { MaintenanceModule } from './modules/maintenance/maintenance.module';
 import { MarketingModule } from './modules/marketing/marketing.module';
+import { NfcTagsModule } from './modules/nfc-tags/nfc-tags.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { PermissionsModule } from './modules/permissions/permissions.module';
@@ -116,6 +117,7 @@ import { WasteModule } from './modules/waste/waste.module';
     PlatformAdminModule,
     FinancesModule,
     FundsModule,
+    NfcTagsModule,
     TabletKioskModule,
     PublicMenuModule,
   ],

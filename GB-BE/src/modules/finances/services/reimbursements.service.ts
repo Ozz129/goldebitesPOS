@@ -41,6 +41,16 @@ export class ReimbursementsService {
     return ReimbursementObligationMapper.toDomain(row);
   }
 
+  /** Called by ExpensesService.reclassifySource() (BR-08) to find the obligation it needs to void or check for existing reimbursements. Null if the expense's source was never PERSONAL_MONEY (or its obligation was already voided). */
+  async findActiveObligationForExpense(
+    businessId: string,
+    expenseId: string,
+    client?: DbClient,
+  ): Promise<ReimbursementObligation | null> {
+    const row = await this.obligationsRepository.findActiveByExpenseId(expenseId, businessId, client);
+    return row ? ReimbursementObligationMapper.toDomain(row) : null;
+  }
+
   async findAll(query: ReimbursementObligationQuery): Promise<PaginatedResult<ReimbursementObligation>> {
     const { rows, total } = await this.obligationsRepository.findAll(query);
     return {
@@ -169,6 +179,48 @@ export class ReimbursementsService {
       newValues: { status: ReimbursementObligationStatus.VOIDED },
       metadata: { reason },
     });
+  }
+
+  /**
+   * Same as voidObligation(), but participates in the caller's transaction —
+   * used by ExpensesService.reclassifySource() (BR-08) when a source
+   * reclassification moves an expense away from PERSONAL_MONEY and its
+   * obligation has no reimbursements yet, so the void must be atomic with
+   * the rest of the reclassification. Caller is responsible for checking
+   * `reimbursedAmount === 0` first (AC-14) — this method doesn't re-check it.
+   */
+  async voidObligationInTransaction(
+    businessId: string,
+    obligationId: string,
+    actorUserId: string,
+    reason: string,
+    client: DbClient,
+  ): Promise<void> {
+    const row = await this.obligationsRepository.findById(obligationId, businessId, client);
+    if (!row) {
+      throw new EntityNotFoundException('ReimbursementObligation', obligationId);
+    }
+    const obligation = ReimbursementObligationMapper.toDomain(row);
+
+    if (obligation.status === ReimbursementObligationStatus.VOIDED) {
+      throw new BusinessRuleException('This obligation was already voided', 'OBLIGATION_ALREADY_VOIDED');
+    }
+
+    await this.obligationsRepository.void(obligationId, actorUserId, reason, client);
+
+    await this.auditService.record(
+      {
+        businessId,
+        userId: actorUserId,
+        entityType: 'reimbursement_obligation',
+        entityId: obligationId,
+        action: 'VOID',
+        oldValues: { status: obligation.status },
+        newValues: { status: ReimbursementObligationStatus.VOIDED },
+        metadata: { reason },
+      },
+      client,
+    );
   }
 
   private async getOwnedOrFail(businessId: string, id: string) {

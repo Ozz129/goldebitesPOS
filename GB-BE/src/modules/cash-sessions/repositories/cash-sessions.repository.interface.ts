@@ -26,6 +26,12 @@ export interface ICashSessionsRepository {
     branchId: string,
     client?: DbClient,
   ): Promise<CashSessionRow | null>;
+  /** All OPEN sessions for the business, optionally scoped to one branch. At most one per branch can ever be open at a time. */
+  findAllOpen(
+    businessId: string,
+    branchId?: string,
+    client?: DbClient,
+  ): Promise<CashSessionRow[]>;
   findAll(
     query: CashSessionQuery,
   ): Promise<{ rows: CashSessionRow[]; total: number }>;

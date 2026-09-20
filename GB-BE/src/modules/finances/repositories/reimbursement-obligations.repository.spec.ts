@@ -144,6 +144,48 @@ describe('ReimbursementObligationsRepository (integration)', () => {
     expect(voided?.voided_by).toBe(userId);
   });
 
+  it('allows a second active obligation for the same expense once the first is voided (GOL-6 reclassification round-trip)', async () => {
+    const expenseId = await createExpense(40000);
+    const first = await repository.create({
+      businessId,
+      expenseId,
+      payerName: 'Primera vez',
+      originalAmount: 40000,
+    });
+    await repository.void(first.id, userId, 'se reclasificó a Reserva');
+
+    // The old hard UNIQUE(expense_id) would reject this — relaxed to a
+    // partial unique index (WHERE status != 'VOIDED') in migration 061.
+    const second = await repository.create({
+      businessId,
+      expenseId,
+      payerName: 'Reclasificado de vuelta a Personal',
+      originalAmount: 40000,
+    });
+
+    expect(second.id).not.toBe(first.id);
+  });
+
+  it('findActiveByExpenseId() returns only the non-voided obligation for an expense', async () => {
+    const expenseId = await createExpense(40000);
+    const voided = await repository.create({
+      businessId,
+      expenseId,
+      payerName: 'Voided one',
+      originalAmount: 40000,
+    });
+    await repository.void(voided.id, userId, 'motivo');
+    const active = await repository.create({
+      businessId,
+      expenseId,
+      payerName: 'Active one',
+      originalAmount: 40000,
+    });
+
+    const found = await repository.findActiveByExpenseId(expenseId, businessId);
+    expect(found?.id).toBe(active.id);
+  });
+
   it('getSummary() counts only PENDING/PARTIALLY_REIMBURSED and sums their pending balance', async () => {
     const expenseIdA = await createExpense(100000);
     const expenseIdB = await createExpense(50000);

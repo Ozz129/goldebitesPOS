@@ -8,6 +8,7 @@ describe('ReimbursementsService', () => {
   let obligationsRepository: {
     create: jest.Mock;
     findById: jest.Mock;
+    findActiveByExpenseId: jest.Mock;
     findAll: jest.Mock;
     updateStatus: jest.Mock;
     void: jest.Mock;
@@ -47,6 +48,7 @@ describe('ReimbursementsService', () => {
     obligationsRepository = {
       create: jest.fn(),
       findById: jest.fn(),
+      findActiveByExpenseId: jest.fn(),
       findAll: jest.fn(),
       updateStatus: jest.fn(),
       void: jest.fn(),
@@ -187,6 +189,60 @@ describe('ReimbursementsService', () => {
       await expect(service.voidObligation(businessId, obligationId, actorUserId, 'x')).rejects.toThrow(
         BusinessRuleException,
       );
+    });
+  });
+
+  describe('voidObligationInTransaction', () => {
+    it('voids the obligation using the caller-supplied client, for GOL-6 reclassification', async () => {
+      obligationsRepository.findById.mockResolvedValue(makeObligationRow());
+      const client = { transactional: true };
+
+      await service.voidObligationInTransaction(businessId, obligationId, actorUserId, 'reclasificado', client as never);
+
+      expect(obligationsRepository.findById).toHaveBeenCalledWith(obligationId, businessId, client);
+      expect(obligationsRepository.void).toHaveBeenCalledWith(obligationId, actorUserId, 'reclasificado', client);
+      expect(auditService.record).toHaveBeenCalledWith(
+        expect.objectContaining({ action: 'VOID', newValues: { status: ReimbursementObligationStatus.VOIDED } }),
+        client,
+      );
+    });
+
+    it('throws EntityNotFoundException for an unknown obligation', async () => {
+      obligationsRepository.findById.mockResolvedValue(null);
+
+      await expect(
+        service.voidObligationInTransaction(businessId, 'missing-id', actorUserId, 'x', {} as never),
+      ).rejects.toThrow(EntityNotFoundException);
+      expect(obligationsRepository.void).not.toHaveBeenCalled();
+    });
+
+    it('rejects an already-VOIDED obligation', async () => {
+      obligationsRepository.findById.mockResolvedValue(
+        makeObligationRow({ status: ReimbursementObligationStatus.VOIDED }),
+      );
+
+      await expect(
+        service.voidObligationInTransaction(businessId, obligationId, actorUserId, 'x', {} as never),
+      ).rejects.toThrow(BusinessRuleException);
+      expect(obligationsRepository.void).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('findActiveObligationForExpense', () => {
+    it('returns null when the expense has no active obligation', async () => {
+      obligationsRepository.findActiveByExpenseId.mockResolvedValue(null);
+
+      const result = await service.findActiveObligationForExpense(businessId, 'expense-1');
+
+      expect(result).toBeNull();
+    });
+
+    it('maps the row to domain when an active obligation exists', async () => {
+      obligationsRepository.findActiveByExpenseId.mockResolvedValue(makeObligationRow());
+
+      const result = await service.findActiveObligationForExpense(businessId, 'expense-1');
+
+      expect(result?.id).toBe(obligationId);
     });
   });
 });

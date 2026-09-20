@@ -138,6 +138,7 @@ describe('OrdersService', () => {
         name: 'Burger',
         sale_price: '5000.00',
         current_cost: '2000.00',
+        is_active: true,
         track_inventory: false,
         max_sauces: 0,
         max_sides: 0,
@@ -190,6 +191,27 @@ describe('OrdersService', () => {
           [],
         ),
       ).rejects.toThrow(BusinessRuleException);
+    });
+
+    it('rejects an item whose product has been deactivated since the menu was loaded', async () => {
+      productsService.getOwnedOrFail.mockResolvedValue({
+        id: productId,
+        name: 'Burger',
+        sale_price: '5000.00',
+        current_cost: '2000.00',
+        is_active: false,
+        track_inventory: false,
+        max_sauces: 0,
+        max_sides: 0,
+      });
+
+      await expect(
+        service.create(
+          { businessId, branchId, orderType: OrderType.DINE_IN },
+          [{ productId, quantity: 1 }],
+        ),
+      ).rejects.toThrow(BusinessRuleException);
+      expect(repository.create).not.toHaveBeenCalled();
     });
 
     it('computes subtotal/total from unit price * quantity with a 0 tax rate', async () => {
@@ -321,6 +343,7 @@ describe('OrdersService', () => {
         name: 'Burger',
         sale_price: '5000.00',
         current_cost: '2000.00',
+        is_active: true,
         track_inventory: true,
         max_sauces: 0,
         max_sides: 0,
@@ -444,6 +467,7 @@ describe('OrdersService', () => {
         name: 'Burger',
         sale_price: '5000.00',
         current_cost: '2000.00',
+        is_active: true,
         track_inventory: true,
         max_sauces: 0,
         max_sides: 0,

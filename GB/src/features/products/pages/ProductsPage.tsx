@@ -205,7 +205,7 @@ export default function ProductsPage() {
               startIcon={<QrCode size={16} />}
               onClick={() => setMenuLinkOpen(true)}
             >
-              Menú público
+              Vista previa del menú
             </Button>
             {tab === 'productos' && (
               <Can permission="products.create">

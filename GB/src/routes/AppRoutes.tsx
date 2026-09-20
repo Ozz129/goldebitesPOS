@@ -12,6 +12,7 @@ import { KIOSK_PATHS, KIOSK_PERMISSIONS } from './kioskConfig';
 
 const LoginPage = lazy(() => import('../modules/auth/pages/LoginPage'));
 const PublicMenuPage = lazy(() => import('../features/public-menu/pages/PublicMenuPage'));
+const NfcTableMenuPage = lazy(() => import('../features/public-menu/pages/NfcTableMenuPage'));
 
 const DashboardPage = lazy(() => import('../features/dashboard/pages/DashboardPage'));
 const OrdersPage = lazy(() => import('../features/orders/pages/OrdersPage'));
@@ -34,6 +35,7 @@ const DocumentScansPage = lazy(() => import('../features/document-scans/pages/Do
 const MarketingPage = lazy(() => import('../features/marketing/pages/MarketingPage'));
 const AnalyticsPage = lazy(() => import('../features/analytics/pages/AnalyticsPage'));
 const SettingsPage = lazy(() => import('../features/settings/pages/SettingsPage'));
+const BranchTablesNfcPage = lazy(() => import('../features/settings/pages/BranchTablesNfcPage'));
 const RolesPage = lazy(() => import('../features/roles/pages/RolesPage'));
 const PlatformAdminPage = lazy(() => import('../features/platform-admin/pages/PlatformAdminPage'));
 const FeatureFlagsPage = lazy(() => import('../features/platform-admin/pages/FeatureFlagsPage'));
@@ -61,6 +63,14 @@ export default function AppRoutes() {
         element={
           <Loadable>
             <PublicMenuPage />
+          </Loadable>
+        }
+      />
+      <Route
+        path="/m/:token"
+        element={
+          <Loadable>
+            <NfcTableMenuPage />
           </Loadable>
         }
       />
@@ -272,6 +282,16 @@ export default function AppRoutes() {
               element={
                 <Loadable>
                   <SettingsPage />
+                </Loadable>
+              }
+            />
+          </Route>
+          <Route element={<ProtectedRoute permission="branches.manage" />}>
+            <Route
+              path="/configuracion/sedes/:branchId/mesas-nfc"
+              element={
+                <Loadable>
+                  <BranchTablesNfcPage />
                 </Loadable>
               }
             />

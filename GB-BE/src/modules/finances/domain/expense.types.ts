@@ -6,11 +6,23 @@ export enum ExpenseCategory {
   OTHER = 'OTHER',
 }
 
-/** Whether an expense drew from Golden Bites' own funds, or from someone's personal money (creates a reimbursement obligation instead). */
+/** Which fund an expense drew from — determines what gets debited and whether it affects the cash session's expected cash. */
 export enum ExpensePaymentSource {
-  BUSINESS_FUNDS = 'BUSINESS_FUNDS',
+  CASH_OPERATIONAL = 'CASH_OPERATIONAL',
+  CASH_RESERVE = 'CASH_RESERVE',
+  BANK_ACCOUNT = 'BANK_ACCOUNT',
   PERSONAL_MONEY = 'PERSONAL_MONEY',
+  /** BR-07: expenses created before a source was required. Never selectable — only ever assigned by the migration or reclassified away from. */
+  UNSPECIFIED_HISTORICAL = 'UNSPECIFIED_HISTORICAL',
 }
+
+/** The 4 real sources a user can pick — UNSPECIFIED_HISTORICAL is a migration/legacy marker only (AC-01, BR-07). */
+export const SELECTABLE_EXPENSE_PAYMENT_SOURCES = [
+  ExpensePaymentSource.CASH_OPERATIONAL,
+  ExpensePaymentSource.CASH_RESERVE,
+  ExpensePaymentSource.BANK_ACCOUNT,
+  ExpensePaymentSource.PERSONAL_MONEY,
+] as const;
 
 export interface CreateExpenseData {
   businessId: string;
@@ -24,6 +36,8 @@ export interface CreateExpenseData {
   paymentSource: ExpensePaymentSource;
   payerEmployeeId?: string;
   payerName?: string;
+  /** CASH_OPERATIONAL only — disambiguates when the business has more than one open session (AC-03). */
+  cashSessionId?: string;
 }
 
 export interface UpdateExpenseData {
@@ -36,11 +50,22 @@ export interface UpdateExpenseData {
   expenseDate?: string;
 }
 
+export interface ReclassifyExpenseSourceData {
+  paymentSource: ExpensePaymentSource;
+  payerEmployeeId?: string;
+  payerName?: string;
+  branchId?: string;
+  cashSessionId?: string;
+  reason: string;
+  actorUserId: string;
+}
+
 export interface ExpenseQuery {
   businessId: string;
   page: number;
   limit: number;
   category?: ExpenseCategory;
+  paymentSource?: ExpensePaymentSource;
   dateFrom?: string;
   dateTo?: string;
 }

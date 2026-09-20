@@ -2,6 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsDateString,
   IsEnum,
+  IsIn,
   IsNumber,
   IsOptional,
   IsString,
@@ -10,7 +11,7 @@ import {
   MaxLength,
   MinLength,
 } from 'class-validator';
-import { ExpenseCategory, ExpensePaymentSource } from '../domain/expense.types';
+import { ExpenseCategory, ExpensePaymentSource, SELECTABLE_EXPENSE_PAYMENT_SOURCES } from '../domain/expense.types';
 
 export class CreateExpenseDto {
   @ApiProperty({ enum: ExpenseCategory })
@@ -49,14 +50,12 @@ export class CreateExpenseDto {
   @IsUUID()
   branchId?: string;
 
-  @ApiPropertyOptional({
-    enum: ExpensePaymentSource,
-    default: ExpensePaymentSource.BUSINESS_FUNDS,
-    description: 'BUSINESS_FUNDS (default) draws from Golden Bites funds; PERSONAL_MONEY creates a reimbursement obligation instead.',
+  @ApiProperty({
+    enum: SELECTABLE_EXPENSE_PAYMENT_SOURCES,
+    description: 'Which fund the expense drew from — mandatory (AC-01). UNSPECIFIED_HISTORICAL is not selectable, it only exists on legacy rows.',
   })
-  @IsOptional()
-  @IsEnum(ExpensePaymentSource)
-  paymentSource: ExpensePaymentSource = ExpensePaymentSource.BUSINESS_FUNDS;
+  @IsIn(SELECTABLE_EXPENSE_PAYMENT_SOURCES)
+  paymentSource: ExpensePaymentSource;
 
   @ApiPropertyOptional({ description: 'An existing employee who paid personally — required (or payerName) when paymentSource is PERSONAL_MONEY.' })
   @IsOptional()
@@ -68,4 +67,11 @@ export class CreateExpenseDto {
   @IsString()
   @MaxLength(150)
   payerName?: string;
+
+  @ApiPropertyOptional({
+    description: 'CASH_OPERATIONAL only — which open cash session received the money. Required only when more than one is open for the business (AC-03); auto-selected otherwise.',
+  })
+  @IsOptional()
+  @IsUUID()
+  cashSessionId?: string;
 }

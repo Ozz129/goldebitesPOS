@@ -90,6 +90,19 @@ export class ReimbursementObligationsRepository implements IReimbursementObligat
     return result.rows[0] ?? null;
   }
 
+  async findActiveByExpenseId(
+    expenseId: string,
+    businessId: string,
+    client?: DbClient,
+  ): Promise<ReimbursementObligationRow | null> {
+    const result = await this.db.query<ReimbursementObligationRow>(
+      `${SELECT_WITH_REIMBURSED} WHERE o.expense_id = $1 AND o.business_id = $2 AND o.status != 'VOIDED'`,
+      [expenseId, businessId],
+      client,
+    );
+    return result.rows[0] ?? null;
+  }
+
   async findAll(
     query: ReimbursementObligationQuery,
   ): Promise<{ rows: ReimbursementObligationRow[]; total: number }> {
@@ -146,16 +159,19 @@ export class ReimbursementObligationsRepository implements IReimbursementObligat
     id: string,
     voidedBy: string,
     reason: string,
+    client?: DbClient,
   ): Promise<ReimbursementObligationRow | null> {
     await this.db.query(
       `UPDATE reimbursement_obligations
        SET status = 'VOIDED', voided_at = now(), voided_by = $2, void_reason = $3
        WHERE id = $1`,
       [id, voidedBy, reason],
+      client,
     );
     const result = await this.db.query<ReimbursementObligationRow>(
       `${SELECT_WITH_REIMBURSED} WHERE o.id = $1`,
       [id],
+      client,
     );
     return result.rows[0] ?? null;
   }

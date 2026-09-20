@@ -82,6 +82,25 @@ export class CashSessionsRepository implements ICashSessionsRepository {
     return result.rows[0] ?? null;
   }
 
+  async findAllOpen(
+    businessId: string,
+    branchId?: string,
+    client?: DbClient,
+  ): Promise<CashSessionRow[]> {
+    const conditions = [`business_id = $1`, `status = 'OPEN'`];
+    const params: unknown[] = [businessId];
+    if (branchId) {
+      params.push(branchId);
+      conditions.push(`branch_id = $${params.length}`);
+    }
+    const result = await this.db.query<CashSessionRow>(
+      `SELECT ${SELECT_COLUMNS} FROM cash_sessions WHERE ${conditions.join(' AND ')} ORDER BY opened_at`,
+      params,
+      client,
+    );
+    return result.rows;
+  }
+
   async findAll(
     query: CashSessionQuery,
   ): Promise<{ rows: CashSessionRow[]; total: number }> {
@@ -180,6 +199,7 @@ export class CashSessionsRepository implements ICashSessionsRepository {
          CASE
            WHEN cm.movement_type = 'SALE' AND cm.payment_method = 'CASH' THEN cm.amount
            WHEN cm.movement_type = 'INCOME' THEN cm.amount
+           WHEN cm.movement_type = 'EXPENSE_REVERSAL' THEN cm.amount
            WHEN cm.movement_type IN ('EXPENSE', 'WITHDRAWAL', 'REIMBURSEMENT') THEN -cm.amount
            ELSE 0
          END

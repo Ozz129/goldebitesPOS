@@ -156,6 +156,16 @@ export class CashSessionsService {
     return CashSessionMapper.toDomain(row);
   }
 
+  /** Used by ExpensesService: every OPEN session for the business (optionally scoped to a branch), to resolve which one an expense drew from (BR-02/AC-02/AC-03/AC-04). */
+  async findAllOpen(
+    businessId: string,
+    branchId?: string,
+    client?: DbClient,
+  ): Promise<CashSession[]> {
+    const rows = await this.sessionsRepository.findAllOpen(businessId, branchId, client);
+    return rows.map((row) => CashSessionMapper.toDomain(row));
+  }
+
   /** Used by PaymentsService: the branch's open session, if any, for non-CASH payments (which don't require one). */
   async findOpenSessionId(
     businessId: string,

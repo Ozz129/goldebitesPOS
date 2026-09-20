@@ -2,7 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { BusinessesService } from '../../businesses/services/businesses.service';
 import { ProductCategoriesService } from '../../product-categories/services/product-categories.service';
 import { ProductsService } from '../../products/services/products.service';
-import { PublicMenu, PublicMenuCategory, PublicMenuProduct } from '../domain/public-menu.interface';
+import { SaucesService } from '../../sauces/services/sauces.service';
+import { SidesService } from '../../sides/services/sides.service';
+import { PublicMenu, PublicMenuCategory, PublicMenuOption, PublicMenuProduct } from '../domain/public-menu.interface';
 
 const UNCATEGORIZED_LABEL = 'Otros';
 
@@ -12,6 +14,8 @@ export class PublicMenuService {
     private readonly businessesService: BusinessesService,
     private readonly productCategoriesService: ProductCategoriesService,
     private readonly productsService: ProductsService,
+    private readonly saucesService: SaucesService,
+    private readonly sidesService: SidesService,
   ) {}
 
   /**
@@ -21,13 +25,19 @@ export class PublicMenuService {
    * Filters on isVisible in addition to isActive: some active products (e.g.
    * internal surcharges the team adds when invoicing) stay usable for staff
    * but are deliberately hidden from this customer-facing view.
+   *
+   * Sauces/sides are returned once, business-wide — not a parallel catalog
+   * duplicated per product. Each product only carries its own maxSauces/
+   * maxSides count; the frontend caps selection against the shared lists.
    */
   async getMenu(businessId: string): Promise<PublicMenu> {
     const business = await this.businessesService.findById(businessId);
 
-    const [categoriesResult, productsResult] = await Promise.all([
+    const [categoriesResult, productsResult, saucesResult, sidesResult] = await Promise.all([
       this.productCategoriesService.findAll({ businessId, isActive: true, page: 1, limit: 200 }),
       this.productsService.findAll({ businessId, isActive: true, isVisible: true, page: 1, limit: 500 }),
+      this.saucesService.findAll({ businessId, isActive: true, page: 1, limit: 200 }),
+      this.sidesService.findAll({ businessId, isActive: true, page: 1, limit: 200 }),
     ]);
 
     const productsByCategory = new Map<string | null, PublicMenuProduct[]>();
@@ -39,6 +49,9 @@ export class PublicMenuService {
         name: product.name,
         salePrice: product.salePrice,
         description: product.description,
+        imageUrl: product.imageUrl,
+        maxSauces: product.maxSauces,
+        maxSides: product.maxSides,
       });
       productsByCategory.set(key, list);
     }
@@ -60,6 +73,13 @@ export class PublicMenuService {
       categories.push({ id: null, name: UNCATEGORIZED_LABEL, products: uncategorized });
     }
 
-    return { businessName: business.name, categories };
+    const toOption = (item: { id: string; name: string }): PublicMenuOption => ({ id: item.id, name: item.name });
+
+    return {
+      businessName: business.name,
+      categories,
+      sauces: saucesResult.data.map(toOption),
+      sides: sidesResult.data.map(toOption),
+    };
   }
 }

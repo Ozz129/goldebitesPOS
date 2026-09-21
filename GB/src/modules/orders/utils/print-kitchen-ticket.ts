@@ -1,20 +1,26 @@
 import { ORDER_TYPE_LABELS } from '../order-status';
 import { printThermalDocument } from './print-thermal-document';
 import { escapeHtml } from './escape-html';
-import type { OrderWithItems } from '../types/order.types';
+import type { OrderItem, OrderWithItems } from '../types/order.types';
 
 interface PrintTicketOptions {
   businessName?: string;
   businessLogo?: string | null;
+  /** Print only these items instead of the full order — used for "Agregar productos" additions. */
+  addedItems?: OrderItem[];
 }
 
-function buildTicketHtml(order: OrderWithItems, { businessName, businessLogo }: PrintTicketOptions): string {
+function buildTicketHtml(
+  order: OrderWithItems,
+  { businessName, businessLogo, addedItems }: PrintTicketOptions,
+): string {
   const dateLabel = new Date(order.createdAt).toLocaleString('es-CO', {
     dateStyle: 'short',
     timeStyle: 'short',
   });
+  const isAddition = Boolean(addedItems);
 
-  const itemsHtml = order.items
+  const itemsHtml = (addedItems ?? order.items)
     .map((item) => {
       const selections = [
         item.sauceNames.length > 0 && `Salsas: ${item.sauceNames.join(', ')}`,
@@ -74,6 +80,7 @@ function buildTicketHtml(order: OrderWithItems, { businessName, businessLogo }: 
   .description { font-size: 11px; margin-left: 7mm; color: #333; word-break: break-word; }
   .note { font-size: 11px; font-weight: 700; margin-left: 7mm; word-break: break-word; }
   .order-notes { margin-top: 2.5mm; font-size: 11px; font-weight: 700; border: 1px dashed #000; padding: 1.5mm; word-break: break-word; }
+  .addition-badge { font-size: 13px; font-weight: 800; margin-top: 1mm; }
   .footer { margin-top: 3mm; text-align: center; font-size: 9px; }
 </style>
 </head>
@@ -82,6 +89,7 @@ function buildTicketHtml(order: OrderWithItems, { businessName, businessLogo }: 
     ${businessLogo ? `<img class="logo" src="${businessLogo}" alt="" />` : ''}
     ${businessName ? `<div class="business">${escapeHtml(businessName)}</div>` : ''}
     <div class="order-number">#${order.orderNumber}</div>
+    ${isAddition ? '<div class="addition-badge">★ PRODUCTOS AGREGADOS ★</div>' : ''}
     <div class="type">${ORDER_TYPE_LABELS[order.orderType]}</div>
     ${tableLine}
     ${customerLine}
@@ -90,7 +98,7 @@ function buildTicketHtml(order: OrderWithItems, { businessName, businessLogo }: 
   <hr />
   ${itemsHtml}
   ${notesBlock}
-  <div class="footer">— Comanda de cocina —</div>
+  <div class="footer">${isAddition ? '— Adición a la comanda —' : '— Comanda de cocina —'}</div>
 </body>
 </html>`;
 }

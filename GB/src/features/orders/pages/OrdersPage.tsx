@@ -321,7 +321,7 @@ export default function OrdersPage() {
               onChange={(_, checked) => handleAutoPrintToggle(checked)}
             />
           }
-          label="Imprimir comandas automáticamente"
+          label="Imprimir y notificar comandas automáticamente"
         />
       </FilterBar>
 

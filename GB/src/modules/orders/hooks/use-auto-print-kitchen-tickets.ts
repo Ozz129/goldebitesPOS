@@ -1,14 +1,21 @@
 import { useEffect, useRef } from 'react';
 import { ordersApi } from '../api/orders.api';
 import { printKitchenTicket } from '../utils/print-kitchen-ticket';
+import { playOrderNotificationSound } from '../utils/notification-sound';
 import type { Order } from '../types/order.types';
 
-const STORAGE_KEY = 'gb-pos:orders-printed-order-ids';
-const MAX_STORED_IDS = 300;
+const PRINTED_IDS_STORAGE_KEY = 'gb-pos:orders-printed-order-ids';
+const ITEM_STATE_STORAGE_KEY = 'gb-pos:orders-item-state';
+const MAX_STORED_ENTRIES = 300;
+
+interface OrderItemState {
+  updatedAt: string;
+  itemIds: string[];
+}
 
 function loadPrintedIds(): Set<string> {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(PRINTED_IDS_STORAGE_KEY);
     return raw ? new Set(JSON.parse(raw) as string[]) : new Set();
   } catch {
     return new Set();
@@ -16,13 +23,29 @@ function loadPrintedIds(): Set<string> {
 }
 
 function savePrintedIds(ids: Set<string>): void {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(ids).slice(-MAX_STORED_IDS)));
+  localStorage.setItem(PRINTED_IDS_STORAGE_KEY, JSON.stringify(Array.from(ids).slice(-MAX_STORED_ENTRIES)));
+}
+
+function loadItemState(): Record<string, OrderItemState> {
+  try {
+    const raw = localStorage.getItem(ITEM_STATE_STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as Record<string, OrderItemState>) : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveItemState(state: Record<string, OrderItemState>): void {
+  const entries = Object.entries(state).slice(-MAX_STORED_ENTRIES);
+  localStorage.setItem(ITEM_STATE_STORAGE_KEY, JSON.stringify(Object.fromEntries(entries)));
 }
 
 /**
- * Imprime automáticamente la comanda de cada pedido nuevo confirmado (no PENDING/CANCELLED).
- * Los pedidos que ya existían al montar el hook (p.ej. tras recargar la página) se marcan como
- * "vistos" sin imprimir, para no reimprimir todo el historial del día.
+ * Imprime automáticamente la comanda de cada pedido nuevo confirmado (no PENDING/CANCELLED), y
+ * también una comanda de adición cuando se le agregan productos a un pedido ya conocido — en
+ * ambos casos con un aviso sonoro. Los pedidos que ya existían al montar el hook (p.ej. tras
+ * recargar la página) se marcan como "vistos" sin imprimir, para no reimprimir todo el historial
+ * del día ni tratar sus ítems ya existentes como una "adición".
  */
 export function useAutoPrintKitchenTickets(
   orders: Order[] | undefined,
@@ -31,8 +54,9 @@ export function useAutoPrintKitchenTickets(
   enabled: boolean,
 ) {
   const printedIds = useRef<Set<string>>(loadPrintedIds());
+  const itemState = useRef<Record<string, OrderItemState>>(loadItemState());
   const isFirstLoad = useRef(true);
-  const printingIds = useRef<Set<string>>(new Set());
+  const inFlightIds = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     if (!enabled || !orders) return;
@@ -44,23 +68,45 @@ export function useAutoPrintKitchenTickets(
       return;
     }
 
-    const newOrders = orders.filter(
-      (order) => !printedIds.current.has(order.id) && !printingIds.current.has(order.id),
-    );
-    if (newOrders.length === 0) return;
+    orders.forEach((order) => {
+      if (inFlightIds.current.has(order.id)) return;
 
-    newOrders.forEach((order) => {
-      printingIds.current.add(order.id);
+      const isNewOrder = !printedIds.current.has(order.id);
+      const knownItemState = itemState.current[order.id];
+      const needsItemCheck = !isNewOrder && (!knownItemState || knownItemState.updatedAt !== order.updatedAt);
+
+      if (!isNewOrder && !needsItemCheck) return;
+
+      inFlightIds.current.add(order.id);
       ordersApi
         .getOrder(order.id)
-        .then((fullOrder) => printKitchenTicket(fullOrder, { businessName, businessLogo }))
+        .then((fullOrder) => {
+          if (isNewOrder) {
+            printKitchenTicket(fullOrder, { businessName, businessLogo });
+            playOrderNotificationSound();
+          } else if (knownItemState) {
+            const newItems = fullOrder.items.filter((item) => !knownItemState.itemIds.includes(item.id));
+            if (newItems.length > 0) {
+              printKitchenTicket(fullOrder, { businessName, businessLogo, addedItems: newItems });
+              playOrderNotificationSound();
+            }
+          }
+          // Missing knownItemState (order known from before this feature existed, or first
+          // sighting via needsItemCheck) just establishes the baseline below — no print.
+
+          itemState.current[order.id] = {
+            updatedAt: fullOrder.updatedAt,
+            itemIds: fullOrder.items.map((item) => item.id),
+          };
+          saveItemState(itemState.current);
+        })
         .catch(() => {
-          // Si falla la carga de items no bloqueamos la lista; el usuario puede reimprimir manualmente.
+          // Si falla la carga del pedido no bloqueamos la lista; el usuario puede reimprimir manualmente.
         })
         .finally(() => {
           printedIds.current.add(order.id);
-          printingIds.current.delete(order.id);
           savePrintedIds(printedIds.current);
+          inFlightIds.current.delete(order.id);
         });
     });
   }, [orders, businessName, businessLogo, enabled]);

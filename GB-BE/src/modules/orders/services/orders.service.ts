@@ -26,6 +26,7 @@ import {
   OrderRow,
   OrderStatus,
   OrderWithItems,
+  PaymentPolicy,
   SalesSummary,
   TopProduct,
 } from '../domain/order.interface';
@@ -88,7 +89,7 @@ export class OrdersService {
       );
     }
 
-    await this.branchesService.findOne(data.businessId, data.branchId);
+    const branch = await this.branchesService.findOne(data.businessId, data.branchId);
     if (data.customerId) {
       await this.customersService.getOwnedOrFail(
         data.businessId,
@@ -111,6 +112,7 @@ export class OrdersService {
         data,
         actorUserId,
         timezone,
+        branch.paymentPolicy,
         client,
       );
       await this.ordersRepository.addItems(created.id, computedItems, client);
@@ -290,6 +292,21 @@ export class OrdersService {
         'ORDER_NOT_EDITABLE',
       );
     }
+    // Once an order has been sent to kitchen at least once, a PREPAY_REQUIRED
+    // policy keeps applying to every addition — never let cocina receive more
+    // food while a balance is still owed on what's already been ordered.
+    if (
+      order.status !== OrderStatus.PENDING &&
+      order.payment_policy === PaymentPolicy.PREPAY_REQUIRED
+    ) {
+      const totalPaid = round2(await this.ordersRepository.getTotalPaid(id));
+      if (totalPaid < parseFloat(order.total_amount)) {
+        throw new BusinessRuleException(
+          'New items cannot be added while this order has a pending balance',
+          'PAYMENT_REQUIRED_FOR_ADDITION',
+        );
+      }
+    }
 
     const computedItems = await this.computeItems(businessId, items);
     const taxRate = await this.businessesService.getTaxRate(businessId);
@@ -452,6 +469,18 @@ export class OrdersService {
     if (!ALLOWED_TRANSITIONS[order.status].includes(newStatus)) {
       throw new InvalidOrderStatusTransitionException(order.status, newStatus);
     }
+    if (
+      newStatus === OrderStatus.CONFIRMED &&
+      order.payment_policy === PaymentPolicy.PREPAY_REQUIRED
+    ) {
+      const totalPaid = round2(await this.ordersRepository.getTotalPaid(id));
+      if (totalPaid < parseFloat(order.total_amount)) {
+        throw new BusinessRuleException(
+          'This order requires full payment before it can be sent to kitchen',
+          'PAYMENT_REQUIRED_BEFORE_KITCHEN',
+        );
+      }
+    }
 
     const updated = await this.transactionService.execute(async (client) => {
       if (newStatus === OrderStatus.CONFIRMED) {
@@ -511,6 +540,26 @@ export class OrdersService {
     });
 
     return this.buildWithItems(updated);
+  }
+
+  /**
+   * Used by unattended channels (Car Service kiosk, public NFC ordering) that have no
+   * human to gate on: confirms the order when its payment policy allows it, otherwise
+   * leaves it PENDING for staff to confirm manually after collecting payment, instead
+   * of failing the whole request.
+   */
+  async tryAutoConfirm(businessId: string, id: string): Promise<OrderWithItems> {
+    try {
+      return await this.updateStatus(businessId, id, OrderStatus.CONFIRMED);
+    } catch (error) {
+      if (
+        error instanceof BusinessRuleException &&
+        error.code === 'PAYMENT_REQUIRED_BEFORE_KITCHEN'
+      ) {
+        return this.findOne(businessId, id);
+      }
+      throw error;
+    }
   }
 
   /** Used by PaymentsService after registering a payment, to sync the order's payment_status. */

@@ -6,7 +6,7 @@ describe('PublicNfcOrdersService', () => {
   let nfcTagsService: { resolvePublic: jest.Mock };
   let ordersService: {
     create: jest.Mock;
-    updateStatus: jest.Mock;
+    tryAutoConfirm: jest.Mock;
     addItems: jest.Mock;
     findActiveIdForTable: jest.Mock;
     findOne: jest.Mock;
@@ -51,7 +51,7 @@ describe('PublicNfcOrdersService', () => {
     };
     ordersService = {
       create: jest.fn().mockResolvedValue(makeOrder()),
-      updateStatus: jest.fn().mockResolvedValue(makeOrder()),
+      tryAutoConfirm: jest.fn().mockResolvedValue(makeOrder()),
       addItems: jest.fn().mockResolvedValue(makeOrder()),
       findActiveIdForTable: jest.fn().mockResolvedValue(null),
       findOne: jest.fn().mockResolvedValue(makeOrder()),
@@ -79,7 +79,7 @@ describe('PublicNfcOrdersService', () => {
         { businessId, branchId, orderType: OrderType.DINE_IN, tableNumber },
         items,
       );
-      expect(ordersService.updateStatus).toHaveBeenCalledWith(businessId, 'order-1', OrderStatus.CONFIRMED);
+      expect(ordersService.tryAutoConfirm).toHaveBeenCalledWith(businessId, 'order-1');
       expect(ordersService.addItems).not.toHaveBeenCalled();
       expect(submissionsRepository.linkOrder).toHaveBeenCalledWith(idempotencyKey, 'order-1');
     });
@@ -102,7 +102,7 @@ describe('PublicNfcOrdersService', () => {
         { businessId, branchId, orderType: OrderType.TAKEAWAY },
         items,
       );
-      expect(ordersService.updateStatus).toHaveBeenCalledWith(businessId, 'order-1', OrderStatus.CONFIRMED);
+      expect(ordersService.tryAutoConfirm).toHaveBeenCalledWith(businessId, 'order-1');
     });
   });
 

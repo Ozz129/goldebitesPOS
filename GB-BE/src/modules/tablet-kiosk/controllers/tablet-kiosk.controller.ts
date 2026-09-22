@@ -11,7 +11,7 @@ import { ConfigService } from '@nestjs/config';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Public } from '../../../common/decorators/public.decorator';
 import { AppConfig } from '../../../config/app.config';
-import { OrderStatus, OrderType } from '../../orders/domain/order.interface';
+import { OrderType } from '../../orders/domain/order.interface';
 import { OrdersService } from '../../orders/services/orders.service';
 import { PaymentsService } from '../../payments/services/payments.service';
 import { ProductCategoriesService } from '../../product-categories/services/product-categories.service';
@@ -84,11 +84,7 @@ export class TabletKioskController {
       },
       dto.items,
     );
-    return this.ordersService.updateStatus(
-      this.businessId,
-      order.id,
-      OrderStatus.CONFIRMED,
-    );
+    return this.ordersService.tryAutoConfirm(this.businessId, order.id);
   }
 
   @Get('orders/active')

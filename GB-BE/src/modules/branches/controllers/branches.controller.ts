@@ -13,6 +13,7 @@ import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { Permissions } from '../../../common/decorators/permissions.decorator';
 import { BranchQueryDto } from '../dto/branch-query.dto';
 import { CreateBranchDto } from '../dto/create-branch.dto';
+import { SetBranchPaymentPolicyDto } from '../dto/set-branch-payment-policy.dto';
 import { SetBranchStatusDto } from '../dto/set-branch-status.dto';
 import { UpdateBranchDto } from '../dto/update-branch.dto';
 import { BranchesService } from '../services/branches.service';
@@ -80,6 +81,23 @@ export class BranchesController {
       businessId,
       id,
       dto.isActive,
+      actorUserId,
+    );
+  }
+
+  @Patch(':id/payment-policy')
+  @Permissions('branches.manage')
+  @ApiOperation({ summary: 'Set whether orders at this branch require full payment before kitchen' })
+  setPaymentPolicy(
+    @CurrentBusiness() businessId: string,
+    @CurrentUser('userId') actorUserId: string,
+    @Param('id') id: string,
+    @Body() dto: SetBranchPaymentPolicyDto,
+  ) {
+    return this.branchesService.setPaymentPolicy(
+      businessId,
+      id,
+      dto.paymentPolicy,
       actorUserId,
     );
   }

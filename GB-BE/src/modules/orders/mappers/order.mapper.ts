@@ -20,6 +20,7 @@ export class OrderMapper {
       orderType: row.order_type,
       status: row.status,
       paymentStatus: row.payment_status,
+      paymentPolicy: row.payment_policy,
       tableNumber: row.table_number,
       deliveryAddress: row.delivery_address,
       deliveryInstructions: row.delivery_instructions,

@@ -11,6 +11,7 @@ export class BranchMapper {
       phone: row.phone,
       tableCount: row.table_count,
       isActive: row.is_active,
+      paymentPolicy: row.payment_policy,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     };

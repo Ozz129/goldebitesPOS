@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { randomUUID } from 'node:crypto';
 import { Pool } from 'pg';
 import { DatabaseService } from '../../../database/database.service';
+import { PaymentPolicy } from '../domain/branch.interface';
 import { BranchesRepository } from './branches.repository';
 
 /**
@@ -123,6 +124,18 @@ describe('BranchesRepository (integration)', () => {
       false,
     );
     expect(deactivated?.is_active).toBe(false);
+  });
+
+  it('create() defaults to PAY_AT_END, and setPaymentPolicy() switches it', async () => {
+    const branch = await repository.create({ businessId, name: 'Sede Test E' });
+    expect(branch.payment_policy).toBe('PAY_AT_END');
+
+    const updated = await repository.setPaymentPolicy(
+      branch.id,
+      businessId,
+      PaymentPolicy.PREPAY_REQUIRED,
+    );
+    expect(updated?.payment_policy).toBe('PREPAY_REQUIRED');
   });
 
   it('returns null when updating a branch that does not belong to the business', async () => {

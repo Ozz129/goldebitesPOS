@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { ConflictException } from '../../../common/exceptions';
 import { PublicNfcResolution } from '../../nfc-tags/domain/nfc-tag.interface';
 import { NfcTagsService } from '../../nfc-tags/services/nfc-tags.service';
-import { OrderStatus, OrderType } from '../../orders/domain/order.interface';
+import { OrderType } from '../../orders/domain/order.interface';
 import { OrdersService } from '../../orders/services/orders.service';
 import { SubmitNfcOrderDto } from '../dto/submit-nfc-order.dto';
 import { PublicOrderView, toPublicOrderView } from '../mappers/public-order.mapper';
@@ -96,11 +96,7 @@ export class PublicNfcOrdersService {
         },
         dto.items,
       );
-      await this.ordersService.updateStatus(
-        resolution.businessId,
-        order.id,
-        OrderStatus.CONFIRMED,
-      );
+      await this.ordersService.tryAutoConfirm(resolution.businessId, order.id);
       return order.id;
     }
 
@@ -123,11 +119,7 @@ export class PublicNfcOrdersService {
       },
       dto.items,
     );
-    await this.ordersService.updateStatus(
-      resolution.businessId,
-      order.id,
-      OrderStatus.CONFIRMED,
-    );
+    await this.ordersService.tryAutoConfirm(resolution.businessId, order.id);
     return order.id;
   }
 }

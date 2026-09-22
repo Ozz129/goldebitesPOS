@@ -1,3 +1,7 @@
+import { PaymentPolicy } from '../../branches/domain/branch.interface';
+
+export { PaymentPolicy };
+
 export enum OrderType {
   DINE_IN = 'DINE_IN',
   TAKEAWAY = 'TAKEAWAY',
@@ -33,6 +37,8 @@ export interface Order {
   orderType: OrderType;
   status: OrderStatus;
   paymentStatus: OrderPaymentStatus;
+  /** Copy of the branch's payment policy at the moment this order was created — see branches.payment_policy. Later branch changes never affect this. */
+  paymentPolicy: PaymentPolicy;
   tableNumber: string | null;
   deliveryAddress: string | null;
   deliveryInstructions: string | null;
@@ -61,6 +67,7 @@ export interface OrderRow {
   order_type: OrderType;
   status: OrderStatus;
   payment_status: OrderPaymentStatus;
+  payment_policy: PaymentPolicy;
   table_number: string | null;
   delivery_address: string | null;
   delivery_instructions: string | null;

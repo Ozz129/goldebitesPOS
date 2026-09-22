@@ -2,7 +2,7 @@ import {
   ConflictException,
   EntityNotFoundException,
 } from '../../../common/exceptions';
-import { BranchRow } from '../domain/branch.interface';
+import { BranchRow, PaymentPolicy } from '../domain/branch.interface';
 import { BranchesService } from './branches.service';
 
 describe('BranchesService', () => {
@@ -12,6 +12,7 @@ describe('BranchesService', () => {
     findAll: jest.Mock;
     update: jest.Mock;
     setActive: jest.Mock;
+    setPaymentPolicy: jest.Mock;
     existsByName: jest.Mock;
   };
   let auditService: { record: jest.Mock };
@@ -29,6 +30,7 @@ describe('BranchesService', () => {
       phone: null,
       table_count: 20,
       is_active: true,
+      payment_policy: PaymentPolicy.PAY_AT_END,
       created_at: new Date(),
       updated_at: new Date(),
       ...overrides,
@@ -42,6 +44,7 @@ describe('BranchesService', () => {
       findAll: jest.fn(),
       update: jest.fn(),
       setActive: jest.fn(),
+      setPaymentPolicy: jest.fn(),
       existsByName: jest.fn(),
     };
     auditService = { record: jest.fn() };
@@ -98,6 +101,47 @@ describe('BranchesService', () => {
 
       await expect(
         service.setActive(businessId, 'branch-1', false),
+      ).rejects.toThrow(EntityNotFoundException);
+    });
+  });
+
+  describe('setPaymentPolicy', () => {
+    it('updates the policy and records the old/new values in the audit trail', async () => {
+      branchesRepository.findById.mockResolvedValue(
+        makeBranchRow({ payment_policy: PaymentPolicy.PAY_AT_END }),
+      );
+      branchesRepository.setPaymentPolicy.mockResolvedValue(
+        makeBranchRow({ payment_policy: PaymentPolicy.PREPAY_REQUIRED }),
+      );
+
+      const result = await service.setPaymentPolicy(
+        businessId,
+        'branch-1',
+        PaymentPolicy.PREPAY_REQUIRED,
+        'user-1',
+      );
+
+      expect(branchesRepository.setPaymentPolicy).toHaveBeenCalledWith(
+        'branch-1',
+        businessId,
+        PaymentPolicy.PREPAY_REQUIRED,
+      );
+      expect(auditService.record).toHaveBeenCalledWith(
+        expect.objectContaining({
+          entityType: 'branch',
+          action: 'SET_PAYMENT_POLICY',
+          oldValues: { paymentPolicy: PaymentPolicy.PAY_AT_END },
+          newValues: { paymentPolicy: PaymentPolicy.PREPAY_REQUIRED },
+        }),
+      );
+      expect(result.paymentPolicy).toBe(PaymentPolicy.PREPAY_REQUIRED);
+    });
+
+    it('throws EntityNotFoundException when the branch is not owned by the business', async () => {
+      branchesRepository.findById.mockResolvedValue(null);
+
+      await expect(
+        service.setPaymentPolicy(businessId, 'branch-1', PaymentPolicy.PREPAY_REQUIRED),
       ).rejects.toThrow(EntityNotFoundException);
     });
   });

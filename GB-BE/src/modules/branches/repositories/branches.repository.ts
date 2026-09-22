@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../../database/database.service';
 import { getOffset } from '../../../common/pagination/pagination.util';
 import { DbClient } from '../../../database/types/database.types';
-import { BranchRow } from '../domain/branch.interface';
+import { BranchRow, PaymentPolicy } from '../domain/branch.interface';
 import {
   BranchQuery,
   CreateBranchData,
@@ -10,7 +10,7 @@ import {
 } from '../domain/branch.types';
 import { IBranchesRepository } from './branches.repository.interface';
 
-const SELECT_COLUMNS = `id, business_id, name, address, city, phone, table_count, is_active, created_at, updated_at`;
+const SELECT_COLUMNS = `id, business_id, name, address, city, phone, table_count, is_active, payment_policy, created_at, updated_at`;
 
 interface CountRow {
   count: string;
@@ -129,6 +129,18 @@ export class BranchesRepository implements IBranchesRepository {
     const result = await this.db.query<BranchRow>(
       `UPDATE branches SET is_active = $3 WHERE id = $1 AND business_id = $2 RETURNING ${SELECT_COLUMNS}`,
       [id, businessId, isActive],
+    );
+    return result.rows[0] ?? null;
+  }
+
+  async setPaymentPolicy(
+    id: string,
+    businessId: string,
+    paymentPolicy: PaymentPolicy,
+  ): Promise<BranchRow | null> {
+    const result = await this.db.query<BranchRow>(
+      `UPDATE branches SET payment_policy = $3 WHERE id = $1 AND business_id = $2 RETURNING ${SELECT_COLUMNS}`,
+      [id, businessId, paymentPolicy],
     );
     return result.rows[0] ?? null;
   }

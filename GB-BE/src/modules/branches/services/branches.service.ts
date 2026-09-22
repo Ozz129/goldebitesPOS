@@ -6,7 +6,7 @@ import {
 import { PaginatedResult } from '../../../common/pagination/paginated-result.interface';
 import { buildPaginationMeta } from '../../../common/pagination/pagination.util';
 import { AuditService } from '../../audit/services/audit.service';
-import { Branch, BranchRow } from '../domain/branch.interface';
+import { Branch, BranchRow, PaymentPolicy } from '../domain/branch.interface';
 import {
   BranchQuery,
   CreateBranchData,
@@ -122,6 +122,34 @@ export class BranchesService {
       entityType: 'branch',
       entityId: id,
       action: isActive ? 'ACTIVATE' : 'DEACTIVATE',
+    });
+    return BranchMapper.toDomain(row);
+  }
+
+  async setPaymentPolicy(
+    businessId: string,
+    id: string,
+    paymentPolicy: PaymentPolicy,
+    actorUserId?: string,
+  ): Promise<Branch> {
+    const existing = await this.getOwnedBranchOrFail(businessId, id);
+    const row = await this.branchesRepository.setPaymentPolicy(
+      id,
+      businessId,
+      paymentPolicy,
+    );
+    if (!row) {
+      throw new EntityNotFoundException('Branch', id);
+    }
+    await this.auditService.record({
+      businessId,
+      branchId: id,
+      userId: actorUserId,
+      entityType: 'branch',
+      entityId: id,
+      action: 'SET_PAYMENT_POLICY',
+      oldValues: { paymentPolicy: existing.payment_policy },
+      newValues: { paymentPolicy },
     });
     return BranchMapper.toDomain(row);
   }

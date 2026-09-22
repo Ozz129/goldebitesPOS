@@ -1,5 +1,5 @@
 import { DbClient } from '../../../database/types/database.types';
-import { BranchRow } from '../domain/branch.interface';
+import { BranchRow, PaymentPolicy } from '../domain/branch.interface';
 import {
   BranchQuery,
   CreateBranchData,
@@ -24,6 +24,11 @@ export interface IBranchesRepository {
     id: string,
     businessId: string,
     isActive: boolean,
+  ): Promise<BranchRow | null>;
+  setPaymentPolicy(
+    id: string,
+    businessId: string,
+    paymentPolicy: PaymentPolicy,
   ): Promise<BranchRow | null>;
   existsByName(
     businessId: string,

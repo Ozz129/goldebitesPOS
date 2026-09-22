@@ -5,6 +5,7 @@ import {
   OrderRow,
   OrderStatus,
   OrderStatusHistoryRow,
+  PaymentPolicy,
   SalesSummaryRow,
   TopProductRow,
 } from '../domain/order.interface';
@@ -19,6 +20,7 @@ export interface IOrdersRepository {
     data: CreateOrderData,
     createdBy: string | undefined,
     timezone?: string,
+    paymentPolicy?: PaymentPolicy,
     client?: DbClient,
   ): Promise<OrderRow>;
   findById(

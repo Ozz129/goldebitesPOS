@@ -68,6 +68,7 @@ describe('OrdersService', () => {
       order_type: OrderType.DINE_IN,
       status: OrderStatus.PENDING,
       payment_status: 'PENDING' as never,
+      payment_policy: 'PAY_AT_END' as never,
       table_number: null,
       delivery_address: null,
       delivery_instructions: null,
@@ -134,7 +135,7 @@ describe('OrdersService', () => {
       getTopProducts: jest.fn().mockResolvedValue([]),
     };
     branchesService = {
-      findOne: jest.fn().mockResolvedValue({ id: branchId }),
+      findOne: jest.fn().mockResolvedValue({ id: branchId, paymentPolicy: 'PAY_AT_END' }),
     };
     productsService = {
       getOwnedOrFail: jest.fn().mockResolvedValue({
@@ -233,6 +234,24 @@ describe('OrdersService', () => {
         0,
         0,
         10000,
+        expect.anything(),
+      );
+    });
+
+    it("copies the branch's current payment policy onto the order at creation time", async () => {
+      repository.create.mockResolvedValue(makeOrderRow());
+      branchesService.findOne.mockResolvedValue({ id: branchId, paymentPolicy: 'PREPAY_REQUIRED' });
+
+      await service.create(
+        { businessId, branchId, orderType: OrderType.DINE_IN },
+        [{ productId, quantity: 1 }],
+      );
+
+      expect(repository.create).toHaveBeenCalledWith(
+        expect.anything(),
+        undefined,
+        expect.anything(),
+        'PREPAY_REQUIRED',
         expect.anything(),
       );
     });
@@ -420,6 +439,53 @@ describe('OrdersService', () => {
       ).rejects.toThrow(BusinessRuleException);
     });
 
+    it('rejects adding items to a PREPAY_REQUIRED order that already has a pending balance', async () => {
+      repository.findById.mockResolvedValue(
+        makeOrderRow({
+          status: OrderStatus.CONFIRMED,
+          payment_policy: 'PREPAY_REQUIRED' as never,
+          total_amount: '10000.00',
+        }),
+      );
+      repository.getTotalPaid.mockResolvedValue(0);
+
+      await expect(
+        service.addItems(businessId, 'order-1', [{ productId, quantity: 1 }]),
+      ).rejects.toThrow(BusinessRuleException);
+      expect(repository.addItems).not.toHaveBeenCalled();
+    });
+
+    it('allows adding items to a PREPAY_REQUIRED order once its current balance is fully paid', async () => {
+      repository.findById.mockResolvedValue(
+        makeOrderRow({
+          status: OrderStatus.CONFIRMED,
+          payment_policy: 'PREPAY_REQUIRED' as never,
+          total_amount: '10000.00',
+        }),
+      );
+      repository.getTotalPaid.mockResolvedValue(10000);
+
+      await service.addItems(businessId, 'order-1', [{ productId, quantity: 1 }]);
+
+      expect(repository.addItems).toHaveBeenCalled();
+    });
+
+    it('does not gate a PREPAY_REQUIRED order that is still PENDING (never sent to kitchen yet)', async () => {
+      repository.findById.mockResolvedValue(
+        makeOrderRow({
+          status: OrderStatus.PENDING,
+          payment_policy: 'PREPAY_REQUIRED' as never,
+          total_amount: '10000.00',
+        }),
+      );
+      repository.getTotalPaid.mockResolvedValue(0);
+
+      await expect(
+        service.addItems(businessId, 'order-1', [{ productId, quantity: 1 }]),
+      ).resolves.toBeDefined();
+      expect(repository.addItems).toHaveBeenCalled();
+    });
+
     it('adds the new items on top of the existing subtotal without touching current items', async () => {
       repository.findById.mockResolvedValue(
         makeOrderRow({
@@ -581,6 +647,54 @@ describe('OrdersService', () => {
       ).rejects.toThrow(InvalidOrderStatusTransitionException);
     });
 
+    it('rejects confirming a PREPAY_REQUIRED order that is not fully paid — the ticket\'s own AC', async () => {
+      repository.findById.mockResolvedValue(
+        makeOrderRow({
+          status: OrderStatus.PENDING,
+          payment_policy: 'PREPAY_REQUIRED' as never,
+          total_amount: '10000.00',
+        }),
+      );
+      repository.getTotalPaid.mockResolvedValue(0);
+
+      await expect(
+        service.updateStatus(businessId, 'order-1', OrderStatus.CONFIRMED),
+      ).rejects.toThrow(BusinessRuleException);
+      expect(repository.setStatus).not.toHaveBeenCalled();
+    });
+
+    it('allows confirming a PREPAY_REQUIRED order once it is fully paid', async () => {
+      repository.findById.mockResolvedValue(
+        makeOrderRow({
+          status: OrderStatus.PENDING,
+          payment_policy: 'PREPAY_REQUIRED' as never,
+          total_amount: '10000.00',
+        }),
+      );
+      repository.getTotalPaid.mockResolvedValue(10000);
+      repository.setStatus.mockResolvedValue(
+        makeOrderRow({ status: OrderStatus.CONFIRMED }),
+      );
+
+      await service.updateStatus(businessId, 'order-1', OrderStatus.CONFIRMED);
+
+      expect(repository.setStatus).toHaveBeenCalled();
+    });
+
+    it('never gates a PAY_AT_END order regardless of how much is paid', async () => {
+      repository.findById.mockResolvedValue(
+        makeOrderRow({ status: OrderStatus.PENDING, payment_policy: 'PAY_AT_END' as never }),
+      );
+      repository.getTotalPaid.mockResolvedValue(0);
+      repository.setStatus.mockResolvedValue(
+        makeOrderRow({ status: OrderStatus.CONFIRMED }),
+      );
+
+      await service.updateStatus(businessId, 'order-1', OrderStatus.CONFIRMED);
+
+      expect(repository.setStatus).toHaveBeenCalled();
+    });
+
     it('consumes stock per recipe item when confirming an order for a tracked product', async () => {
       repository.findById.mockResolvedValue(makeOrderRow());
       repository.findItems.mockResolvedValue([makeItemRow()]);
@@ -707,6 +821,68 @@ describe('OrdersService', () => {
         'customer-1',
         10000,
         expect.anything(),
+      );
+    });
+
+    it("gates purely on the order's own snapshotted policy — never re-reads the branch's current setting", async () => {
+      repository.findById.mockResolvedValue(
+        makeOrderRow({
+          status: OrderStatus.PENDING,
+          payment_policy: 'PREPAY_REQUIRED' as never,
+          total_amount: '10000.00',
+        }),
+      );
+      repository.getTotalPaid.mockResolvedValue(10000);
+      repository.setStatus.mockResolvedValue(
+        makeOrderRow({ status: OrderStatus.CONFIRMED }),
+      );
+      // The branch could have since flipped to PAY_AT_END (or anything else) — irrelevant,
+      // updateStatus must never call out to it; the order's own copy is authoritative.
+      branchesService.findOne.mockClear();
+
+      await service.updateStatus(businessId, 'order-1', OrderStatus.CONFIRMED);
+
+      expect(branchesService.findOne).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('tryAutoConfirm', () => {
+    it('confirms normally when payment allows it', async () => {
+      repository.findById.mockResolvedValue(
+        makeOrderRow({ status: OrderStatus.PENDING, payment_policy: 'PAY_AT_END' as never }),
+      );
+      repository.setStatus.mockResolvedValue(
+        makeOrderRow({ status: OrderStatus.CONFIRMED }),
+      );
+
+      const result = await service.tryAutoConfirm(businessId, 'order-1');
+
+      expect(result.status).toBe(OrderStatus.CONFIRMED);
+    });
+
+    it('leaves the order PENDING instead of throwing when prepayment is required but missing', async () => {
+      repository.findById.mockResolvedValue(
+        makeOrderRow({
+          status: OrderStatus.PENDING,
+          payment_policy: 'PREPAY_REQUIRED' as never,
+          total_amount: '10000.00',
+        }),
+      );
+      repository.getTotalPaid.mockResolvedValue(0);
+
+      const result = await service.tryAutoConfirm(businessId, 'order-1');
+
+      expect(result.status).toBe(OrderStatus.PENDING);
+      expect(repository.setStatus).not.toHaveBeenCalled();
+    });
+
+    it('still rejects for reasons other than a missing prepayment', async () => {
+      repository.findById.mockResolvedValue(
+        makeOrderRow({ status: OrderStatus.DELIVERED }),
+      );
+
+      await expect(service.tryAutoConfirm(businessId, 'order-1')).rejects.toThrow(
+        InvalidOrderStatusTransitionException,
       );
     });
   });

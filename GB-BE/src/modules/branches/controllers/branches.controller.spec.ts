@@ -1,4 +1,5 @@
 import { SortOrder } from '../../../common/pagination/pagination-query.dto';
+import { PaymentPolicy } from '../domain/branch.interface';
 import { BranchesController } from './branches.controller';
 import { BranchesService } from '../services/branches.service';
 
@@ -6,7 +7,7 @@ describe('BranchesController', () => {
   let service: jest.Mocked<
     Pick<
       BranchesService,
-      'create' | 'findAll' | 'findOne' | 'update' | 'setActive'
+      'create' | 'findAll' | 'findOne' | 'update' | 'setActive' | 'setPaymentPolicy'
     >
   >;
   let controller: BranchesController;
@@ -18,6 +19,7 @@ describe('BranchesController', () => {
       findOne: jest.fn(),
       update: jest.fn(),
       setActive: jest.fn(),
+      setPaymentPolicy: jest.fn(),
     };
     controller = new BranchesController(service as unknown as BranchesService);
   });
@@ -87,6 +89,21 @@ describe('BranchesController', () => {
       'business-1',
       'branch-1',
       false,
+      'actor-1',
+    );
+  });
+
+  it('setPaymentPolicy() delegates with the actor id', async () => {
+    service.setPaymentPolicy.mockResolvedValue({ id: 'branch-1' } as never);
+
+    await controller.setPaymentPolicy('business-1', 'actor-1', 'branch-1', {
+      paymentPolicy: PaymentPolicy.PREPAY_REQUIRED,
+    });
+
+    expect(service.setPaymentPolicy).toHaveBeenCalledWith(
+      'business-1',
+      'branch-1',
+      PaymentPolicy.PREPAY_REQUIRED,
       'actor-1',
     );
   });

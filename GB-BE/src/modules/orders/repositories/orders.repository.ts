@@ -8,6 +8,7 @@ import {
   OrderRow,
   OrderStatus,
   OrderStatusHistoryRow,
+  PaymentPolicy,
   SalesSummaryRow,
   TopProductRow,
 } from '../domain/order.interface';
@@ -19,7 +20,7 @@ import {
 import { IOrdersRepository } from './orders.repository.interface';
 
 const SELECT_COLUMNS = `id, business_id, branch_id, customer_id, customer_name, created_by, order_number::text AS order_number,
-  order_type, status, payment_status, table_number, delivery_address, delivery_instructions,
+  order_type, status, payment_status, payment_policy, table_number, delivery_address, delivery_instructions,
   subtotal, discount_amount, tax_amount, delivery_fee, total_amount, notes,
   confirmed_at, prepared_at, delivered_at, cancelled_at, created_at, updated_at`;
 
@@ -40,6 +41,7 @@ export class OrdersRepository implements IOrdersRepository {
     data: CreateOrderData,
     createdBy: string | undefined,
     timezone: string = 'America/Bogota',
+    paymentPolicy: PaymentPolicy = PaymentPolicy.PAY_AT_END,
     client?: DbClient,
   ): Promise<OrderRow> {
     const result = await this.db.query<OrderRow>(
@@ -54,9 +56,10 @@ export class OrdersRepository implements IOrdersRepository {
          RETURNING last_number, order_date
        )
        INSERT INTO orders (business_id, branch_id, customer_id, created_by, order_type, table_number,
-         delivery_address, delivery_instructions, discount_amount, delivery_fee, notes, order_number, customer_name)
+         delivery_address, delivery_instructions, discount_amount, delivery_fee, notes, order_number, customer_name,
+         payment_policy)
        SELECT $1, $2, $3, $4, $5, $6, $7, $8, COALESCE($9::numeric, 0), COALESCE($10::numeric, 0), $11,
-         to_char(counter.order_date, 'MMDD') || '-' || lpad(counter.last_number::text, 2, '0'), $13
+         to_char(counter.order_date, 'MMDD') || '-' || lpad(counter.last_number::text, 2, '0'), $13, $14
        FROM counter
        RETURNING ${SELECT_COLUMNS}`,
       [
@@ -73,6 +76,7 @@ export class OrdersRepository implements IOrdersRepository {
         data.notes ?? null,
         timezone,
         data.customerName ?? null,
+        paymentPolicy,
       ],
       client,
     );

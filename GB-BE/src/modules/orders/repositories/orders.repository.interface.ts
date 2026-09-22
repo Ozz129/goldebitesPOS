@@ -31,6 +31,12 @@ export interface IOrdersRepository {
     businessId: string,
     branchId?: string,
   ): Promise<OrderRow[]>;
+  /** The most recent non-DELIVERED/CANCELLED DINE_IN order for a table, or null if none — used by the public NFC ordering endpoint to decide create vs. addItems. */
+  findActiveByTable(
+    businessId: string,
+    branchId: string,
+    tableNumber: string,
+  ): Promise<OrderRow | null>;
   /** Orders left open (not DELIVERED/CANCELLED) from before the business's current local calendar day. */
   findBacklog(
     businessId: string,
@@ -69,6 +75,7 @@ export interface IOrdersRepository {
     paymentStatus: string,
     client?: DbClient,
   ): Promise<void>;
+  getTotalPaid(orderId: string, client?: DbClient): Promise<number>;
   addStatusHistory(
     orderId: string,
     previousStatus: OrderStatus | null,

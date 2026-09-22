@@ -50,6 +50,7 @@ import { PlatformAdminModule } from './modules/platform-admin/platform-admin.mod
 import { ProductCategoriesModule } from './modules/product-categories/product-categories.module';
 import { ProductsModule } from './modules/products/products.module';
 import { PublicMenuModule } from './modules/public-menu/public-menu.module';
+import { PublicNfcOrdersModule } from './modules/public-nfc-orders/public-nfc-orders.module';
 import { PurchasesModule } from './modules/purchases/purchases.module';
 import { RecipesModule } from './modules/recipes/recipes.module';
 import { RolesModule } from './modules/roles/roles.module';
@@ -120,6 +121,7 @@ import { WasteModule } from './modules/waste/waste.module';
     NfcTagsModule,
     TabletKioskModule,
     PublicMenuModule,
+    PublicNfcOrdersModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

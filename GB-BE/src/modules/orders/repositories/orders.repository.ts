@@ -171,6 +171,22 @@ export class OrdersRepository implements IOrdersRepository {
     return result.rows;
   }
 
+  async findActiveByTable(
+    businessId: string,
+    branchId: string,
+    tableNumber: string,
+  ): Promise<OrderRow | null> {
+    const result = await this.db.query<OrderRow>(
+      `SELECT ${SELECT_COLUMNS} FROM orders
+       WHERE business_id = $1 AND branch_id = $2 AND table_number = $3
+         AND order_type = 'DINE_IN' AND status NOT IN ('DELIVERED', 'CANCELLED')
+       ORDER BY created_at DESC
+       LIMIT 1`,
+      [businessId, branchId, tableNumber],
+    );
+    return result.rows[0] ?? null;
+  }
+
   async findBacklog(
     businessId: string,
     timezone: string,
@@ -292,6 +308,19 @@ export class OrdersRepository implements IOrdersRepository {
       [id, paymentStatus],
       client,
     );
+  }
+
+  /**
+   * Queried directly against `payments` (not via PaymentsModule) to avoid a circular
+   * module dependency — PaymentsModule already imports OrdersModule.
+   */
+  async getTotalPaid(orderId: string, client?: DbClient): Promise<number> {
+    const result = await this.db.query<{ total: string | null }>(
+      `SELECT SUM(amount)::text AS total FROM payments WHERE order_id = $1`,
+      [orderId],
+      client,
+    );
+    return parseFloat(result.rows[0]?.total ?? '0');
   }
 
   async addStatusHistory(

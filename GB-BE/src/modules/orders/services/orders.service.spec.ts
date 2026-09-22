@@ -17,6 +17,7 @@ describe('OrdersService', () => {
     findById: jest.Mock;
     findAll: jest.Mock;
     findActiveForKitchen: jest.Mock;
+    findActiveByTable: jest.Mock;
     findBacklog: jest.Mock;
     addItems: jest.Mock;
     replaceItems: jest.Mock;
@@ -24,6 +25,7 @@ describe('OrdersService', () => {
     updateTotals: jest.Mock;
     setStatus: jest.Mock;
     updatePaymentStatus: jest.Mock;
+    getTotalPaid: jest.Mock;
     addStatusHistory: jest.Mock;
     findStatusHistory: jest.Mock;
     getActiveCount: jest.Mock;
@@ -113,6 +115,7 @@ describe('OrdersService', () => {
       findById: jest.fn(),
       findAll: jest.fn().mockResolvedValue({ rows: [], total: 0 }),
       findActiveForKitchen: jest.fn().mockResolvedValue([]),
+      findActiveByTable: jest.fn().mockResolvedValue(null),
       findBacklog: jest.fn().mockResolvedValue([]),
       addItems: jest.fn(),
       replaceItems: jest.fn(),
@@ -120,6 +123,7 @@ describe('OrdersService', () => {
       updateTotals: jest.fn(),
       setStatus: jest.fn(),
       updatePaymentStatus: jest.fn(),
+      getTotalPaid: jest.fn().mockResolvedValue(0),
       addStatusHistory: jest.fn(),
       findStatusHistory: jest.fn().mockResolvedValue([]),
       getActiveCount: jest.fn().mockResolvedValue(0),
@@ -492,6 +496,78 @@ describe('OrdersService', () => {
         expect.anything(),
       );
     });
+
+    it("re-evaluates payment_status against the new total — the ticket's own AC example ($30k paid, $20k added, PAID -> PARTIALLY_PAID)", async () => {
+      repository.findById.mockResolvedValue(
+        makeOrderRow({
+          status: OrderStatus.CONFIRMED,
+          payment_status: 'PAID' as never,
+          subtotal: '30000.00',
+          discount_amount: '0.00',
+          delivery_fee: '0.00',
+          total_amount: '30000.00',
+        }),
+      );
+      repository.getTotalPaid.mockResolvedValue(30000);
+
+      const result = await service.addItems(businessId, 'order-1', [
+        { productId, quantity: 4 }, // 4 * 5000 = 20000
+      ]);
+
+      expect(repository.updateTotals).toHaveBeenCalledWith(
+        'order-1',
+        50000,
+        0,
+        0,
+        0,
+        50000,
+        expect.anything(),
+      );
+      expect(repository.updatePaymentStatus).toHaveBeenCalledWith(
+        'order-1',
+        'PARTIALLY_PAID',
+        expect.anything(),
+      );
+      expect(result.paymentStatus).toBe('PARTIALLY_PAID');
+      // The payment itself is never touched — only read and re-compared against the new total.
+      expect(repository.getTotalPaid).toHaveBeenCalledWith('order-1', expect.anything());
+    });
+
+    it('leaves payment_status PENDING when the order still has no payments at all', async () => {
+      repository.findById.mockResolvedValue(
+        makeOrderRow({ status: OrderStatus.CONFIRMED, payment_status: 'PENDING' as never }),
+      );
+      repository.getTotalPaid.mockResolvedValue(0);
+
+      const result = await service.addItems(businessId, 'order-1', [
+        { productId, quantity: 1 },
+      ]);
+
+      expect(repository.updatePaymentStatus).toHaveBeenCalledWith(
+        'order-1',
+        'PENDING',
+        expect.anything(),
+      );
+      expect(result.paymentStatus).toBe('PENDING');
+    });
+
+    it('stays PAID when the amount already paid still covers the new, larger total', async () => {
+      repository.findById.mockResolvedValue(
+        makeOrderRow({ status: OrderStatus.CONFIRMED, payment_status: 'PAID' as never }),
+      );
+      repository.getTotalPaid.mockResolvedValue(60000); // overpaid relative to the new 15000 total
+
+      const result = await service.addItems(businessId, 'order-1', [
+        { productId, quantity: 1 },
+      ]);
+
+      expect(repository.updatePaymentStatus).toHaveBeenCalledWith(
+        'order-1',
+        'PAID',
+        expect.anything(),
+      );
+      expect(result.paymentStatus).toBe('PAID');
+    });
   });
 
   describe('updateStatus', () => {
@@ -646,6 +722,25 @@ describe('OrdersService', () => {
         branchId,
       );
       expect(queue).toHaveLength(1);
+    });
+  });
+
+  describe('findActiveIdForTable', () => {
+    it('returns the id of the active order for that table', async () => {
+      repository.findActiveByTable.mockResolvedValue(makeOrderRow({ id: 'order-9' }));
+
+      const id = await service.findActiveIdForTable(businessId, branchId, '5');
+
+      expect(repository.findActiveByTable).toHaveBeenCalledWith(businessId, branchId, '5');
+      expect(id).toBe('order-9');
+    });
+
+    it('returns null when the table has no active order', async () => {
+      repository.findActiveByTable.mockResolvedValue(null);
+
+      const id = await service.findActiveIdForTable(businessId, branchId, '5');
+
+      expect(id).toBeNull();
     });
   });
 

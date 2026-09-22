@@ -22,6 +22,7 @@ import { SidesService } from '../../sides/services/sides.service';
 import {
   DailySales,
   Order,
+  OrderPaymentStatus,
   OrderRow,
   OrderStatus,
   OrderWithItems,
@@ -179,6 +180,20 @@ export class OrdersService {
     return this.ordersRepository.getActiveCount(businessId, branchId);
   }
 
+  /** Used by the public NFC ordering endpoint to decide create vs. addItems for a table. */
+  async findActiveIdForTable(
+    businessId: string,
+    branchId: string,
+    tableNumber: string,
+  ): Promise<string | null> {
+    const row = await this.ordersRepository.findActiveByTable(
+      businessId,
+      branchId,
+      tableNumber,
+    );
+    return row?.id ?? null;
+  }
+
   /** Orders left open from before the business's current local calendar day. */
   async getBacklog(businessId: string, branchId?: string): Promise<Order[]> {
     const timezone = await this.businessesService.getTimezone(businessId);
@@ -291,6 +306,8 @@ export class OrdersService {
       taxRate,
     );
 
+    let newPaymentStatus: OrderPaymentStatus = order.payment_status;
+
     await this.transactionService.execute(async (client) => {
       await this.ordersRepository.addItems(id, computedItems, client);
       await this.ordersRepository.updateTotals(
@@ -316,6 +333,20 @@ export class OrdersService {
           actorUserId,
         );
       }
+
+      // The new total can outgrow what was already paid (e.g. a fully PAID order
+      // that just got more items) — recompute payment_status against the new
+      // total instead of leaving a stale PAID/PARTIALLY_PAID status behind.
+      // Existing payments are never touched here, only re-evaluated against
+      // the new total.
+      const totalPaid = round2(await this.ordersRepository.getTotalPaid(id, client));
+      newPaymentStatus =
+        totalPaid <= 0
+          ? OrderPaymentStatus.PENDING
+          : totalPaid < totals.totalAmount
+            ? OrderPaymentStatus.PARTIALLY_PAID
+            : OrderPaymentStatus.PAID;
+      await this.ordersRepository.updatePaymentStatus(id, newPaymentStatus, client);
     });
 
     await this.auditService.record({
@@ -328,7 +359,11 @@ export class OrdersService {
       newValues: { itemCount: items.length, additionalSubtotal },
     });
 
-    return this.buildWithItems({ ...order, ...totalsToRow(totals) });
+    return this.buildWithItems({
+      ...order,
+      ...totalsToRow(totals),
+      payment_status: newPaymentStatus,
+    });
   }
 
   async replaceItems(

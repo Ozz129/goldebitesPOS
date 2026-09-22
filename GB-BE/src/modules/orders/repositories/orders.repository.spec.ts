@@ -83,6 +83,10 @@ describe('OrdersRepository (integration)', () => {
 
   afterAll(async () => {
     await pool.query(
+      'DELETE FROM payments WHERE order_id IN (SELECT id FROM orders WHERE business_id = $1)',
+      [businessId],
+    );
+    await pool.query(
       'DELETE FROM order_items WHERE order_id IN (SELECT id FROM orders WHERE business_id = $1)',
       [businessId],
     );
@@ -129,6 +133,26 @@ describe('OrdersRepository (integration)', () => {
     const [secondDate, secondSeq] = second.order_number.split('-');
     expect(secondDate).toBe(firstDate);
     expect(parseInt(secondSeq, 10)).toBe(parseInt(firstSeq, 10) + 1);
+  });
+
+  it('getTotalPaid() sums every payment registered against the order', async () => {
+    const order = await repository.create(
+      { businessId, branchId, orderType: OrderType.DINE_IN },
+      undefined,
+    );
+
+    const noPaymentsYet = await repository.getTotalPaid(order.id);
+    expect(noPaymentsYet).toBe(0);
+
+    await pool.query(`INSERT INTO payments (order_id, payment_method, amount) VALUES ($1, 'CASH', 30000)`, [
+      order.id,
+    ]);
+    await pool.query(`INSERT INTO payments (order_id, payment_method, amount) VALUES ($1, 'CARD', 20000)`, [
+      order.id,
+    ]);
+
+    const totalPaid = await repository.getTotalPaid(order.id);
+    expect(totalPaid).toBe(50000);
   });
 
   it('addItems() + findItems() persist decimal quantities correctly', async () => {
@@ -243,6 +267,33 @@ describe('OrdersRepository (integration)', () => {
 
     expect(ids).toContain(confirmed.id);
     expect(ids).not.toContain(pending.id);
+  });
+
+  it('findActiveByTable() finds the newest non-DELIVERED/CANCELLED DINE_IN order for that table, ignoring other tables/types/statuses', async () => {
+    const otherTable = await repository.create(
+      { businessId, branchId, orderType: OrderType.DINE_IN, tableNumber: '77' },
+      undefined,
+    );
+    const cancelled = await repository.create(
+      { businessId, branchId, orderType: OrderType.DINE_IN, tableNumber: '42' },
+      undefined,
+    );
+    await repository.setStatus(cancelled.id, businessId, OrderStatus.CANCELLED, 'cancelled_at');
+    const active = await repository.create(
+      { businessId, branchId, orderType: OrderType.DINE_IN, tableNumber: '42' },
+      undefined,
+    );
+
+    const found = await repository.findActiveByTable(businessId, branchId, '42');
+
+    expect(found?.id).toBe(active.id);
+    expect(found?.id).not.toBe(cancelled.id);
+    expect(found?.id).not.toBe(otherTable.id);
+  });
+
+  it('findActiveByTable() returns null when the table has no active order', async () => {
+    const found = await repository.findActiveByTable(businessId, branchId, 'no-such-table');
+    expect(found).toBeNull();
   });
 
   it('findAll() filters by createdBy', async () => {

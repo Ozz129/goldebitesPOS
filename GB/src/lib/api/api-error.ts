@@ -37,6 +37,8 @@ const KNOWN_MESSAGE_TRANSLATIONS: Record<string, string> = {
     'Tu cuenta no está activa. Contacta a tu administrador.',
   'Invalid or expired refresh token': 'Tu sesión expiró. Inicia sesión nuevamente.',
   'Current password is incorrect': 'La contraseña actual es incorrecta.',
+  'This submission is already being processed — try again shortly':
+    'Ya estamos procesando tu pedido — intenta de nuevo en un momento.',
 };
 
 function translateBackendMessage(message: string): string {

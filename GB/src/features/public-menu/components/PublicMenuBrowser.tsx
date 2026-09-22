@@ -6,11 +6,18 @@ import Badge from '@mui/material/Badge';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Divider from '@mui/material/Divider';
+import { useSnackbar } from 'notistack';
 import { ShoppingCart, UtensilsCrossed } from 'lucide-react';
 import LoadingSkeleton from '../../../components/common/LoadingSkeleton';
 import ErrorState from '../../../components/common/ErrorState';
+import StatusChip from '../../../components/common/StatusChip';
 import { usePublicMenu } from '../../../modules/public-menu/hooks/use-public-menu';
 import type { PublicMenuProduct } from '../../../modules/public-menu/types/public-menu.types';
+import { useSubmitNfcOrder } from '../../../modules/public-nfc-orders/hooks/use-submit-nfc-order';
+import type { PublicNfcOrder } from '../../../modules/public-nfc-orders/types/public-nfc-order.types';
+import { normalizeApiError } from '../../../lib/api/api-error';
+import { ORDER_STATUS_LABELS, ORDER_STATUS_TONE } from '../../../modules/orders/order-status';
+import type { OrderStatus } from '../../../modules/orders/types/order.types';
 import { formatCOP } from '../../../utils/format';
 import { brand } from '../../../theme/palette';
 import ProductDetailDialog from './ProductDetailDialog';
@@ -21,6 +28,9 @@ interface PublicMenuBrowserProps {
   businessId: string | undefined;
   /** Whether the generic "Menú" heading under the business name should render — off when a caller (e.g. the NFC page) already shows its own context header above this. */
   showMenuLabel?: boolean;
+  /** Present only from the NFC-scanned flow (/m/:token) — absent here means the generic preview, which never offers "Confirmar pedido". */
+  token?: string;
+  orderType?: 'DINE_IN' | 'TAKEAWAY';
 }
 
 /**
@@ -29,11 +39,45 @@ interface PublicMenuBrowserProps {
  * preview (`/menu/:businessId`, no branch/table context) and wrapped with a
  * fixed-table context header by the NFC gallo page (`/m/:token`).
  */
-export default function PublicMenuBrowser({ businessId, showMenuLabel = true }: PublicMenuBrowserProps) {
+export default function PublicMenuBrowser({
+  businessId,
+  showMenuLabel = true,
+  token,
+  orderType,
+}: PublicMenuBrowserProps) {
+  const { enqueueSnackbar } = useSnackbar();
   const { data: menu, isLoading, isError } = usePublicMenu(businessId);
   const [selectedProduct, setSelectedProduct] = useState<PublicMenuProduct | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
-  const { cart, addToCart, increment, decrement, remove, itemCount, total } = usePublicCart();
+  const [activeOrder, setActiveOrder] = useState<PublicNfcOrder | null>(null);
+  const { cart, addToCart, increment, decrement, remove, clear, itemCount, total, idempotencyKey } =
+    usePublicCart();
+  const submitOrder = useSubmitNfcOrder(token);
+
+  function handleSubmit() {
+    if (!token || !orderType) return;
+    submitOrder.mutate(
+      {
+        orderType,
+        idempotencyKey,
+        items: cart.map((line) => ({
+          productId: line.productId,
+          quantity: line.quantity,
+          sauceIds: line.sauceIds.length > 0 ? line.sauceIds : undefined,
+          sideIds: line.sideIds.length > 0 ? line.sideIds : undefined,
+        })),
+      },
+      {
+        onSuccess: (order) => {
+          setActiveOrder(order);
+          clear();
+          setCartOpen(false);
+          enqueueSnackbar(`Pedido #${order.orderNumber} confirmado`, { variant: 'success' });
+        },
+        onError: (error) => enqueueSnackbar(normalizeApiError(error).message, { variant: 'error' }),
+      },
+    );
+  }
 
   return (
     <Box sx={{ pb: 12 }}>
@@ -60,6 +104,33 @@ export default function PublicMenuBrowser({ businessId, showMenuLabel = true }: 
                 </Typography>
               )}
             </Stack>
+
+            {activeOrder && (
+              <Stack
+                direction="row"
+                spacing={1.5}
+                sx={{
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  mb: 4,
+                  p: 1.5,
+                  borderRadius: 2,
+                  border: '1px solid',
+                  borderColor: brand.gold,
+                }}
+              >
+                <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                  Pedido #{activeOrder.orderNumber}
+                </Typography>
+                <StatusChip
+                  label={ORDER_STATUS_LABELS[activeOrder.status as OrderStatus] ?? activeOrder.status}
+                  tone={ORDER_STATUS_TONE[activeOrder.status as OrderStatus]}
+                />
+                <Typography variant="body2" sx={{ fontWeight: 800 }}>
+                  {formatCOP(activeOrder.totalAmount)}
+                </Typography>
+              </Stack>
+            )}
 
             {menu.categories.length === 0 && (
               <Typography variant="body1" color="text.secondary" sx={{ textAlign: 'center' }}>
@@ -181,6 +252,8 @@ export default function PublicMenuBrowser({ businessId, showMenuLabel = true }: 
         onDecrement={decrement}
         onRemove={remove}
         onClose={() => setCartOpen(false)}
+        onSubmit={token && orderType ? handleSubmit : undefined}
+        submitting={submitOrder.isPending}
       />
     </Box>
   );

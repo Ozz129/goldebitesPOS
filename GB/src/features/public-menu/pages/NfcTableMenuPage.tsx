@@ -73,7 +73,14 @@ export default function NfcTableMenuPage() {
         )}
       </Box>
 
-      {resolved && <PublicMenuBrowser businessId={resolved.businessId} showMenuLabel={false} />}
+      {resolved && (
+        <PublicMenuBrowser
+          businessId={resolved.businessId}
+          showMenuLabel={false}
+          token={token}
+          orderType={orderType}
+        />
+      )}
     </Box>
   );
 }

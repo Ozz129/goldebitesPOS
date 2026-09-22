@@ -1,4 +1,5 @@
 import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
 import Drawer from '@mui/material/Drawer';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
@@ -19,6 +20,9 @@ interface PublicCartDrawerProps {
   onDecrement: (id: string) => void;
   onRemove: (id: string) => void;
   onClose: () => void;
+  /** Absent (e.g. the generic /menu/:businessId preview, no NFC context) hides the confirm button entirely. */
+  onSubmit?: () => void;
+  submitting?: boolean;
 }
 
 /** Customization is decided in ProductDetailDialog — this view only edits quantity or removes a line, never re-opens the sauce/side choice. */
@@ -32,6 +36,8 @@ export default function PublicCartDrawer({
   onDecrement,
   onRemove,
   onClose,
+  onSubmit,
+  submitting,
 }: PublicCartDrawerProps) {
   const nameOf = (options: PublicMenuOption[], id: string) => options.find((o) => o.id === id)?.name ?? id;
 
@@ -109,7 +115,7 @@ export default function PublicCartDrawer({
 
         <Divider sx={{ borderBottomWidth: 2 }} />
         <Box sx={{ p: 2 }}>
-          <Stack direction="row" sx={{ justifyContent: 'space-between' }}>
+          <Stack direction="row" sx={{ justifyContent: 'space-between', mb: onSubmit ? 1.5 : 0 }}>
             <Typography variant="h6" sx={{ fontWeight: 700 }}>
               Total
             </Typography>
@@ -117,6 +123,19 @@ export default function PublicCartDrawer({
               {formatCOP(total)}
             </Typography>
           </Stack>
+          {onSubmit && (
+            <Button
+              variant="contained"
+              fullWidth
+              size="large"
+              disabled={cart.length === 0 || submitting}
+              loading={submitting}
+              onClick={onSubmit}
+              sx={{ py: 1.5, fontSize: '1rem', fontWeight: 700 }}
+            >
+              Confirmar pedido
+            </Button>
+          )}
         </Box>
       </Stack>
     </Drawer>

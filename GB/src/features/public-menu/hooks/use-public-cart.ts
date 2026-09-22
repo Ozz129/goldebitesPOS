@@ -39,6 +39,9 @@ export interface CartSelection {
 
 export function usePublicCart() {
   const [cart, setCart] = useState<PublicCartLine[]>([]);
+  // One key per submission attempt: stable across retries of the same cart, rotated in clear()
+  // so the next (genuinely new) submission after a success never reuses a spent key.
+  const [idempotencyKey, setIdempotencyKey] = useState(() => crypto.randomUUID());
 
   function addToCart(product: PublicMenuProduct, selection: CartSelection) {
     setCart((prev) => {
@@ -88,10 +91,11 @@ export function usePublicCart() {
 
   function clear() {
     setCart([]);
+    setIdempotencyKey(crypto.randomUUID());
   }
 
   const itemCount = cart.reduce((sum, line) => sum + line.quantity, 0);
   const total = cart.reduce((sum, line) => sum + line.unitPrice * line.quantity, 0);
 
-  return { cart, addToCart, increment, decrement, remove, clear, itemCount, total };
+  return { cart, addToCart, increment, decrement, remove, clear, itemCount, total, idempotencyKey };
 }

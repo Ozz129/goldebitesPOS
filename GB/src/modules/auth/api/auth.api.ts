@@ -1,6 +1,11 @@
 import { apiClient } from '../../../lib/api/api-client';
 import type { ApiResponse } from '../../../lib/api/api-types';
-import type { CurrentUserProfile, LoginPayload, LoginResponseData } from '../types/auth.types';
+import type {
+  ChangePasswordPayload,
+  CurrentUserProfile,
+  LoginPayload,
+  LoginResponseData,
+} from '../types/auth.types';
 
 export const authApi = {
   async login(payload: LoginPayload): Promise<LoginResponseData> {
@@ -15,5 +20,9 @@ export const authApi = {
   async getCurrentUser(): Promise<CurrentUserProfile> {
     const { data } = await apiClient.get<ApiResponse<CurrentUserProfile>>('/users/me');
     return data.data;
+  },
+
+  async changePassword(payload: ChangePasswordPayload): Promise<void> {
+    await apiClient.post('/auth/change-password', payload);
   },
 };

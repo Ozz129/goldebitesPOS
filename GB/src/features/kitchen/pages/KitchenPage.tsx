@@ -13,10 +13,12 @@ import FilterBar from '../../../components/common/FilterBar';
 import EmptyState from '../../../components/common/EmptyState';
 import ErrorState from '../../../components/common/ErrorState';
 import LoadingSkeleton from '../../../components/common/LoadingSkeleton';
+import { useAuthStore } from '../../../modules/auth/store/auth.store';
 import { useKitchenQueue } from '../../../modules/kitchen/hooks/use-kitchen-queue';
 import { useUpdateKitchenStatus } from '../../../modules/kitchen/hooks/use-update-kitchen-status';
 import { normalizeApiError } from '../../../lib/api/api-error';
 import { isOrderDelayed, ORDER_STATUS_LABELS } from '../../../modules/orders/order-status';
+import { useTableNameMap } from '../../../modules/table-names/hooks/use-table-name-map';
 import type { Order } from '../../../modules/orders/types/order.types';
 import KitchenOrderCard from '../components/KitchenOrderCard';
 
@@ -25,6 +27,8 @@ export default function KitchenPage() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [sortOrder, setSortOrder] = useState<'antiguos' | 'recientes'>('antiguos');
+  const branchId = useAuthStore((s) => s.user?.branchId);
+  const tableNames = useTableNameMap(branchId);
 
   const { data: queue, isLoading, isError, refetch } = useKitchenQueue();
   const updateStatus = useUpdateKitchenStatus();
@@ -121,6 +125,7 @@ export default function KitchenPage() {
                 order={order}
                 onStartPreparation={(o) => handleStatusChange(o, 'PREPARING')}
                 onMarkReady={(o) => handleStatusChange(o, 'READY')}
+                tableNames={tableNames}
               />
             </Grid>
           ))}

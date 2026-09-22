@@ -9,7 +9,7 @@ export function useGenerateEmployeeCredentials() {
   return useMutation({
     mutationFn: ({ id, payload }: { id: string; payload: GenerateEmployeeCredentialsPayload }) =>
       employeesApi.generateCredentials(id, payload),
-    onSuccess: ({ employee }) => {
+    onSuccess: (employee) => {
       queryClient.invalidateQueries({ queryKey: employeeKeys.lists() });
       queryClient.invalidateQueries({ queryKey: employeeKeys.detail(employee.id) });
     },

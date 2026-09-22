@@ -21,6 +21,7 @@ import { useUpdateOrderStatus } from '../../../modules/orders/hooks/use-update-o
 import { useCartLines } from '../../../modules/orders/hooks/use-cart-lines';
 import { useOccupiedTables } from '../../../modules/orders/hooks/use-occupied-tables';
 import { getOrderIdentifierLabel } from '../../../modules/orders/order-status';
+import { useTableNameMap } from '../../../modules/table-names/hooks/use-table-name-map';
 import { normalizeApiError } from '../../../lib/api/api-error';
 import { useNotificationsStore } from '../../../store/notificationsStore';
 import type { Order, OrderStatus, OrderType } from '../../../modules/orders/types/order.types';
@@ -41,6 +42,7 @@ export default function WaiterKioskPage() {
   const branchId = useAuthStore((s) => s.user?.branchId);
   const { data: branch } = useBranch(branchId);
   const occupiedTables = useOccupiedTables(branchId);
+  const tableNames = useTableNameMap(branchId);
   const logout = useLogout();
   const addNotification = useNotificationsStore((s) => s.addNotification);
 
@@ -90,7 +92,7 @@ export default function WaiterKioskPage() {
     for (const order of orders) {
       const prev = previousStatuses.current.get(order.id);
       if (prev && prev !== 'READY' && order.status === 'READY') {
-        enqueueSnackbar(`¡Pedido #${order.orderNumber} listo! ${getOrderIdentifierLabel(order)}`, {
+        enqueueSnackbar(`¡Pedido #${order.orderNumber} listo! ${getOrderIdentifierLabel(order, tableNames)}`, {
           variant: 'success',
           persist: true,
           // Ancla arriba (no abajo, el default) para no tapar el botón "Marcar
@@ -106,13 +108,13 @@ export default function WaiterKioskPage() {
         });
         addNotification({
           title: 'Pedido listo',
-          message: `#${order.orderNumber} — ${getOrderIdentifierLabel(order)}`,
+          message: `#${order.orderNumber} — ${getOrderIdentifierLabel(order, tableNames)}`,
           level: 'success',
         });
       }
     }
     previousStatuses.current = new Map(orders.map((order) => [order.id, order.status]));
-  }, [orders, enqueueSnackbar, closeSnackbar, addNotification]);
+  }, [orders, tableNames, enqueueSnackbar, closeSnackbar, addNotification]);
 
   function startNewOrder() {
     clear();
@@ -335,6 +337,7 @@ export default function WaiterKioskPage() {
           <Box sx={{ flex: 1, overflowY: 'auto' }}>
             <WaiterOrderList
               orders={orders}
+              tableNames={tableNames}
               onSelect={(order: Order) => {
                 setMyOrdersOpen(false);
                 setSelectedOrderId(order.id);
@@ -344,7 +347,11 @@ export default function WaiterKioskPage() {
         </Box>
       </Drawer>
 
-      <WaiterOrderDetailDrawer orderId={selectedOrderId} onClose={() => setSelectedOrderId(null)} />
+      <WaiterOrderDetailDrawer
+        orderId={selectedOrderId}
+        tableNames={tableNames}
+        onClose={() => setSelectedOrderId(null)}
+      />
     </Box>
   );
 }

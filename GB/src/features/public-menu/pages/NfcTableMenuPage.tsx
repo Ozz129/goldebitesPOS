@@ -62,7 +62,7 @@ export default function NfcTableMenuPage() {
             {orderType === 'DINE_IN' ? (
               <Chip
                 icon={<MapPin size={16} />}
-                label={`Mesa ${resolved.tableNumber}`}
+                label={resolved.tableName ?? `Mesa ${resolved.tableNumber}`}
                 color="primary"
                 sx={{ fontWeight: 700 }}
               />

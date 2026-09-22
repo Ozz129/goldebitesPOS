@@ -11,4 +11,5 @@ export interface AuthenticatedUser {
   permissions: string[];
   isPlatformAdmin: boolean;
   enabledFeatures: string[];
+  mustChangePassword: boolean;
 }

@@ -22,6 +22,7 @@ function createUser(enabledFeatures: string[]): AuthenticatedUser {
     permissions: [],
     isPlatformAdmin: false,
     enabledFeatures,
+    mustChangePassword: false,
   };
 }
 

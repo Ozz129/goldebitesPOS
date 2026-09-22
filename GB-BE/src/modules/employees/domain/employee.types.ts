@@ -20,7 +20,8 @@ export interface ShiftInput {
 export interface CreateEmployeeData {
   businessId: string;
   branchId?: string;
-  roleId?: string;
+  /** Required — also becomes the auto-created login account's role. */
+  roleId: string;
   firstName: string;
   lastName: string;
   phone?: string;

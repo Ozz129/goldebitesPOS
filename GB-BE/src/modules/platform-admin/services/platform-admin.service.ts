@@ -115,7 +115,7 @@ export class PlatformAdminService {
   ): Promise<{ temporaryPassword: string }> {
     const user = await this.usersService.findOne(businessId, userId);
     const temporaryPassword = generateTemporaryPassword();
-    await this.usersService.setPasswordHash(user.id, temporaryPassword);
+    await this.usersService.setPasswordHash(user.id, temporaryPassword, true);
 
     await this.auditService.record({
       businessId,

@@ -16,6 +16,7 @@ import {
   ORDER_STATUS_LABELS,
   ORDER_STATUS_TONE,
   ORDER_TYPE_LABELS,
+  getOrderIdentifierLabel,
   isOrderDelayed,
 } from '../../../modules/orders/order-status';
 import type { Order } from '../../../modules/orders/types/order.types';
@@ -25,12 +26,13 @@ interface SwipeableTicketCardProps {
   order: Order;
   onSuccess: (order: Order, status: 'PREPARING' | 'READY') => void;
   onError: (error: unknown) => void;
+  tableNames?: Record<string, string>;
 }
 
 const SWIPE_THRESHOLD_PX = 120;
 const SWIPE_MAX_PX = 160;
 
-export default function SwipeableTicketCard({ order, onSuccess, onError }: SwipeableTicketCardProps) {
+export default function SwipeableTicketCard({ order, onSuccess, onError, tableNames }: SwipeableTicketCardProps) {
   const delayed = isOrderDelayed(order.status, order.createdAt);
   const { data: fullOrder } = useOrder(order.id);
   const items = fullOrder?.items ?? [];
@@ -122,7 +124,7 @@ export default function SwipeableTicketCard({ order, onSuccess, onError }: Swipe
 
           {order.tableNumber && (
             <Typography variant="body2" color="text.secondary">
-              {order.orderType === 'CAR_SERVICE' ? 'Vehículo' : 'Mesa'} {order.tableNumber}
+              {getOrderIdentifierLabel(order, tableNames)}
             </Typography>
           )}
 

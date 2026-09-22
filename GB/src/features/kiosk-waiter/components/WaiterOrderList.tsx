@@ -16,6 +16,7 @@ import type { Order } from '../../../modules/orders/types/order.types';
 interface WaiterOrderListProps {
   orders: Order[];
   onSelect: (order: Order) => void;
+  tableNames?: Record<string, string>;
 }
 
 const pulse = keyframes`
@@ -23,7 +24,7 @@ const pulse = keyframes`
   50% { background-color: rgba(76, 175, 109, 0.18); }
 `;
 
-export default function WaiterOrderList({ orders, onSelect }: WaiterOrderListProps) {
+export default function WaiterOrderList({ orders, onSelect, tableNames }: WaiterOrderListProps) {
   if (orders.length === 0) {
     return (
       <Typography variant="body2" color="text.secondary" sx={{ px: 2, py: 2 }}>
@@ -53,7 +54,7 @@ export default function WaiterOrderList({ orders, onSelect }: WaiterOrderListPro
         >
           <Box sx={{ minWidth: 0 }}>
             <Typography variant="body1" sx={{ fontWeight: 700 }} noWrap>
-              #{order.orderNumber} · {getOrderIdentifierLabel(order)}
+              #{order.orderNumber} · {getOrderIdentifierLabel(order, tableNames)}
             </Typography>
             <OrderTimer createdAt={order.createdAt} />
           </Box>

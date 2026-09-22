@@ -34,6 +34,7 @@ export interface IEmployeesRepository {
     id: string,
     businessId: string,
     userId: string,
+    client?: DbClient,
   ): Promise<EmployeeRow | null>;
   findShifts(
     employeeId: string,

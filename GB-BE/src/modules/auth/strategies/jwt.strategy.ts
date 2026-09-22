@@ -27,6 +27,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       permissions: payload.permissions,
       isPlatformAdmin: payload.isPlatformAdmin,
       enabledFeatures: payload.enabledFeatures,
+      mustChangePassword: payload.mustChangePassword,
     };
   }
 }

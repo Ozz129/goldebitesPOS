@@ -40,6 +40,7 @@ describe('UsersService', () => {
       phone: null,
       status: UserStatus.ACTIVE,
       is_platform_admin: false,
+      must_change_password: false,
       last_login_at: null,
       created_at: new Date(),
       updated_at: new Date(),
@@ -178,6 +179,45 @@ describe('UsersService', () => {
 
       expect(auditService.record).toHaveBeenCalledWith(
         expect.objectContaining({ action: 'DELETE', entityId: 'user-1' }),
+      );
+    });
+  });
+
+  describe('generateUniqueLoginEmail', () => {
+    it('returns the base handle with "1" when nothing is taken yet', async () => {
+      usersRepository.existsByEmailInBusiness.mockResolvedValue(false);
+
+      const email = await service.generateUniqueLoginEmail(
+        businessId,
+        'Juan',
+        'Perez',
+      );
+
+      expect(email).toBe('jupe1@personal.local');
+    });
+
+    it('increments the number until it finds one that is free', async () => {
+      usersRepository.existsByEmailInBusiness.mockImplementation(
+        (_businessId: string, email: string) =>
+          Promise.resolve(
+            email === 'jupe1@personal.local' || email === 'jupe2@personal.local',
+          ),
+      );
+
+      const email = await service.generateUniqueLoginEmail(
+        businessId,
+        'Juan',
+        'Perez',
+      );
+
+      expect(email).toBe('jupe3@personal.local');
+      expect(usersRepository.existsByEmailInBusiness).toHaveBeenCalledWith(
+        businessId,
+        'jupe1@personal.local',
+      );
+      expect(usersRepository.existsByEmailInBusiness).toHaveBeenCalledWith(
+        businessId,
+        'jupe3@personal.local',
       );
     });
   });

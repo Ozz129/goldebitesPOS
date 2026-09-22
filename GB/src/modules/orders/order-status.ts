@@ -88,9 +88,20 @@ export function isOrderDelayed(status: OrderStatus, createdAt: string): boolean 
   return getElapsedMinutes(createdAt) > ORDER_SLA_MINUTES;
 }
 
-/** "Mesa 5"/"Vehículo ABC-123" when there's a physical spot to name, otherwise the order type label (e.g. "Domicilio"). */
-export function getOrderIdentifierLabel(order: Pick<Order, 'orderType' | 'tableNumber'>): string {
-  if (order.orderType === 'DINE_IN') return `Mesa ${order.tableNumber ?? '—'}`;
+/**
+ * "Terraza"/"Mesa 5"/"Vehículo ABC-123" when there's a physical spot to name, otherwise the
+ * order type label (e.g. "Domicilio"). `tableNames` is the {tableNumber: name} map from
+ * useTableNameMap() — only DINE_IN tables can have a custom name; CAR_SERVICE reuses
+ * tableNumber for a vehicle plate, never looked up here.
+ */
+export function getOrderIdentifierLabel(
+  order: Pick<Order, 'orderType' | 'tableNumber'>,
+  tableNames?: Record<string, string>,
+): string {
+  if (order.orderType === 'DINE_IN') {
+    const customName = order.tableNumber ? tableNames?.[order.tableNumber] : undefined;
+    return customName ?? `Mesa ${order.tableNumber ?? '—'}`;
+  }
   if (order.orderType === 'CAR_SERVICE') return `Vehículo ${order.tableNumber ?? '—'}`;
   return ORDER_TYPE_LABELS[order.orderType];
 }

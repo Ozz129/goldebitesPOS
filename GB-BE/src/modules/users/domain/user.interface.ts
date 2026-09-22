@@ -29,6 +29,7 @@ export interface UserRow {
   phone: string | null;
   status: UserStatus;
   is_platform_admin: boolean;
+  must_change_password: boolean;
   last_login_at: Date | null;
   created_at: Date;
   updated_at: Date;

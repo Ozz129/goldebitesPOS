@@ -9,6 +9,7 @@ import { DatabaseModule } from './database/database.module';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import { FeaturesGuard } from './common/guards/features.guard';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
+import { MustChangePasswordGuard } from './common/guards/must-change-password.guard';
 import { PermissionsGuard } from './common/guards/permissions.guard';
 import { PlatformAdminGuard } from './common/guards/platform-admin.guard';
 import { RolesGuard } from './common/guards/roles.guard';
@@ -32,6 +33,7 @@ import { FinancesModule } from './modules/finances/finances.module';
 import { FundsModule } from './modules/funds/funds.module';
 import { GoodsReceiptsModule } from './modules/goods-receipts/goods-receipts.module';
 import { HealthModule } from './modules/health/health.module';
+import { HrModule } from './modules/hr/hr.module';
 import { InventoryCountsModule } from './modules/inventory-counts/inventory-counts.module';
 import { InventoryItemCategoriesModule } from './modules/inventory-item-categories/inventory-item-categories.module';
 import { InventoryItemsModule } from './modules/inventory-items/inventory-items.module';
@@ -58,6 +60,7 @@ import { SaucesModule } from './modules/sauces/sauces.module';
 import { SettingsModule } from './modules/settings/settings.module';
 import { SidesModule } from './modules/sides/sides.module';
 import { SuppliersModule } from './modules/suppliers/suppliers.module';
+import { TableNamesModule } from './modules/table-names/table-names.module';
 import { TabletKioskModule } from './modules/tablet-kiosk/tablet-kiosk.module';
 import { UsersModule } from './modules/users/users.module';
 import { WasteModule } from './modules/waste/waste.module';
@@ -89,6 +92,7 @@ import { WasteModule } from './modules/waste/waste.module';
     SaucesModule,
     SidesModule,
     SuppliersModule,
+    TableNamesModule,
     InventoryItemCategoriesModule,
     InventoryItemsModule,
     RecipesModule,
@@ -108,6 +112,7 @@ import { WasteModule } from './modules/waste/waste.module';
     DashboardModule,
     AnalyticsModule,
     EmployeesModule,
+    HrModule,
     ChecklistsModule,
     MaintenanceModule,
     LoyaltyModule,
@@ -126,6 +131,7 @@ import { WasteModule } from './modules/waste/waste.module';
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_GUARD, useClass: MustChangePasswordGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
     { provide: APP_GUARD, useClass: PermissionsGuard },
     { provide: APP_GUARD, useClass: FeaturesGuard },

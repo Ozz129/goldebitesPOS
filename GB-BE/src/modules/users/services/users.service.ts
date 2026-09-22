@@ -7,6 +7,7 @@ import {
 import { DbClient } from '../../../database/types/database.types';
 import { PaginatedResult } from '../../../common/pagination/paginated-result.interface';
 import { buildPaginationMeta } from '../../../common/pagination/pagination.util';
+import { buildLoginHandleBase } from '../../../common/utils/generate-login-handle.util';
 import { AuditService } from '../../audit/services/audit.service';
 import { BranchesService } from '../../branches/services/branches.service';
 import { RolesService } from '../../roles/services/roles.service';
@@ -22,6 +23,8 @@ import { USERS_REPOSITORY } from '../repositories/users.repository.interface';
 import type { IUsersRepository } from '../repositories/users.repository.interface';
 
 const BCRYPT_ROUNDS = 10;
+const LOGIN_HANDLE_DOMAIN = 'personal.local';
+const LOGIN_HANDLE_MAX_ATTEMPTS = 9999;
 
 @Injectable()
 export class UsersService {
@@ -39,6 +42,7 @@ export class UsersService {
       password: string;
     },
     actorUserId?: string,
+    client?: DbClient,
   ): Promise<User> {
     await this.assertRoleOwnedByBusiness(businessId, data.roleId);
     if (data.branchId) {
@@ -57,26 +61,33 @@ export class UsersService {
     }
 
     const passwordHash = await this.hashPassword(data.password);
-    const row = await this.usersRepository.create({
-      businessId,
-      branchId: data.branchId,
-      roleId: data.roleId,
-      firstName: data.firstName,
-      lastName: data.lastName,
-      email: data.email,
-      passwordHash,
-      phone: data.phone,
-    });
+    const row = await this.usersRepository.create(
+      {
+        businessId,
+        branchId: data.branchId,
+        roleId: data.roleId,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        passwordHash,
+        phone: data.phone,
+        mustChangePassword: data.mustChangePassword,
+      },
+      client,
+    );
 
-    await this.auditService.record({
-      businessId,
-      branchId: row.branch_id,
-      userId: actorUserId,
-      entityType: 'user',
-      entityId: row.id,
-      action: 'CREATE',
-      newValues: { email: row.email, roleId: row.role_id },
-    });
+    await this.auditService.record(
+      {
+        businessId,
+        branchId: row.branch_id,
+        userId: actorUserId,
+        entityType: 'user',
+        entityId: row.id,
+        action: 'CREATE',
+        newValues: { email: row.email, roleId: row.role_id },
+      },
+      client,
+    );
 
     return UserMapper.toDomain(row);
   }
@@ -198,10 +209,44 @@ export class UsersService {
   async setPasswordHash(
     userId: string,
     plainPassword: string,
+    mustChangePassword: boolean,
     client?: DbClient,
   ): Promise<void> {
     const passwordHash = await this.hashPassword(plainPassword);
-    await this.usersRepository.updatePasswordHash(userId, passwordHash, client);
+    await this.usersRepository.updatePasswordHash(
+      userId,
+      passwordHash,
+      mustChangePassword,
+      client,
+    );
+  }
+
+  /**
+   * Builds a login handle from the employee's name (e.g. "Juan"+"Pérez" ->
+   * "jupe1@personal.local"), appending the first available disambiguating
+   * number scoped to this business. Used for auto-provisioned employee
+   * accounts, where there's no real email to log in with.
+   */
+  async generateUniqueLoginEmail(
+    businessId: string,
+    firstName: string,
+    lastName: string,
+  ): Promise<string> {
+    const base = buildLoginHandleBase(firstName, lastName);
+    for (let n = 1; n <= LOGIN_HANDLE_MAX_ATTEMPTS; n++) {
+      const candidate = `${base}${n}@${LOGIN_HANDLE_DOMAIN}`;
+      const taken = await this.usersRepository.existsByEmailInBusiness(
+        businessId,
+        candidate,
+      );
+      if (!taken) {
+        return candidate;
+      }
+    }
+    throw new ConflictException(
+      `Could not generate a unique login for "${firstName} ${lastName}"`,
+      'LOGIN_HANDLE_EXHAUSTED',
+    );
   }
 
   async touchLastLogin(userId: string, client?: DbClient): Promise<void> {

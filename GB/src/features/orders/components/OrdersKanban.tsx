@@ -14,6 +14,7 @@ import {
   ORDER_TYPE_LABELS,
   PAYMENT_STATUS_LABELS,
   PAYMENT_STATUS_TONE,
+  getOrderIdentifierLabel,
   nextStatusFor,
 } from '../../../modules/orders/order-status';
 import type { Order, OrderStatus } from '../../../modules/orders/types/order.types';
@@ -24,9 +25,16 @@ interface OrdersKanbanProps {
   onSelect: (order: Order) => void;
   onAdvance: (order: Order) => void;
   customerName: (order: Order) => string;
+  tableNames?: Record<string, string>;
 }
 
-export default function OrdersKanban({ orders, onSelect, onAdvance, customerName }: OrdersKanbanProps) {
+export default function OrdersKanban({
+  orders,
+  onSelect,
+  onAdvance,
+  customerName,
+  tableNames,
+}: OrdersKanbanProps) {
   const columns = ORDER_STATUS_SEQUENCE;
 
   return (
@@ -53,7 +61,7 @@ export default function OrdersKanban({ orders, onSelect, onAdvance, customerName
                         #{order.orderNumber}
                         {order.tableNumber && (
                           <Typography component="span" variant="caption" color="text.secondary" sx={{ ml: 0.75 }}>
-                            {order.orderType === 'CAR_SERVICE' ? 'Vehículo' : 'Mesa'} {order.tableNumber}
+                            {getOrderIdentifierLabel(order, tableNames)}
                           </Typography>
                         )}
                       </Typography>

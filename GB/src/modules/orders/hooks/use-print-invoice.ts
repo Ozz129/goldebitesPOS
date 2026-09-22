@@ -1,5 +1,7 @@
+import { useAuthStore } from '../../auth/store/auth.store';
 import { useCurrentBusiness } from '../../businesses/hooks/use-current-business';
 import { useBusinessLogo } from '../../businesses/hooks/use-business-logo';
+import { useTableNameMap } from '../../table-names/hooks/use-table-name-map';
 import { ordersApi } from '../api/orders.api';
 import { printInvoice } from '../utils/print-invoice';
 import type { OrderWithItems } from '../types/order.types';
@@ -8,12 +10,15 @@ import type { Payment } from '../types/payment.types';
 export function usePrintInvoice() {
   const { data: business } = useCurrentBusiness();
   const { data: logo } = useBusinessLogo();
+  const branchId = useAuthStore((s) => s.user?.branchId);
+  const tableNames = useTableNameMap(branchId);
   const options = {
     businessName: business?.name,
     businessLogo: logo,
     legalName: business?.legalName,
     taxId: business?.taxId,
     phone: business?.phone,
+    tableNames,
   };
 
   return {

@@ -181,13 +181,16 @@ describe('UsersRepository (integration)', () => {
       lastName: 'Lovelace',
       email: uniqueEmail(),
       passwordHash: 'old-hash',
+      mustChangePassword: true,
     });
+    expect(created.must_change_password).toBe(true);
 
-    await repository.updatePasswordHash(created.id, 'new-hash');
+    await repository.updatePasswordHash(created.id, 'new-hash', false);
     await repository.updateLastLoginAt(created.id);
 
     const updated = await repository.findById(created.id, businessId);
     expect(updated?.password_hash).toBe('new-hash');
+    expect(updated?.must_change_password).toBe(false);
     expect(updated?.last_login_at).not.toBeNull();
   });
 });

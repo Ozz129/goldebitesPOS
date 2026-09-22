@@ -16,6 +16,7 @@ import { CREDENTIALS_STATUS_LABELS, CREDENTIALS_STATUS_TONE } from '../../../mod
 import type { EmployeeWithShifts } from '../../../modules/employees/types/employee.types';
 import GenerateCredentialsDialog from './GenerateCredentialsDialog';
 import CredentialsRevealDialog from './CredentialsRevealDialog';
+import NewAccountInfoDialog from './NewAccountInfoDialog';
 
 interface EmployeeCredentialsSectionProps {
   employee: EmployeeWithShifts;
@@ -25,6 +26,7 @@ export default function EmployeeCredentialsSection({ employee }: EmployeeCredent
   const { enqueueSnackbar } = useSnackbar();
   const [generateOpen, setGenerateOpen] = useState(false);
   const [confirmingResetOrBlock, setConfirmingResetOrBlock] = useState<'reset' | 'toggle' | null>(null);
+  const [newAccountEmail, setNewAccountEmail] = useState<string | null>(null);
   const [reveal, setReveal] = useState<{ email: string; password: string } | null>(null);
 
   const generateCredentials = useGenerateEmployeeCredentials();
@@ -33,13 +35,15 @@ export default function EmployeeCredentialsSection({ employee }: EmployeeCredent
 
   const account = employee.userAccount;
 
-  const handleGenerate = (values: { email: string; roleId: string }) => {
+  const handleGenerate = (values: { roleId: string }) => {
     generateCredentials.mutate(
       { id: employee.id, payload: values },
       {
-        onSuccess: ({ employee: updated, temporaryPassword }) => {
+        onSuccess: (updated) => {
           setGenerateOpen(false);
-          setReveal({ email: updated.userAccount?.email ?? values.email, password: temporaryPassword });
+          if (updated.userAccount) {
+            setNewAccountEmail(updated.userAccount.email);
+          }
           enqueueSnackbar('Acceso generado correctamente', { variant: 'success' });
         },
         onError: (error) => enqueueSnackbar(normalizeApiError(error).message, { variant: 'error' }),
@@ -134,7 +138,7 @@ export default function EmployeeCredentialsSection({ employee }: EmployeeCredent
       <GenerateCredentialsDialog
         open={generateOpen}
         loading={generateCredentials.isPending}
-        defaultEmail={employee.email}
+        defaultRoleId={employee.roleId}
         onClose={() => setGenerateOpen(false)}
         onSubmit={handleGenerate}
       />
@@ -169,6 +173,12 @@ export default function EmployeeCredentialsSection({ employee }: EmployeeCredent
         email={reveal?.email}
         temporaryPassword={reveal?.password ?? null}
         onClose={() => setReveal(null)}
+      />
+
+      <NewAccountInfoDialog
+        open={Boolean(newAccountEmail)}
+        email={newAccountEmail}
+        onClose={() => setNewAccountEmail(null)}
       />
     </Box>
   );

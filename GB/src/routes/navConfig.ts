@@ -12,6 +12,7 @@ import {
   Gift,
   Landmark,
   UserCog,
+  HeartHandshake,
   ListChecks,
   Trash2,
   Wrench,
@@ -38,6 +39,7 @@ export const MODULE_PATHS = {
   loyalty: '/fidelizacion',
   finances: '/finanzas',
   employees: '/personal',
+  hr: '/recursos-humanos',
   checklists: '/checklists',
   waste: '/mermas',
   maintenance: '/mantenimiento',
@@ -71,6 +73,7 @@ export const MODULE_PERMISSIONS: Record<ModuleKey, string | string[]> = {
   loyalty: 'loyalty.read',
   finances: 'finances.read',
   employees: 'employees.read',
+  hr: 'hr.manage',
   checklists: 'checklists.read',
   waste: 'inventory.read',
   maintenance: 'maintenance.read',
@@ -154,6 +157,13 @@ export const NAV_ENTRIES: NavEntry[] = [
     items: [
       { kind: 'item', module: 'finances', label: 'Finanzas', path: MODULE_PATHS.finances, icon: Landmark },
       { kind: 'item', module: 'employees', label: 'Personal', path: MODULE_PATHS.employees, icon: UserCog },
+      {
+        kind: 'item',
+        module: 'hr',
+        label: 'Recursos Humanos',
+        path: MODULE_PATHS.hr,
+        icon: HeartHandshake,
+      },
       {
         kind: 'item',
         module: 'analytics',

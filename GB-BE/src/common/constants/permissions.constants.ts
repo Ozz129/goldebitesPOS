@@ -176,6 +176,17 @@ export const PERMISSIONS: PermissionDefinition[] = [
   },
 
   {
+    code: 'hr.read',
+    module: 'hr',
+    description: 'Ver la descripción de mi rol y las normas de mi sede',
+  },
+  {
+    code: 'hr.manage',
+    module: 'hr',
+    description: 'Configurar normas de RH por sede',
+  },
+
+  {
     code: 'checklists.read',
     module: 'checklists',
     description: 'Ver plantillas y ejecuciones de checklists',
@@ -300,6 +311,8 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<SystemRoleName, string[]> = {
     'analytics.read',
     'employees.read',
     'employees.manage',
+    'hr.read',
+    'hr.manage',
     'checklists.read',
     'checklists.manage',
     'checklists.execute',
@@ -327,6 +340,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<SystemRoleName, string[]> = {
     'cash.open',
     'cash.close',
     'cash.withdraw',
+    'hr.read',
     'checklists.read',
     'checklists.execute',
     'loyalty.read',
@@ -336,6 +350,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<SystemRoleName, string[]> = {
     'orders.read',
     'kitchen.read',
     'kitchen.update_status',
+    'hr.read',
     'checklists.read',
     'checklists.execute',
   ],
@@ -353,6 +368,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<SystemRoleName, string[]> = {
     'purchases.receive',
     'maintenance.read',
     'maintenance.manage',
+    'hr.read',
     'checklists.read',
     'checklists.execute',
   ],
@@ -360,6 +376,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<SystemRoleName, string[]> = {
     'dashboard.read',
     'orders.read',
     'products.read',
+    'hr.read',
     'checklists.read',
     'checklists.execute',
   ],

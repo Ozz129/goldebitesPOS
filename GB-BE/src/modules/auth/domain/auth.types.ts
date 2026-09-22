@@ -7,6 +7,7 @@ export interface JwtPayload {
   permissions: string[];
   isPlatformAdmin: boolean;
   enabledFeatures: string[];
+  mustChangePassword: boolean;
 }
 
 export interface AuthTokens {
@@ -24,4 +25,5 @@ export interface AuthenticatedProfile {
   firstName: string;
   lastName: string;
   email: string;
+  mustChangePassword: boolean;
 }

@@ -14,6 +14,7 @@ import {
   ORDER_STATUS_LABELS,
   ORDER_STATUS_TONE,
   ORDER_TYPE_LABELS,
+  getOrderIdentifierLabel,
   isOrderDelayed,
 } from '../../../modules/orders/order-status';
 import type { Order } from '../../../modules/orders/types/order.types';
@@ -23,9 +24,15 @@ interface KitchenOrderCardProps {
   order: Order;
   onStartPreparation: (order: Order) => void;
   onMarkReady: (order: Order) => void;
+  tableNames?: Record<string, string>;
 }
 
-export default function KitchenOrderCard({ order, onStartPreparation, onMarkReady }: KitchenOrderCardProps) {
+export default function KitchenOrderCard({
+  order,
+  onStartPreparation,
+  onMarkReady,
+  tableNames,
+}: KitchenOrderCardProps) {
   const delayed = isOrderDelayed(order.status, order.createdAt);
   const { data: fullOrder } = useOrder(order.id);
   const items = fullOrder?.items ?? [];
@@ -53,7 +60,7 @@ export default function KitchenOrderCard({ order, onStartPreparation, onMarkRead
 
         {order.tableNumber && (
           <Typography variant="caption" color="text.secondary">
-            {order.orderType === 'CAR_SERVICE' ? 'Vehículo' : 'Mesa'} {order.tableNumber}
+            {getOrderIdentifierLabel(order, tableNames)}
           </Typography>
         )}
 

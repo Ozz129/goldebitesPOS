@@ -1,4 +1,4 @@
-import { ORDER_TYPE_LABELS } from '../order-status';
+import { ORDER_TYPE_LABELS, getOrderIdentifierLabel } from '../order-status';
 import { printThermalDocument } from './print-thermal-document';
 import { escapeHtml } from './escape-html';
 import type { OrderItem, OrderWithItems } from '../types/order.types';
@@ -8,11 +8,13 @@ interface PrintTicketOptions {
   businessLogo?: string | null;
   /** Print only these items instead of the full order — used for "Agregar productos" additions. */
   addedItems?: OrderItem[];
+  /** {tableNumber: name} — shows the table's custom name instead of the raw number when set. */
+  tableNames?: Record<string, string>;
 }
 
 function buildTicketHtml(
   order: OrderWithItems,
-  { businessName, businessLogo, addedItems }: PrintTicketOptions,
+  { businessName, businessLogo, addedItems, tableNames }: PrintTicketOptions,
 ): string {
   const dateLabel = new Date(order.createdAt).toLocaleString('es-CO', {
     dateStyle: 'short',
@@ -40,7 +42,7 @@ function buildTicketHtml(
     .join('');
 
   const tableLine = order.tableNumber
-    ? `<div class="meta">${order.orderType === 'CAR_SERVICE' ? 'Vehículo' : 'Mesa'}: ${escapeHtml(order.tableNumber)}</div>`
+    ? `<div class="meta">${escapeHtml(getOrderIdentifierLabel(order, tableNames))}</div>`
     : '';
 
   const customerLine = order.customerName

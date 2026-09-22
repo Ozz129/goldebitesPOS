@@ -52,6 +52,7 @@ export function useAutoPrintKitchenTickets(
   businessName: string | undefined,
   businessLogo: string | null | undefined,
   enabled: boolean,
+  tableNames?: Record<string, string>,
 ) {
   const printedIds = useRef<Set<string>>(loadPrintedIds());
   const itemState = useRef<Record<string, OrderItemState>>(loadItemState());
@@ -82,12 +83,12 @@ export function useAutoPrintKitchenTickets(
         .getOrder(order.id)
         .then((fullOrder) => {
           if (isNewOrder) {
-            printKitchenTicket(fullOrder, { businessName, businessLogo });
+            printKitchenTicket(fullOrder, { businessName, businessLogo, tableNames });
             playOrderNotificationSound();
           } else if (knownItemState) {
             const newItems = fullOrder.items.filter((item) => !knownItemState.itemIds.includes(item.id));
             if (newItems.length > 0) {
-              printKitchenTicket(fullOrder, { businessName, businessLogo, addedItems: newItems });
+              printKitchenTicket(fullOrder, { businessName, businessLogo, addedItems: newItems, tableNames });
               playOrderNotificationSound();
             }
           }
@@ -109,5 +110,5 @@ export function useAutoPrintKitchenTickets(
           inFlightIds.current.delete(order.id);
         });
     });
-  }, [orders, businessName, businessLogo, enabled]);
+  }, [orders, businessName, businessLogo, enabled, tableNames]);
 }

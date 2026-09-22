@@ -44,12 +44,12 @@ export class CreateEmployeeDto {
   @MaxLength(100)
   position?: string;
 
-  @ApiPropertyOptional({
-    description: 'System role granted to this employee, if any',
+  @ApiProperty({
+    description:
+      "System role granted to this employee — also used for the login account created automatically for them",
   })
-  @IsOptional()
   @IsUUID()
-  roleId?: string;
+  roleId: string;
 
   @ApiPropertyOptional()
   @IsOptional()

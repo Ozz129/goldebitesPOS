@@ -184,12 +184,14 @@ export class EmployeesRepository implements IEmployeesRepository {
     id: string,
     businessId: string,
     userId: string,
+    client?: DbClient,
   ): Promise<EmployeeRow | null> {
     const result = await this.db.query<EmployeeRow>(
       `UPDATE employees SET user_id = $3
        WHERE id = $1 AND business_id = $2 AND deleted_at IS NULL
        RETURNING ${SELECT_COLUMNS}`,
       [id, businessId, userId],
+      client,
     );
     return result.rows[0] ?? null;
   }

@@ -14,40 +14,37 @@ import { getRoleLabel } from '../../../modules/roles/role-labels';
 interface GenerateCredentialsDialogProps {
   open: boolean;
   loading?: boolean;
-  defaultEmail?: string | null;
+  defaultRoleId?: string | null;
   onClose: () => void;
-  onSubmit: (values: { email: string; roleId: string }) => void;
+  onSubmit: (values: { roleId: string }) => void;
 }
 
 export default function GenerateCredentialsDialog({
   open,
   loading = false,
-  defaultEmail,
+  defaultRoleId,
   onClose,
   onSubmit,
 }: GenerateCredentialsDialogProps) {
   const { data: roles } = useRoles();
-  const [email, setEmail] = useState('');
   const [roleId, setRoleId] = useState('');
   const [touched, setTouched] = useState(false);
   const [wasOpen, setWasOpen] = useState(false);
 
   if (open && !wasOpen) {
     setWasOpen(true);
-    setEmail(defaultEmail ?? '');
-    setRoleId('');
+    setRoleId(defaultRoleId ?? '');
     setTouched(false);
   } else if (!open && wasOpen) {
     setWasOpen(false);
   }
 
-  const emailValid = /^\S+@\S+\.\S+$/.test(email);
-  const canSubmit = emailValid && Boolean(roleId);
+  const canSubmit = Boolean(roleId);
 
   const handleSubmit = () => {
     setTouched(true);
     if (!canSubmit) return;
-    onSubmit({ email, roleId });
+    onSubmit({ roleId });
   };
 
   return (
@@ -56,18 +53,9 @@ export default function GenerateCredentialsDialog({
       <DialogContent>
         <Stack spacing={2} sx={{ mt: 1 }}>
           <Typography variant="body2" color="text.secondary">
-            Se creará una cuenta de acceso con una contraseña temporal, la cual solo se mostrará una vez.
+            Se creará automáticamente un usuario a partir del nombre del empleado, con la
+            contraseña por defecto — se le pedirá cambiarla en su primer ingreso.
           </Typography>
-          <TextField
-            label="Correo de acceso"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            error={touched && !emailValid}
-            helperText={touched && !emailValid ? 'Ingresa un correo válido' : undefined}
-            autoFocus
-            fullWidth
-          />
           <TextField
             select
             label="Rol"
@@ -75,6 +63,7 @@ export default function GenerateCredentialsDialog({
             onChange={(e) => setRoleId(e.target.value)}
             error={touched && !roleId}
             helperText={touched && !roleId ? 'Selecciona un rol' : undefined}
+            autoFocus
             fullWidth
           >
             {(roles ?? []).map((role) => (

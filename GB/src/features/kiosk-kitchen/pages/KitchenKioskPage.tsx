@@ -7,11 +7,13 @@ import Button from '@mui/material/Button';
 import { LogOut, ChefHat } from 'lucide-react';
 import { useSnackbar } from 'notistack';
 import { useNavigate } from 'react-router-dom';
+import { useAuthStore } from '../../../modules/auth/store/auth.store';
 import { useLogout } from '../../../modules/auth/hooks/use-logout';
 import { useCurrentBusiness } from '../../../modules/businesses/hooks/use-current-business';
 import { useKitchenQueue } from '../../../modules/kitchen/hooks/use-kitchen-queue';
 import { normalizeApiError } from '../../../lib/api/api-error';
 import { ORDER_STATUS_LABELS } from '../../../modules/orders/order-status';
+import { useTableNameMap } from '../../../modules/table-names/hooks/use-table-name-map';
 import type { Order } from '../../../modules/orders/types/order.types';
 import EmptyState from '../../../components/common/EmptyState';
 import SwipeableTicketCard from '../components/SwipeableTicketCard';
@@ -22,6 +24,8 @@ export default function KitchenKioskPage() {
   const business = useCurrentBusiness();
   const logout = useLogout();
   const containerRef = useRef<HTMLDivElement>(null);
+  const branchId = useAuthStore((s) => s.user?.branchId);
+  const tableNames = useTableNameMap(branchId);
 
   const { data: queue } = useKitchenQueue();
   const kitchenOrders = queue ?? [];
@@ -82,7 +86,12 @@ export default function KitchenKioskPage() {
           <Grid container spacing={2.5}>
             {kitchenOrders.map((order) => (
               <Grid key={order.id} size={{ xs: 12, sm: 6, lg: 4, xl: 3 }}>
-                <SwipeableTicketCard order={order} onSuccess={handleSuccess} onError={handleError} />
+                <SwipeableTicketCard
+                  order={order}
+                  onSuccess={handleSuccess}
+                  onError={handleError}
+                  tableNames={tableNames}
+                />
               </Grid>
             ))}
           </Grid>

@@ -28,4 +28,6 @@ export interface PublicNfcResolution {
   branchId: string;
   businessName: string;
   tableNumber: string;
+  /** The table's custom display name, or null if it was never given one — fall back to "Mesa {tableNumber}". */
+  tableName: string | null;
 }

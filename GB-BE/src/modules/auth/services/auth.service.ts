@@ -201,7 +201,7 @@ export class AuthService {
       throw new UnauthorizedException('Current password is incorrect');
     }
 
-    await this.usersService.setPasswordHash(userId, dto.newPassword);
+    await this.usersService.setPasswordHash(userId, dto.newPassword, false);
     await this.refreshTokenRepository.revokeAllForUser(userId);
 
     await this.auditService.record({
@@ -257,6 +257,7 @@ export class AuthService {
       await this.usersService.setPasswordHash(
         record.user_id,
         dto.newPassword,
+        false,
         client,
       );
       await this.passwordResetTokenRepository.markUsed(record.id, client);
@@ -305,6 +306,7 @@ export class AuthService {
       permissions: role.permissions,
       isPlatformAdmin: user.is_platform_admin,
       enabledFeatures,
+      mustChangePassword: user.must_change_password,
     };
 
     const appConfig = this.configService.getOrThrow<AppConfig>('app');
@@ -350,6 +352,7 @@ export class AuthService {
       firstName: user.first_name,
       lastName: user.last_name,
       email: user.email,
+      mustChangePassword: user.must_change_password,
     };
   }
 

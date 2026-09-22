@@ -26,6 +26,7 @@ import type { Employee, EmployeeStatus } from '../../../modules/employees/types/
 import type { EmployeeFormValues } from '../schemas/employeeSchema';
 import EmployeeDetailDrawer from '../components/EmployeeDetailDrawer';
 import EmployeeFormDrawer from '../components/EmployeeFormDrawer';
+import NewAccountInfoDialog from '../components/NewAccountInfoDialog';
 import ShiftCalendar from '../components/ShiftCalendar';
 
 export default function EmployeesPage() {
@@ -36,6 +37,7 @@ export default function EmployeesPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [deletingEmployee, setDeletingEmployee] = useState<Employee | null>(null);
+  const [newAccountEmail, setNewAccountEmail] = useState<string | null>(null);
 
   const filters = useMemo(
     () => ({
@@ -64,7 +66,7 @@ export default function EmployeesPage() {
       lastName: values.lastName,
       phone: values.phone || undefined,
       email: values.email || undefined,
-      roleId: values.roleId || undefined,
+      roleId: values.roleId,
       hireDate: values.hireDate || undefined,
       notes: values.notes || undefined,
       payRate: values.payRate,
@@ -84,9 +86,12 @@ export default function EmployeesPage() {
       );
     } else {
       createEmployee.mutate(payload, {
-        onSuccess: () => {
+        onSuccess: (employee) => {
           enqueueSnackbar('Empleado creado correctamente', { variant: 'success' });
           setFormOpen(false);
+          if (employee.userAccount) {
+            setNewAccountEmail(employee.userAccount.email);
+          }
         },
         onError: (error) => enqueueSnackbar(normalizeApiError(error).message, { variant: 'error' }),
       });
@@ -225,6 +230,12 @@ export default function EmployeesPage() {
         destructive
         onClose={() => setDeletingEmployee(null)}
         onConfirm={handleDelete}
+      />
+
+      <NewAccountInfoDialog
+        open={Boolean(newAccountEmail)}
+        email={newAccountEmail}
+        onClose={() => setNewAccountEmail(null)}
       />
     </>
   );

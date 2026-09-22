@@ -12,7 +12,7 @@ import {
 import { IUsersRepository } from './users.repository.interface';
 
 const SELECT_COLUMNS = `id, business_id, branch_id, role_id, first_name, last_name, email,
-  password_hash, phone, status, is_platform_admin, last_login_at, created_at, updated_at, deleted_at`;
+  password_hash, phone, status, is_platform_admin, must_change_password, last_login_at, created_at, updated_at, deleted_at`;
 
 interface CountRow {
   count: string;
@@ -24,8 +24,8 @@ export class UsersRepository implements IUsersRepository {
 
   async create(data: CreateUserData, client?: DbClient): Promise<UserRow> {
     const result = await this.db.query<UserRow>(
-      `INSERT INTO users (business_id, branch_id, role_id, first_name, last_name, email, password_hash, phone)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      `INSERT INTO users (business_id, branch_id, role_id, first_name, last_name, email, password_hash, phone, must_change_password)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING ${SELECT_COLUMNS}`,
       [
         data.businessId,
@@ -36,6 +36,7 @@ export class UsersRepository implements IUsersRepository {
         data.email,
         data.passwordHash,
         data.phone ?? null,
+        data.mustChangePassword ?? false,
       ],
       client,
     );
@@ -166,11 +167,12 @@ export class UsersRepository implements IUsersRepository {
   async updatePasswordHash(
     id: string,
     passwordHash: string,
+    mustChangePassword: boolean,
     client?: DbClient,
   ): Promise<void> {
     await this.db.query(
-      'UPDATE users SET password_hash = $2 WHERE id = $1',
-      [id, passwordHash],
+      'UPDATE users SET password_hash = $2, must_change_password = $3 WHERE id = $1',
+      [id, passwordHash, mustChangePassword],
       client,
     );
   }

@@ -24,6 +24,7 @@ function createUser(
     permissions: [],
     isPlatformAdmin: false,
     enabledFeatures: [],
+    mustChangePassword: false,
     ...overrides,
   };
 }

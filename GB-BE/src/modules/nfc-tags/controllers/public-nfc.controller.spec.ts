@@ -16,6 +16,7 @@ describe('PublicNfcController', () => {
       branchId: 'branch-1',
       businessName: 'Golden Bites',
       tableNumber: '1',
+      tableName: null,
     });
 
     const result = await controller.resolve('some-token');

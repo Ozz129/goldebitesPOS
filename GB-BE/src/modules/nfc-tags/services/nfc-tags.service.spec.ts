@@ -15,6 +15,7 @@ describe('NfcTagsService', () => {
   };
   let branchesService: { findOne: jest.Mock };
   let auditService: { record: jest.Mock };
+  let tableNamesService: { findName: jest.Mock };
   let service: NfcTagsService;
 
   const businessId = 'business-1';
@@ -49,7 +50,13 @@ describe('NfcTagsService', () => {
     };
     branchesService = { findOne: jest.fn().mockResolvedValue({ id: branchId }) };
     auditService = { record: jest.fn() };
-    service = new NfcTagsService(nfcTagsRepository as never, branchesService as never, auditService as never);
+    tableNamesService = { findName: jest.fn().mockResolvedValue(null) };
+    service = new NfcTagsService(
+      nfcTagsRepository as never,
+      branchesService as never,
+      auditService as never,
+      tableNamesService as never,
+    );
   });
 
   describe('register', () => {
@@ -140,7 +147,7 @@ describe('NfcTagsService', () => {
   });
 
   describe('resolvePublic', () => {
-    it('returns the resolved context for an active gallo with an active branch and business', async () => {
+    it('returns the resolved context for an active gallo with an active branch and business, with no custom table name', async () => {
       nfcTagsRepository.findActiveByToken.mockResolvedValue({
         businessId,
         branchId,
@@ -149,7 +156,28 @@ describe('NfcTagsService', () => {
       });
 
       const result = await service.resolvePublic('some-token');
-      expect(result).toEqual({ businessId, branchId, businessName: 'Golden Bites', tableNumber: '1' });
+      expect(result).toEqual({
+        businessId,
+        branchId,
+        businessName: 'Golden Bites',
+        tableNumber: '1',
+        tableName: null,
+      });
+    });
+
+    it('includes the table\'s custom name when one is set', async () => {
+      nfcTagsRepository.findActiveByToken.mockResolvedValue({
+        businessId,
+        branchId,
+        businessName: 'Golden Bites',
+        tableNumber: '1',
+      });
+      tableNamesService.findName.mockResolvedValue('Terraza');
+
+      const result = await service.resolvePublic('some-token');
+
+      expect(tableNamesService.findName).toHaveBeenCalledWith(businessId, branchId, '1');
+      expect(result.tableName).toBe('Terraza');
     });
 
     it('throws a generic EntityNotFoundException when the token does not resolve to anything active', async () => {

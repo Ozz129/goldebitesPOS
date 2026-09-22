@@ -12,6 +12,7 @@ import { CurrentBusiness } from '../../../common/decorators/current-business.dec
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { Public } from '../../../common/decorators/public.decorator';
 import { RawResponse } from '../../../common/decorators/raw-response.decorator';
+import { SkipMustChangePassword } from '../../../common/decorators/skip-must-change-password.decorator';
 import { ChangePasswordDto } from '../dto/change-password.dto';
 import { ForgotPasswordDto } from '../dto/forgot-password.dto';
 import { LoginDto } from '../dto/login.dto';
@@ -58,6 +59,7 @@ export class AuthController {
   }
 
   @Post('change-password')
+  @SkipMustChangePassword()
   @ApiBearerAuth()
   @ApiOperation({ summary: "Change the current user's password" })
   async changePassword(

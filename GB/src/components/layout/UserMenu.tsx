@@ -8,11 +8,12 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import Divider from '@mui/material/Divider';
 import ButtonBase from '@mui/material/ButtonBase';
-import { ChevronDown, Moon, Sun, Settings as SettingsIcon, LogOut } from 'lucide-react';
+import { ChevronDown, Moon, Sun, Settings as SettingsIcon, LogOut, UserCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 import { useAuthStore } from '../../modules/auth/store/auth.store';
 import { useLogout } from '../../modules/auth/hooks/use-logout';
+import { usePermissions } from '../../modules/auth/hooks/use-permissions';
 import { useUiStore } from '../../store/uiStore';
 import { initialsFromName } from '../../utils/format';
 import { brand } from '../../theme/palette';
@@ -26,6 +27,8 @@ export default function UserMenu() {
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
   const logout = useLogout();
+  const { hasPermission, hasFeature } = usePermissions();
+  const showMyProfile = hasPermission('hr.read') && hasFeature('hr');
 
   const close = () => setAnchorEl(null);
 
@@ -94,6 +97,19 @@ export default function UserMenu() {
           </ListItemIcon>
           <ListItemText primary={themeMode === 'dark' ? 'Modo claro' : 'Modo oscuro'} />
         </MenuItem>
+        {showMyProfile && (
+          <MenuItem
+            onClick={() => {
+              close();
+              navigate('/mi-perfil');
+            }}
+          >
+            <ListItemIcon>
+              <UserCircle size={17} />
+            </ListItemIcon>
+            <ListItemText primary="Mi Perfil" />
+          </MenuItem>
+        )}
         <MenuItem
           onClick={() => {
             close();

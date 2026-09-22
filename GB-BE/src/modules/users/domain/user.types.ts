@@ -13,6 +13,8 @@ export interface CreateUserData {
   email: string;
   passwordHash: string;
   phone?: string;
+  /** Internal-only — not exposed on the public CreateUserDto. Defaults to false at the repository layer. */
+  mustChangePassword?: boolean;
 }
 
 export interface UpdateUserData {

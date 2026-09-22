@@ -116,8 +116,17 @@ export default function EmployeeFormDrawer({
           name="roleId"
           control={control}
           render={({ field }) => (
-            <TextField {...field} select label="Cargo" fullWidth>
-              <MenuItem value="">Sin cargo asignado</MenuItem>
+            <TextField
+              {...field}
+              select
+              label="Cargo"
+              helperText={
+                errors.roleId?.message ??
+                'Define también el rol de su cuenta de acceso, creada automáticamente'
+              }
+              error={Boolean(errors.roleId)}
+              fullWidth
+            >
               {(roles ?? []).map((role) => (
                 <MenuItem key={role.id} value={role.id}>
                   {getRoleLabel(role.name)}

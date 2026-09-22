@@ -11,6 +11,7 @@ import {
   ORDER_TYPE_LABELS,
   PAYMENT_STATUS_LABELS,
   PAYMENT_STATUS_TONE,
+  getOrderIdentifierLabel,
 } from '../../../modules/orders/order-status';
 import type { Order } from '../../../modules/orders/types/order.types';
 import PrintOrderButton from './PrintOrderButton';
@@ -19,9 +20,10 @@ interface OrdersTableProps {
   orders: Order[];
   onSelect: (order: Order) => void;
   customerName: (order: Order) => string;
+  tableNames?: Record<string, string>;
 }
 
-export default function OrdersTable({ orders, onSelect, customerName }: OrdersTableProps) {
+export default function OrdersTable({ orders, onSelect, customerName, tableNames }: OrdersTableProps) {
   const columns: ColumnDef<Order, unknown>[] = [
     {
       id: 'orderNumber',
@@ -35,7 +37,7 @@ export default function OrdersTable({ orders, onSelect, customerName }: OrdersTa
             <DateDisplay value={row.original.createdAt} mode="time" variant="caption" color="text.secondary" />
             {row.original.tableNumber && (
               <Typography variant="caption" color="text.secondary">
-                · {row.original.orderType === 'CAR_SERVICE' ? 'Vehículo' : 'Mesa'} {row.original.tableNumber}
+                · {getOrderIdentifierLabel(row.original, tableNames)}
               </Typography>
             )}
           </Stack>

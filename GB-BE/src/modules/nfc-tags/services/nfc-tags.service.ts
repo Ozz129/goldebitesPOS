@@ -3,6 +3,7 @@ import { randomBytes } from 'node:crypto';
 import { ConflictException, EntityNotFoundException } from '../../../common/exceptions';
 import { AuditService } from '../../audit/services/audit.service';
 import { BranchesService } from '../../branches/services/branches.service';
+import { TableNamesService } from '../../table-names/services/table-names.service';
 import { NfcTag, PublicNfcResolution } from '../domain/nfc-tag.interface';
 import { CreateNfcTagData, UpdateNfcTagData } from '../domain/nfc-tag.types';
 import { NfcTagMapper } from '../mappers/nfc-tag.mapper';
@@ -21,6 +22,7 @@ export class NfcTagsService {
     private readonly nfcTagsRepository: INfcTagsRepository,
     private readonly branchesService: BranchesService,
     private readonly auditService: AuditService,
+    private readonly tableNamesService: TableNamesService,
   ) {}
 
   async register(data: CreateNfcTagData): Promise<NfcTag> {
@@ -126,7 +128,12 @@ export class NfcTagsService {
     if (!resolution) {
       throw new EntityNotFoundException('NfcTag', token);
     }
-    return resolution;
+    const tableName = await this.tableNamesService.findName(
+      resolution.businessId,
+      resolution.branchId,
+      resolution.tableNumber,
+    );
+    return { ...resolution, tableName };
   }
 
   private async assertTableFree(branchId: string, tableNumber: string, excludeId?: string): Promise<void> {

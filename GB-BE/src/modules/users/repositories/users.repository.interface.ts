@@ -31,6 +31,7 @@ export interface IUsersRepository {
   updatePasswordHash(
     id: string,
     passwordHash: string,
+    mustChangePassword: boolean,
     client?: DbClient,
   ): Promise<void>;
   updateLastLoginAt(id: string, client?: DbClient): Promise<void>;

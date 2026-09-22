@@ -63,6 +63,7 @@ export const FEATURE_MODULES: FeatureModuleDefinition[] = [
     ],
   },
   { key: 'employees', label: 'Personal' },
+  { key: 'hr', label: 'Recursos Humanos' },
   { key: 'checklists', label: 'Checklists' },
   { key: 'waste', label: 'Mermas' },
   { key: 'maintenance', label: 'Mantenimiento' },

@@ -3,6 +3,7 @@ import {
   BusinessRuleException,
   EntityNotFoundException,
 } from '../../../common/exceptions';
+import { DEFAULT_EMPLOYEE_PASSWORD } from '../../../common/constants/default-password.constant';
 import { PaginatedResult } from '../../../common/pagination/paginated-result.interface';
 import { buildPaginationMeta } from '../../../common/pagination/pagination.util';
 import { generateTemporaryPassword } from '../../../common/utils/generate-password.util';
@@ -28,7 +29,6 @@ import { EMPLOYEES_REPOSITORY } from '../repositories/employees.repository.inter
 import type { IEmployeesRepository } from '../repositories/employees.repository.interface';
 
 export interface GenerateEmployeeCredentialsInput {
-  email: string;
   roleId: string;
   branchId?: string;
 }
@@ -43,21 +43,65 @@ export class EmployeesService {
     private readonly auditService: AuditService,
   ) {}
 
+  /** Every new employee gets a login account automatically — an auto-generated handle (e.g. "jupe1@personal.local") plus the fixed default password, forced to change on first login. */
   async create(
     data: CreateEmployeeData,
     actorUserId?: string,
-  ): Promise<Employee> {
-    const row = await this.employeesRepository.create(data);
+  ): Promise<EmployeeWithShifts> {
+    const loginEmail = await this.usersService.generateUniqueLoginEmail(
+      data.businessId,
+      data.firstName,
+      data.lastName,
+    );
+
+    const { employeeRow, user } = await this.transactionService.execute(
+      async (client) => {
+        const created = await this.employeesRepository.create(data, client);
+        const user = await this.usersService.create(
+          data.businessId,
+          {
+            firstName: data.firstName,
+            lastName: data.lastName,
+            email: loginEmail,
+            password: DEFAULT_EMPLOYEE_PASSWORD,
+            roleId: data.roleId,
+            branchId: data.branchId,
+            phone: data.phone,
+            mustChangePassword: true,
+          },
+          actorUserId,
+          client,
+        );
+        const linked = await this.employeesRepository.setUserId(
+          created.id,
+          data.businessId,
+          user.id,
+          client,
+        );
+        return { employeeRow: linked ?? created, user };
+      },
+    );
+
     await this.auditService.record({
       businessId: data.businessId,
       branchId: data.branchId,
       userId: actorUserId,
       entityType: 'employee',
-      entityId: row.id,
+      entityId: employeeRow.id,
       action: 'CREATE',
-      newValues: { firstName: row.first_name, lastName: row.last_name },
+      newValues: {
+        firstName: employeeRow.first_name,
+        lastName: employeeRow.last_name,
+        loginEmail,
+      },
     });
-    return EmployeeMapper.toDomain(row);
+
+    const shiftRows = await this.employeesRepository.findShifts(employeeRow.id);
+    return {
+      ...EmployeeMapper.toDomain(employeeRow),
+      shifts: shiftRows.map((shift) => EmployeeMapper.shiftToDomain(shift)),
+      userAccount: { id: user.id, email: user.email, status: user.status },
+    };
   }
 
   async findAll(query: EmployeeQuery): Promise<PaginatedResult<Employee>> {
@@ -173,13 +217,17 @@ export class EmployeesService {
     };
   }
 
-  /** Provisions a login account for an employee that doesn't have one yet. */
+  /**
+   * Provisions a login account for a legacy employee (created before this
+   * flow existed) that doesn't have one yet — same auto-generated handle +
+   * fixed default password + forced change as EmployeesService.create().
+   */
   async generateCredentials(
     businessId: string,
     id: string,
     input: GenerateEmployeeCredentialsInput,
     actorUserId?: string,
-  ): Promise<{ employee: EmployeeWithShifts; temporaryPassword: string }> {
+  ): Promise<EmployeeWithShifts> {
     const row = await this.getOwnedOrFail(businessId, id);
     if (row.user_id) {
       throw new BusinessRuleException(
@@ -188,17 +236,22 @@ export class EmployeesService {
       );
     }
 
-    const temporaryPassword = generateTemporaryPassword();
+    const loginEmail = await this.usersService.generateUniqueLoginEmail(
+      businessId,
+      row.first_name,
+      row.last_name,
+    );
     const user = await this.usersService.create(
       businessId,
       {
         firstName: row.first_name,
         lastName: row.last_name,
-        email: input.email,
-        password: temporaryPassword,
+        email: loginEmail,
+        password: DEFAULT_EMPLOYEE_PASSWORD,
         roleId: input.roleId,
         branchId: input.branchId ?? row.branch_id ?? undefined,
         phone: row.phone ?? undefined,
+        mustChangePassword: true,
       },
       actorUserId,
     );
@@ -218,21 +271,22 @@ export class EmployeesService {
       entityType: 'employee',
       entityId: id,
       action: 'CREATE_CREDENTIALS',
-      newValues: { email: input.email, roleId: input.roleId },
+      newValues: { email: loginEmail, roleId: input.roleId },
     });
 
     const shiftRows = await this.employeesRepository.findShifts(id);
     return {
-      employee: {
-        ...EmployeeMapper.toDomain(updatedRow),
-        shifts: shiftRows.map((shift) => EmployeeMapper.shiftToDomain(shift)),
-        userAccount: { id: user.id, email: user.email, status: user.status },
-      },
-      temporaryPassword,
+      ...EmployeeMapper.toDomain(updatedRow),
+      shifts: shiftRows.map((shift) => EmployeeMapper.shiftToDomain(shift)),
+      userAccount: { id: user.id, email: user.email, status: user.status },
     };
   }
 
-  /** Issues a new temporary password for an employee that already has credentials. */
+  /**
+   * Issues a new random one-time password for an employee that already has
+   * credentials (unlike initial provisioning, this is a genuine reset — the
+   * old password may be lost/compromised) — still forces a change on next login.
+   */
   async resetCredentials(
     businessId: string,
     id: string,
@@ -247,7 +301,7 @@ export class EmployeesService {
     }
 
     const temporaryPassword = generateTemporaryPassword();
-    await this.usersService.setPasswordHash(row.user_id, temporaryPassword);
+    await this.usersService.setPasswordHash(row.user_id, temporaryPassword, true);
 
     await this.auditService.record({
       businessId,

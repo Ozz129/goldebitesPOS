@@ -26,8 +26,8 @@ export const employeesApi = {
     return data.data;
   },
 
-  async createEmployee(payload: CreateEmployeePayload): Promise<Employee> {
-    const { data } = await apiClient.post<ApiResponse<Employee>>('/employees', payload);
+  async createEmployee(payload: CreateEmployeePayload): Promise<EmployeeWithShifts> {
+    const { data } = await apiClient.post<ApiResponse<EmployeeWithShifts>>('/employees', payload);
     return data.data;
   },
 
@@ -58,10 +58,11 @@ export const employeesApi = {
   async generateCredentials(
     id: string,
     payload: GenerateEmployeeCredentialsPayload,
-  ): Promise<{ employee: EmployeeWithShifts; temporaryPassword: string }> {
-    const { data } = await apiClient.post<
-      ApiResponse<{ employee: EmployeeWithShifts; temporaryPassword: string }>
-    >(`/employees/${id}/credentials`, payload);
+  ): Promise<EmployeeWithShifts> {
+    const { data } = await apiClient.post<ApiResponse<EmployeeWithShifts>>(
+      `/employees/${id}/credentials`,
+      payload,
+    );
     return data.data;
   },
 

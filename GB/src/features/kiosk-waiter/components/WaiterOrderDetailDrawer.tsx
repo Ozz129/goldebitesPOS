@@ -25,9 +25,10 @@ import {
 interface WaiterOrderDetailDrawerProps {
   orderId: string | null;
   onClose: () => void;
+  tableNames?: Record<string, string>;
 }
 
-export default function WaiterOrderDetailDrawer({ orderId, onClose }: WaiterOrderDetailDrawerProps) {
+export default function WaiterOrderDetailDrawer({ orderId, onClose, tableNames }: WaiterOrderDetailDrawerProps) {
   const { enqueueSnackbar } = useSnackbar();
   const { data: order, isLoading } = useOrder(orderId);
   const updateStatus = useUpdateOrderStatus();
@@ -77,7 +78,7 @@ export default function WaiterOrderDetailDrawer({ orderId, onClose }: WaiterOrde
         open={Boolean(orderId)}
         onClose={onClose}
         title={`Pedido #${order.orderNumber}`}
-        subtitle={[getOrderIdentifierLabel(order), order.customerName].filter(Boolean).join(' · ')}
+        subtitle={[getOrderIdentifierLabel(order, tableNames), order.customerName].filter(Boolean).join(' · ')}
         headerExtra={<StatusChip label={ORDER_STATUS_LABELS[order.status]} tone={ORDER_STATUS_TONE[order.status]} />}
         footer={
           order.status === 'READY' ? (

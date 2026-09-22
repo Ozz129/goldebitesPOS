@@ -8,6 +8,7 @@ export interface AuthenticatedProfile {
   firstName: string;
   lastName: string;
   email: string;
+  mustChangePassword: boolean;
 }
 
 /** Full profile returned by GET /users/me. No roleName — fetch the role separately if needed. */
@@ -35,6 +36,11 @@ export interface AuthTokens {
 export interface LoginPayload {
   email: string;
   password: string;
+}
+
+export interface ChangePasswordPayload {
+  currentPassword: string;
+  newPassword: string;
 }
 
 export type LoginResponseData = AuthTokens & { user: AuthenticatedProfile };

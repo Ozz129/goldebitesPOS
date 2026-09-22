@@ -7,7 +7,13 @@ import { MapPin } from 'lucide-react';
 import CurrencyDisplay from '../../../components/common/CurrencyDisplay';
 import StatusChip from '../../../components/common/StatusChip';
 import { useOrders } from '../../../modules/orders/hooks/use-orders';
-import { ACTIVE_STATUSES, ORDER_STATUS_LABELS, ORDER_STATUS_TONE } from '../../../modules/orders/order-status';
+import {
+  ACTIVE_STATUSES,
+  ORDER_STATUS_LABELS,
+  ORDER_STATUS_TONE,
+  getOrderIdentifierLabel,
+} from '../../../modules/orders/order-status';
+import { useTableNameMap } from '../../../modules/table-names/hooks/use-table-name-map';
 
 interface ActiveTablesGridProps {
   branchId: string | null | undefined;
@@ -18,6 +24,7 @@ const ACTIVE_TABLES_POLL_INTERVAL_MS = 15_000;
 
 /** Touch-friendly "Mesas activas" — every table with an active DINE_IN order, tap to open it. */
 export default function ActiveTablesGrid({ branchId, onSelect }: ActiveTablesGridProps) {
+  const tableNames = useTableNameMap(branchId);
   const { data, isLoading } = useOrders(
     { branchId: branchId ?? undefined, orderType: 'DINE_IN', limit: 100 },
     { refetchInterval: ACTIVE_TABLES_POLL_INTERVAL_MS, enabled: Boolean(branchId) },
@@ -58,7 +65,7 @@ export default function ActiveTablesGrid({ branchId, onSelect }: ActiveTablesGri
           <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
             <MapPin size={20} />
             <Typography variant="h6" sx={{ fontWeight: 800 }}>
-              Mesa {order.tableNumber}
+              {getOrderIdentifierLabel(order, tableNames)}
             </Typography>
           </Stack>
           <Typography variant="body2" color="text.secondary">

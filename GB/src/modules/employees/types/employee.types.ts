@@ -48,7 +48,8 @@ export interface CreateEmployeePayload {
   phone?: string;
   email?: string;
   position?: string;
-  roleId?: string;
+  /** Also becomes the auto-created login account's role. */
+  roleId: string;
   branchId?: string;
   hireDate?: string;
   notes?: string;
@@ -65,7 +66,6 @@ export interface ShiftInput {
 }
 
 export interface GenerateEmployeeCredentialsPayload {
-  email: string;
   roleId: string;
   branchId?: string;
 }

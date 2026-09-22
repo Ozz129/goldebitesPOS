@@ -21,6 +21,7 @@ import CurrencyField from '../../../components/common/CurrencyField';
 import CashChangeCalculator from './CashChangeCalculator';
 import DateDisplay from '../../../components/common/DateDisplay';
 import { Can } from '../../../modules/auth/components/can';
+import { useAuthStore } from '../../../modules/auth/store/auth.store';
 import { useOrder } from '../../../modules/orders/hooks/use-order';
 import { useOrderPayments } from '../../../modules/orders/hooks/use-order-payments';
 import { useCreatePayment } from '../../../modules/orders/hooks/use-create-payment';
@@ -42,7 +43,9 @@ import {
   PAYMENT_STATUS_LABELS,
   PAYMENT_STATUS_TONE,
   PAYMENT_METHOD_LABELS,
+  getOrderIdentifierLabel,
 } from '../../../modules/orders/order-status';
+import { useTableNameMap } from '../../../modules/table-names/hooks/use-table-name-map';
 import type { Order } from '../../../modules/orders/types/order.types';
 import type { PaymentMethod } from '../../../modules/orders/types/payment.types';
 
@@ -68,6 +71,8 @@ export default function OrderDetailDrawer({
   const [splitBillOpen, setSplitBillOpen] = useState(false);
   const [editItemsOpen, setEditItemsOpen] = useState(false);
   const [addItemsOpen, setAddItemsOpen] = useState(false);
+  const branchId = useAuthStore((s) => s.user?.branchId);
+  const tableNames = useTableNameMap(branchId);
   const [editingPaymentId, setEditingPaymentId] = useState<string | null>(null);
   const [editMethod, setEditMethod] = useState<PaymentMethod>('CASH');
   const { enqueueSnackbar } = useSnackbar();
@@ -212,7 +217,7 @@ export default function OrderDetailDrawer({
             <Typography variant="body2">{customerName(order)}</Typography>
             {order.tableNumber && (
               <Typography variant="caption" color="text.secondary">
-                Mesa {order.tableNumber}
+                {getOrderIdentifierLabel(order, tableNames)}
               </Typography>
             )}
             {order.deliveryAddress && (

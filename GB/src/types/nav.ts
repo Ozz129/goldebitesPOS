@@ -15,6 +15,7 @@ export type ModuleKey =
   | 'loyalty'
   | 'finances'
   | 'employees'
+  | 'hr'
   | 'checklists'
   | 'waste'
   | 'maintenance'

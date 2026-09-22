@@ -56,6 +56,7 @@ describe('AuthService', () => {
       phone: null,
       status: UserStatus.ACTIVE,
       is_platform_admin: false,
+      must_change_password: false,
       last_login_at: null,
       created_at: new Date(),
       updated_at: new Date(),
@@ -276,6 +277,7 @@ describe('AuthService', () => {
       expect(usersService.setPasswordHash).toHaveBeenCalledWith(
         'user-1',
         'new-password',
+        false,
       );
       expect(refreshTokenRepository.revokeAllForUser).toHaveBeenCalledWith(
         'user-1',
@@ -342,6 +344,7 @@ describe('AuthService', () => {
       expect(usersService.setPasswordHash).toHaveBeenCalledWith(
         'user-1',
         'new-password',
+        false,
         {},
       );
       expect(passwordResetTokenRepository.markUsed).toHaveBeenCalledWith(

@@ -1,5 +1,5 @@
 import { formatCOP } from '../../../utils/format';
-import { ORDER_TYPE_LABELS, PAYMENT_METHOD_LABELS } from '../order-status';
+import { ORDER_TYPE_LABELS, PAYMENT_METHOD_LABELS, getOrderIdentifierLabel } from '../order-status';
 import { printThermalDocument } from './print-thermal-document';
 import { escapeHtml } from './escape-html';
 import type { OrderWithItems } from '../types/order.types';
@@ -11,12 +11,14 @@ interface PrintInvoiceOptions {
   legalName?: string | null;
   taxId?: string | null;
   phone?: string | null;
+  /** {tableNumber: name} — shows the table's custom name instead of the raw number when set. */
+  tableNames?: Record<string, string>;
 }
 
 function buildInvoiceHtml(
   order: OrderWithItems,
   payments: Payment[],
-  { businessName, businessLogo, legalName, taxId, phone }: PrintInvoiceOptions,
+  { businessName, businessLogo, legalName, taxId, phone, tableNames }: PrintInvoiceOptions,
 ): string {
   const dateLabel = new Date(order.createdAt).toLocaleString('es-CO', {
     dateStyle: 'short',
@@ -56,7 +58,7 @@ function buildInvoiceHtml(
 
   const amountPaid = payments.reduce((sum, p) => sum + p.amount, 0);
   const tableLine = order.tableNumber
-    ? `<div class="meta">${order.orderType === 'CAR_SERVICE' ? 'Vehículo' : 'Mesa'}: ${escapeHtml(order.tableNumber)}</div>`
+    ? `<div class="meta">${escapeHtml(getOrderIdentifierLabel(order, tableNames))}</div>`
     : '';
   const customerLine = order.customerName
     ? `<div class="meta">Cliente: ${escapeHtml(order.customerName)}</div>`

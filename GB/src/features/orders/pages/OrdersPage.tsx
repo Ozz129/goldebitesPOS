@@ -23,6 +23,7 @@ import { useOrdersBacklog } from '../../../modules/orders/hooks/use-orders-backl
 import { useCreateOrder } from '../../../modules/orders/hooks/use-create-order';
 import { useUpdateOrderStatus } from '../../../modules/orders/hooks/use-update-order-status';
 import { useAutoPrintKitchenTickets } from '../../../modules/orders/hooks/use-auto-print-kitchen-tickets';
+import { useTableNameMap } from '../../../modules/table-names/hooks/use-table-name-map';
 import { useCurrentBusiness } from '../../../modules/businesses/hooks/use-current-business';
 import { useBusinessLogo } from '../../../modules/businesses/hooks/use-business-logo';
 import { useCustomers } from '../../../modules/customers/hooks/use-customers';
@@ -92,12 +93,13 @@ export default function OrdersPage() {
   const createOrder = useCreateOrder();
   const updateStatus = useUpdateOrderStatus();
   const branchId = useAuthStore((s) => s.user?.branchId);
+  const tableNames = useTableNameMap(branchId);
 
   const printableOrders = useMemo(
     () => todayOrdersData?.data.filter((o) => o.status !== 'PENDING' && o.status !== 'CANCELLED'),
     [todayOrdersData],
   );
-  useAutoPrintKitchenTickets(printableOrders, business?.name, businessLogo, autoPrintEnabled);
+  useAutoPrintKitchenTickets(printableOrders, business?.name, businessLogo, autoPrintEnabled, tableNames);
 
   function handleAutoPrintToggle(checked: boolean) {
     setAutoPrintEnabled(checked);
@@ -354,12 +356,14 @@ export default function OrdersPage() {
           onSelect={(order) => setSelectedOrderId(order.id)}
           onAdvance={handleAdvance}
           customerName={customerName}
+          tableNames={tableNames}
         />
       ) : (
         <OrdersTable
           orders={filtered}
           onSelect={(order) => setSelectedOrderId(order.id)}
           customerName={customerName}
+          tableNames={tableNames}
         />
       )}
 

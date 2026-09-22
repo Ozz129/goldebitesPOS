@@ -95,7 +95,9 @@ export class NfcTagsRepository implements INfcTagsRepository {
     return result.rows[0] ?? null;
   }
 
-  async findActiveByToken(token: string): Promise<PublicNfcResolution | null> {
+  async findActiveByToken(
+    token: string,
+  ): Promise<Omit<PublicNfcResolution, 'tableName'> | null> {
     const result = await this.db.query<{
       business_id: string;
       branch_id: string;

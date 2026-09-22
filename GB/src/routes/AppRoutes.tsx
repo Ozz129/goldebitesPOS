@@ -11,6 +11,7 @@ import { MODULE_PATHS, MODULE_PERMISSIONS } from './navConfig';
 import { KIOSK_PATHS, KIOSK_PERMISSIONS } from './kioskConfig';
 
 const LoginPage = lazy(() => import('../modules/auth/pages/LoginPage'));
+const ForcePasswordChangePage = lazy(() => import('../modules/auth/pages/ForcePasswordChangePage'));
 const PublicMenuPage = lazy(() => import('../features/public-menu/pages/PublicMenuPage'));
 const NfcTableMenuPage = lazy(() => import('../features/public-menu/pages/NfcTableMenuPage'));
 
@@ -27,6 +28,8 @@ const CustomersPage = lazy(() => import('../features/customers/pages/CustomersPa
 const LoyaltyPage = lazy(() => import('../features/loyalty/pages/LoyaltyPage'));
 const FinancesPage = lazy(() => import('../features/finances/pages/FinancesPage'));
 const EmployeesPage = lazy(() => import('../features/employees/pages/EmployeesPage'));
+const HrSettingsPage = lazy(() => import('../features/hr/pages/HrSettingsPage'));
+const MyProfilePage = lazy(() => import('../features/hr/pages/MyProfilePage'));
 const ChecklistsPage = lazy(() => import('../features/checklists/pages/ChecklistsPage'));
 const WastePage = lazy(() => import('../features/waste/pages/WastePage'));
 const MaintenancePage = lazy(() => import('../features/maintenance/pages/MaintenancePage'));
@@ -75,6 +78,14 @@ export default function AppRoutes() {
         }
       />
       <Route element={<AuthProtectedRoute />}>
+        <Route
+          path="/cambiar-contrasena"
+          element={
+            <Loadable>
+              <ForcePasswordChangePage />
+            </Loadable>
+          }
+        />
         <Route element={<AppLayout />}>
           <Route element={<ProtectedRoute permission={MODULE_PERMISSIONS.dashboard} />}>
             <Route
@@ -202,6 +213,26 @@ export default function AppRoutes() {
               element={
                 <Loadable>
                   <EmployeesPage />
+                </Loadable>
+              }
+            />
+          </Route>
+          <Route element={<ProtectedRoute permission={MODULE_PERMISSIONS.hr} module="hr" />}>
+            <Route
+              path={MODULE_PATHS.hr}
+              element={
+                <Loadable>
+                  <HrSettingsPage />
+                </Loadable>
+              }
+            />
+          </Route>
+          <Route element={<ProtectedRoute permission="hr.read" module="hr" />}>
+            <Route
+              path="/mi-perfil"
+              element={
+                <Loadable>
+                  <MyProfilePage />
                 </Loadable>
               }
             />

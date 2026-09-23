@@ -6,4 +6,6 @@ export const employeeKeys = {
   list: (filters: EmployeeFilters) => [...employeeKeys.lists(), filters] as const,
   details: () => [...employeeKeys.all, 'detail'] as const,
   detail: (id: string) => [...employeeKeys.details(), id] as const,
+  myShifts: () => [...employeeKeys.all, 'me', 'shifts'] as const,
+  myPayroll: () => [...employeeKeys.all, 'me', 'payroll'] as const,
 };

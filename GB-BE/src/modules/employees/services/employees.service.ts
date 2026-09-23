@@ -11,14 +11,18 @@ import { TransactionService } from '../../../database/transaction.service';
 import { AuditService } from '../../audit/services/audit.service';
 import { UserStatus } from '../../users/domain/user.types';
 import { UsersService } from '../../users/services/users.service';
+import { DEFAULT_EMPLOYEE_SHIFTS } from '../domain/default-shifts.constant';
 import {
   Employee,
+  EmployeePayroll,
   EmployeeRow,
+  EmployeeShift,
   EmployeeUserAccount,
   EmployeeWithShifts,
 } from '../domain/employee.interface';
 import {
   CreateEmployeeData,
+  EmployeePayFrequency,
   EmployeeQuery,
   EmployeeStatus,
   ShiftInput,
@@ -76,6 +80,11 @@ export class EmployeesService {
           created.id,
           data.businessId,
           user.id,
+          client,
+        );
+        await this.employeesRepository.replaceShifts(
+          created.id,
+          DEFAULT_EMPLOYEE_SHIFTS,
           client,
         );
         return { employeeRow: linked ?? created, user };
@@ -214,6 +223,84 @@ export class EmployeesService {
       ...EmployeeMapper.toDomain(row),
       shifts: shiftRows.map((shift) => EmployeeMapper.shiftToDomain(shift)),
       userAccount,
+    };
+  }
+
+  /**
+   * Self-service: the caller's own weekly schedule, resolved from their JWT
+   * userId via the employees.user_id link. Returns null (not an error) when
+   * this user has no linked employee record — e.g. an owner/admin account
+   * created directly, never through the employee flow — so the profile page
+   * can render a clean "not applicable" state instead of an error.
+   */
+  async findMyShifts(businessId: string, userId: string): Promise<EmployeeShift[] | null> {
+    const employee = await this.employeesRepository.findByUserId(businessId, userId);
+    if (!employee) return null;
+    const shiftRows = await this.employeesRepository.findShifts(employee.id);
+    return shiftRows.map((shift) => EmployeeMapper.shiftToDomain(shift));
+  }
+
+  /** Self-service: lets an employee adjust their own schedule around the default — same replaceShifts() an admin uses, just resolved from their own JWT instead of a route param. */
+  async replaceMyShifts(
+    businessId: string,
+    userId: string,
+    shifts: ShiftInput[],
+  ): Promise<EmployeeShift[]> {
+    const employee = await this.employeesRepository.findByUserId(businessId, userId);
+    if (!employee) {
+      throw new EntityNotFoundException('Employee', userId);
+    }
+    const updated = await this.replaceShifts(businessId, employee.id, shifts, userId);
+    return updated.shifts;
+  }
+
+  /** Self-service: the caller's own payRate (read-only there) and payFrequency. Null when they have no linked employee record. */
+  async findMyPayroll(businessId: string, userId: string): Promise<EmployeePayroll | null> {
+    const employee = await this.employeesRepository.findByUserId(businessId, userId);
+    if (!employee) return null;
+    return {
+      payRate: employee.pay_rate ? parseFloat(employee.pay_rate) : null,
+      payFrequency: employee.pay_frequency,
+    };
+  }
+
+  /**
+   * Self-service: lets an employee choose their own pay cadence among
+   * WEEK/BIWEEKLY/MONTH (enforced by UpdateMyPayFrequencyDto, not just this
+   * check) — goes through the narrow updatePayFrequency() repository method
+   * so pay_rate can never be touched from this path.
+   */
+  async updateMyPayFrequency(
+    businessId: string,
+    userId: string,
+    payFrequency: EmployeePayFrequency,
+  ): Promise<EmployeePayroll> {
+    const employee = await this.employeesRepository.findByUserId(businessId, userId);
+    if (!employee) {
+      throw new EntityNotFoundException('Employee', userId);
+    }
+    const updated = await this.employeesRepository.updatePayFrequency(
+      employee.id,
+      businessId,
+      payFrequency,
+      undefined,
+    );
+    if (!updated) {
+      throw new EntityNotFoundException('Employee', employee.id);
+    }
+
+    await this.auditService.record({
+      businessId,
+      userId,
+      entityType: 'employee',
+      entityId: employee.id,
+      action: 'UPDATE_PAY_FREQUENCY',
+      newValues: { payFrequency },
+    });
+
+    return {
+      payRate: updated.pay_rate ? parseFloat(updated.pay_rate) : null,
+      payFrequency: updated.pay_frequency,
     };
   }
 

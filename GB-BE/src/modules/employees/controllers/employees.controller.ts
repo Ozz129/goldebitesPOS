@@ -23,6 +23,7 @@ import { SetEmployeeCredentialsStatusDto } from '../dto/set-employee-credentials
 import { SetEmployeeShiftsDto } from '../dto/set-employee-shifts.dto';
 import { SetEmployeeStatusDto } from '../dto/set-employee-status.dto';
 import { UpdateEmployeeDto } from '../dto/update-employee.dto';
+import { UpdateMyPayFrequencyDto } from '../dto/update-my-pay-frequency.dto';
 import { EmployeesService } from '../services/employees.service';
 import { RequiresFeature } from '../../../common/decorators/requires-feature.decorator';
 
@@ -59,6 +60,46 @@ export class EmployeesController {
       branchId: query.branchId,
       search: query.search,
     });
+  }
+
+  // "me/shifts" routes must stay registered before the ":id"-shaped routes
+  // below — otherwise Nest/Express would match "me" as the :id param.
+  @Get('me/shifts')
+  @ApiOperation({ summary: "Get the current user's own weekly shift schedule" })
+  getMyShifts(
+    @CurrentBusiness() businessId: string,
+    @CurrentUser('userId') userId: string,
+  ) {
+    return this.employeesService.findMyShifts(businessId, userId);
+  }
+
+  @Put('me/shifts')
+  @ApiOperation({ summary: "Replace the current user's own weekly shift schedule" })
+  replaceMyShifts(
+    @CurrentBusiness() businessId: string,
+    @CurrentUser('userId') userId: string,
+    @Body() dto: SetEmployeeShiftsDto,
+  ) {
+    return this.employeesService.replaceMyShifts(businessId, userId, dto.shifts);
+  }
+
+  @Get('me/payroll')
+  @ApiOperation({ summary: "Get the current user's own pay rate (read-only) and pay frequency" })
+  getMyPayroll(
+    @CurrentBusiness() businessId: string,
+    @CurrentUser('userId') userId: string,
+  ) {
+    return this.employeesService.findMyPayroll(businessId, userId);
+  }
+
+  @Patch('me/payroll')
+  @ApiOperation({ summary: "Set the current user's own pay frequency (weekly/biweekly/monthly — never the pay rate)" })
+  updateMyPayFrequency(
+    @CurrentBusiness() businessId: string,
+    @CurrentUser('userId') userId: string,
+    @Body() dto: UpdateMyPayFrequencyDto,
+  ) {
+    return this.employeesService.updateMyPayFrequency(businessId, userId, dto.payFrequency);
   }
 
   @Get(':id')

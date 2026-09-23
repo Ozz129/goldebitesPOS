@@ -69,3 +69,9 @@ export interface EmployeeWithShifts extends Employee {
   shifts: EmployeeShift[];
   userAccount: EmployeeUserAccount | null;
 }
+
+/** Self-service view — payRate is read-only there, so it's the only field ever exposed on that path. */
+export interface EmployeePayroll {
+  payRate: number | null;
+  payFrequency: EmployeePayFrequency | null;
+}

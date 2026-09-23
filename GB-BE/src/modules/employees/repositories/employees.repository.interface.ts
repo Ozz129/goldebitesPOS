@@ -2,6 +2,7 @@ import { DbClient } from '../../../database/types/database.types';
 import { EmployeeRow, EmployeeShiftRow } from '../domain/employee.interface';
 import {
   CreateEmployeeData,
+  EmployeePayFrequency,
   EmployeeQuery,
   EmployeeStatus,
   ShiftInput,
@@ -15,6 +16,11 @@ export interface IEmployeesRepository {
     businessId: string,
     client?: DbClient,
   ): Promise<EmployeeRow | null>;
+  findByUserId(
+    businessId: string,
+    userId: string,
+    client?: DbClient,
+  ): Promise<EmployeeRow | null>;
   findAll(
     query: EmployeeQuery,
   ): Promise<{ rows: EmployeeRow[]; total: number }>;
@@ -22,6 +28,12 @@ export interface IEmployeesRepository {
     id: string,
     businessId: string,
     data: UpdateEmployeeData,
+    client?: DbClient,
+  ): Promise<EmployeeRow | null>;
+  updatePayFrequency(
+    id: string,
+    businessId: string,
+    payFrequency: EmployeePayFrequency,
     client?: DbClient,
   ): Promise<EmployeeRow | null>;
   setStatus(

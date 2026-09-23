@@ -1,6 +1,14 @@
 export type EmployeeStatus = 'ACTIVE' | 'INACTIVE' | 'ON_VACATION' | 'ON_LEAVE';
 
-export type EmployeePayFrequency = 'SHIFT' | 'WEEK' | 'MONTH';
+export type EmployeePayFrequency = 'SHIFT' | 'WEEK' | 'BIWEEKLY' | 'MONTH';
+
+/** The subset an employee may self-select for their own payroll cadence — SHIFT stays an admin-only classification. */
+export const SELF_SERVICE_PAY_FREQUENCIES: EmployeePayFrequency[] = ['WEEK', 'BIWEEKLY', 'MONTH'];
+
+export interface EmployeePayroll {
+  payRate: number | null;
+  payFrequency: EmployeePayFrequency | null;
+}
 
 export type CredentialsStatus = 'ACTIVE' | 'INACTIVE' | 'BLOCKED';
 

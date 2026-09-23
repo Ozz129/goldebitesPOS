@@ -8,8 +8,16 @@ export enum EmployeeStatus {
 export enum EmployeePayFrequency {
   SHIFT = 'SHIFT',
   WEEK = 'WEEK',
+  BIWEEKLY = 'BIWEEKLY',
   MONTH = 'MONTH',
 }
+
+/** The subset an employee may self-select for their own payroll cadence — SHIFT stays an admin-only classification. */
+export const SELF_SERVICE_PAY_FREQUENCIES = [
+  EmployeePayFrequency.WEEK,
+  EmployeePayFrequency.BIWEEKLY,
+  EmployeePayFrequency.MONTH,
+] as const;
 
 export interface ShiftInput {
   dayOfWeek: number;

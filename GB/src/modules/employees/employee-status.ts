@@ -33,5 +33,6 @@ export const WEEKDAY_LABELS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'
 export const EMPLOYEE_PAY_FREQUENCY_LABELS: Record<EmployeePayFrequency, string> = {
   SHIFT: 'Por turno',
   WEEK: 'Semanal',
+  BIWEEKLY: 'Quincenal',
   MONTH: 'Mensual',
 };

@@ -5,6 +5,9 @@ import type {
   CredentialsStatus,
   Employee,
   EmployeeFilters,
+  EmployeePayFrequency,
+  EmployeePayroll,
+  EmployeeShift,
   EmployeeStatus,
   EmployeeUserAccount,
   EmployeeWithShifts,
@@ -52,6 +55,32 @@ export const employeesApi = {
       `/employees/${id}/shifts`,
       { shifts },
     );
+    return data.data;
+  },
+
+  /** Self-service — null means the current user has no linked employee record. */
+  async getMyShifts(): Promise<EmployeeShift[] | null> {
+    const { data } = await apiClient.get<ApiResponse<EmployeeShift[] | null>>('/employees/me/shifts');
+    return data.data;
+  },
+
+  async replaceMyShifts(shifts: ShiftInput[]): Promise<EmployeeShift[]> {
+    const { data } = await apiClient.put<ApiResponse<EmployeeShift[]>>('/employees/me/shifts', {
+      shifts,
+    });
+    return data.data;
+  },
+
+  /** Self-service — null means the current user has no linked employee record. */
+  async getMyPayroll(): Promise<EmployeePayroll | null> {
+    const { data } = await apiClient.get<ApiResponse<EmployeePayroll | null>>('/employees/me/payroll');
+    return data.data;
+  },
+
+  async updateMyPayFrequency(payFrequency: EmployeePayFrequency): Promise<EmployeePayroll> {
+    const { data } = await apiClient.patch<ApiResponse<EmployeePayroll>>('/employees/me/payroll', {
+      payFrequency,
+    });
     return data.data;
   },
 

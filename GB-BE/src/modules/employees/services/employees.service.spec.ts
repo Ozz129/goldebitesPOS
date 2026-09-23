@@ -1,15 +1,19 @@
-import { BusinessRuleException } from '../../../common/exceptions';
+import { BusinessRuleException, EntityNotFoundException } from '../../../common/exceptions';
 import { DEFAULT_EMPLOYEE_PASSWORD } from '../../../common/constants/default-password.constant';
 import { UserStatus } from '../../users/domain/user.types';
-import { EmployeeRow } from '../domain/employee.interface';
+import { DEFAULT_EMPLOYEE_SHIFTS } from '../domain/default-shifts.constant';
+import { EmployeePayFrequency } from '../domain/employee.types';
+import { EmployeeRow, EmployeeShiftRow } from '../domain/employee.interface';
 import { EmployeesService } from './employees.service';
 
 describe('EmployeesService', () => {
   let employeesRepository: {
     create: jest.Mock;
     findById: jest.Mock;
+    findByUserId: jest.Mock;
     findAll: jest.Mock;
     update: jest.Mock;
+    updatePayFrequency: jest.Mock;
     setStatus: jest.Mock;
     softDelete: jest.Mock;
     setUserId: jest.Mock;
@@ -55,6 +59,17 @@ describe('EmployeesService', () => {
     };
   }
 
+  function makeShiftRow(overrides: Partial<EmployeeShiftRow> = {}): EmployeeShiftRow {
+    return {
+      id: 'shift-1',
+      employee_id: 'employee-1',
+      day_of_week: 1,
+      start_time: '15:00',
+      end_time: '22:00',
+      ...overrides,
+    };
+  }
+
   function makeCreatedUser(overrides: Partial<{ id: string; email: string; status: UserStatus }> = {}) {
     return {
       id: 'user-1',
@@ -77,8 +92,10 @@ describe('EmployeesService', () => {
     employeesRepository = {
       create: jest.fn(),
       findById: jest.fn(),
+      findByUserId: jest.fn(),
       findAll: jest.fn(),
       update: jest.fn(),
+      updatePayFrequency: jest.fn(),
       setStatus: jest.fn(),
       softDelete: jest.fn(),
       setUserId: jest.fn(),
@@ -145,6 +162,11 @@ describe('EmployeesService', () => {
         'employee-1',
         businessId,
         createdUser.id,
+        undefined,
+      );
+      expect(employeesRepository.replaceShifts).toHaveBeenCalledWith(
+        'employee-1',
+        DEFAULT_EMPLOYEE_SHIFTS,
         undefined,
       );
       expect(result.userAccount).toEqual({
@@ -235,6 +257,115 @@ describe('EmployeesService', () => {
         true,
       );
       expect(result.temporaryPassword).toEqual(expect.any(String));
+    });
+  });
+
+  describe('findMyShifts', () => {
+    it('returns null when the caller has no linked employee record', async () => {
+      employeesRepository.findByUserId.mockResolvedValue(null);
+
+      const result = await service.findMyShifts(businessId, 'user-1');
+
+      expect(result).toBeNull();
+      expect(employeesRepository.findShifts).not.toHaveBeenCalled();
+    });
+
+    it("returns the caller's own shifts, resolved via their linked employee record", async () => {
+      employeesRepository.findByUserId.mockResolvedValue(makeEmployeeRow({ user_id: 'user-1' }));
+      employeesRepository.findShifts.mockResolvedValue([makeShiftRow()]);
+
+      const result = await service.findMyShifts(businessId, 'user-1');
+
+      expect(employeesRepository.findByUserId).toHaveBeenCalledWith(businessId, 'user-1');
+      expect(employeesRepository.findShifts).toHaveBeenCalledWith('employee-1');
+      expect(result).toHaveLength(1);
+      expect(result?.[0].dayOfWeek).toBe(1);
+    });
+  });
+
+  describe('replaceMyShifts', () => {
+    it('throws when the caller has no linked employee record', async () => {
+      employeesRepository.findByUserId.mockResolvedValue(null);
+
+      await expect(
+        service.replaceMyShifts(businessId, 'user-1', [{ dayOfWeek: 1, startTime: '09:00', endTime: '17:00' }]),
+      ).rejects.toThrow(EntityNotFoundException);
+    });
+
+    it("replaces the caller's own shifts via the same path an admin uses", async () => {
+      employeesRepository.findByUserId.mockResolvedValue(makeEmployeeRow({ user_id: 'user-1' }));
+      employeesRepository.findById.mockResolvedValue(makeEmployeeRow({ user_id: 'user-1' }));
+      employeesRepository.replaceShifts.mockResolvedValue([
+        makeShiftRow({ start_time: '09:00', end_time: '17:00' }),
+      ]);
+
+      const shifts = [{ dayOfWeek: 1, startTime: '09:00', endTime: '17:00' }];
+      const result = await service.replaceMyShifts(businessId, 'user-1', shifts);
+
+      expect(employeesRepository.replaceShifts).toHaveBeenCalledWith('employee-1', shifts, undefined);
+      expect(result).toHaveLength(1);
+      expect(result[0].startTime).toBe('09:00');
+    });
+  });
+
+  describe('findMyPayroll', () => {
+    it('returns null when the caller has no linked employee record', async () => {
+      employeesRepository.findByUserId.mockResolvedValue(null);
+
+      expect(await service.findMyPayroll(businessId, 'user-1')).toBeNull();
+    });
+
+    it("returns the caller's own payRate and payFrequency, resolved via their linked employee record", async () => {
+      employeesRepository.findByUserId.mockResolvedValue(
+        makeEmployeeRow({ user_id: 'user-1', pay_rate: '150000', pay_frequency: EmployeePayFrequency.WEEK }),
+      );
+
+      const result = await service.findMyPayroll(businessId, 'user-1');
+
+      expect(employeesRepository.findByUserId).toHaveBeenCalledWith(businessId, 'user-1');
+      expect(result).toEqual({ payRate: 150000, payFrequency: EmployeePayFrequency.WEEK });
+    });
+  });
+
+  describe('updateMyPayFrequency', () => {
+    it('throws when the caller has no linked employee record', async () => {
+      employeesRepository.findByUserId.mockResolvedValue(null);
+
+      await expect(
+        service.updateMyPayFrequency(businessId, 'user-1', EmployeePayFrequency.BIWEEKLY),
+      ).rejects.toThrow(EntityNotFoundException);
+    });
+
+    it('updates only pay_frequency via the narrow repository method, never touching pay_rate', async () => {
+      employeesRepository.findByUserId.mockResolvedValue(makeEmployeeRow({ user_id: 'user-1' }));
+      employeesRepository.updatePayFrequency.mockResolvedValue(
+        makeEmployeeRow({
+          user_id: 'user-1',
+          pay_rate: '150000',
+          pay_frequency: EmployeePayFrequency.BIWEEKLY,
+        }),
+      );
+
+      const result = await service.updateMyPayFrequency(
+        businessId,
+        'user-1',
+        EmployeePayFrequency.BIWEEKLY,
+      );
+
+      expect(employeesRepository.updatePayFrequency).toHaveBeenCalledWith(
+        'employee-1',
+        businessId,
+        EmployeePayFrequency.BIWEEKLY,
+        undefined,
+      );
+      expect(result).toEqual({ payRate: 150000, payFrequency: EmployeePayFrequency.BIWEEKLY });
+      expect(auditService.record).toHaveBeenCalledWith(
+        expect.objectContaining({
+          entityType: 'employee',
+          action: 'UPDATE_PAY_FREQUENCY',
+          newValues: { payFrequency: EmployeePayFrequency.BIWEEKLY },
+        }),
+      );
     });
   });
 });

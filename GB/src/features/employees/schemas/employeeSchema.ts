@@ -10,7 +10,7 @@ export const employeeSchema = z.object({
   hireDate: z.string().optional(),
   notes: z.string().max(2000).optional(),
   payRate: z.coerce.number().min(0, 'El valor no puede ser negativo').optional(),
-  payFrequency: z.enum(['SHIFT', 'WEEK', 'MONTH']).optional(),
+  payFrequency: z.enum(['SHIFT', 'WEEK', 'BIWEEKLY', 'MONTH']).optional(),
 });
 
 export type EmployeeFormValues = z.infer<typeof employeeSchema>;

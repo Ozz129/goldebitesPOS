@@ -5,6 +5,7 @@ import { DbClient } from '../../../database/types/database.types';
 import { EmployeeRow, EmployeeShiftRow } from '../domain/employee.interface';
 import {
   CreateEmployeeData,
+  EmployeePayFrequency,
   EmployeeQuery,
   EmployeeStatus,
   ShiftInput,
@@ -58,6 +59,19 @@ export class EmployeesRepository implements IEmployeesRepository {
     const result = await this.db.query<EmployeeRow>(
       `SELECT ${SELECT_COLUMNS} FROM employees WHERE id = $1 AND business_id = $2 AND deleted_at IS NULL`,
       [id, businessId],
+      client,
+    );
+    return result.rows[0] ?? null;
+  }
+
+  async findByUserId(
+    businessId: string,
+    userId: string,
+    client?: DbClient,
+  ): Promise<EmployeeRow | null> {
+    const result = await this.db.query<EmployeeRow>(
+      `SELECT ${SELECT_COLUMNS} FROM employees WHERE business_id = $1 AND user_id = $2 AND deleted_at IS NULL`,
+      [businessId, userId],
       client,
     );
     return result.rows[0] ?? null;
@@ -148,6 +162,23 @@ export class EmployeesRepository implements IEmployeesRepository {
         data.payRate ?? null,
         data.payFrequency ?? null,
       ],
+      client,
+    );
+    return result.rows[0] ?? null;
+  }
+
+  /** Narrower than update() on purpose — touches only pay_frequency, so a self-service caller can never reach pay_rate through this path. */
+  async updatePayFrequency(
+    id: string,
+    businessId: string,
+    payFrequency: EmployeePayFrequency,
+    client?: DbClient,
+  ): Promise<EmployeeRow | null> {
+    const result = await this.db.query<EmployeeRow>(
+      `UPDATE employees SET pay_frequency = $3
+       WHERE id = $1 AND business_id = $2 AND deleted_at IS NULL
+       RETURNING ${SELECT_COLUMNS}`,
+      [id, businessId, payFrequency],
       client,
     );
     return result.rows[0] ?? null;

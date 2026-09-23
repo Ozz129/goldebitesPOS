@@ -30,5 +30,13 @@ export default function ProtectedRoute() {
     return <Navigate to={FORCE_PASSWORD_CHANGE_PATH} replace />;
   }
 
+  // A stale redirect (e.g. a race with the auth-gate's own !isAuthenticated
+  // redirect while the session is being cleared mid-change) can land a user
+  // here after mustChangePassword has already gone false — leave instead of
+  // showing the form again.
+  if (!mustChangePassword && location.pathname === FORCE_PASSWORD_CHANGE_PATH) {
+    return <Navigate to="/" replace />;
+  }
+
   return <Outlet />;
 }

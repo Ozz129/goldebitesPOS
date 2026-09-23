@@ -13,6 +13,7 @@ import { loginSchema, type LoginFormValues } from '../schemas/login.schema';
 import { normalizeApiError } from '../../../lib/api/api-error';
 import { decodeAccessToken } from '../utils/decode-access-token';
 import { brand } from '../../../theme/palette';
+import { FORCE_PASSWORD_CHANGE_PATH } from '../components/protected-route';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -25,7 +26,12 @@ export default function LoginPage() {
     formState: { errors },
   } = useForm<LoginFormValues>({ resolver: zodResolver(loginSchema) });
 
-  const redirectTo = (location.state as { from?: string } | null)?.from ?? '/';
+  // A stale "from" can point at the forced-password-change route (e.g. a
+  // race with the auth-gate's own redirect while the session was being
+  // cleared mid-change) — never treat it as a valid post-login destination;
+  // ProtectedRoute re-derives whether that screen is actually still needed.
+  const rawRedirect = (location.state as { from?: string } | null)?.from ?? '/';
+  const redirectTo = rawRedirect === FORCE_PASSWORD_CHANGE_PATH ? '/' : rawRedirect;
 
   const onSubmit = (values: LoginFormValues) => {
     login.mutate(values, {

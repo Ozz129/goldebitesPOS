@@ -425,7 +425,14 @@ describe('OrdersRepository (integration)', () => {
         dateTo,
       );
       expect(days.length).toBeGreaterThanOrEqual(1);
-      const today = now.toISOString().slice(0, 10);
+      // DATE(delivered_at) buckets by the DB session's timezone, not UTC —
+      // asking Postgres for its own idea of "today" keeps this assertion
+      // correct across the UTC/local date boundary instead of drifting from
+      // what now.toISOString() would compute in UTC.
+      const todayResult = await pool.query<{ today: string }>(
+        `SELECT CURRENT_DATE::text AS today`,
+      );
+      const today = todayResult.rows[0].today;
       expect(days.some((day) => day.date === today)).toBe(true);
     });
 

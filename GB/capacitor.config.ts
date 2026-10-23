@@ -23,8 +23,8 @@ const APPS = {
     appName: 'GB Mesero',
     webDir: 'dist-mesero',
     android: { path: 'android' },
-    // Notifications: a table asking for help.
-    includePlugins: ['@capacitor/push-notifications'],
+    // Notifications: a table asking for help, an order ready.
+    includePlugins: ['@capacitor/push-notifications', '@capacitor/local-notifications'],
   },
   domiciliario: {
     appId: 'net.goldenbites.domiciliario',
@@ -38,6 +38,7 @@ const APPS = {
     },
     includePlugins: [
       '@capacitor/push-notifications',
+      '@capacitor/local-notifications',
       '@capacitor-community/background-geolocation',
     ],
   },
@@ -64,6 +65,8 @@ const config: CapacitorConfig = {
   plugins: {
     // Light icons on the phone's bars: the apps are dark.
     SystemBars: { style: 'DARK' },
+    // The app's own notifications (native-notify.ts): the status bar icon, in gold.
+    LocalNotifications: { smallIcon: 'ic_stat_golden_bites', iconColor: '#D4AF37' },
   },
 };
 

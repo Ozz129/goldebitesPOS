@@ -54,6 +54,7 @@ import { isNativeApp } from '../../../lib/native/platform';
 import { forgetNativePush } from '../../../lib/native/native-push';
 import { useNativePush, type NativePushState } from '../../../lib/native/use-native-push';
 import { formatCOP } from '../../../utils/format';
+import { notify } from '../../deliveries/notify';
 
 /** The waiter's app: how to get its phone to ring when a table calls; nothing when on or not possible. */
 const PUSH_HINTS: Partial<
@@ -61,7 +62,7 @@ const PUSH_HINTS: Partial<
 > = {
   off: {
     severity: 'info',
-    text: 'Activa las notificaciones para que tu teléfono suene cuando una mesa pida ayuda, aunque esté bloqueado.',
+    text: 'Activa las notificaciones para ver un aviso cuando una mesa pida ayuda o un pedido esté listo.',
     action: true,
   },
   denied: {
@@ -177,6 +178,11 @@ export default function WaiterKioskPage() {
           message: `#${order.orderNumber} — ${getOrderIdentifierLabel(order, tableNames)}`,
           level: 'success',
         });
+        notify(
+          `¡Pedido #${order.orderNumber} listo!`,
+          `${getOrderIdentifierLabel(order, tableNames)}: ya puedes llevarlo.`,
+          `ready-order-${order.id}`,
+        );
       }
     }
     previousStatuses.current = new Map(orders.map((order) => [order.id, order.status]));

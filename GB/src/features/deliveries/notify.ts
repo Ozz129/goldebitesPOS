@@ -1,3 +1,6 @@
+import { isNativeApp } from '../../lib/native/platform';
+import { showNativeNotification } from '../../lib/native/native-notify';
+
 /**
  * The phone/browser notification, on top of the sound and the on-screen
  * alert: it shows when the page is in the background, if the person allowed
@@ -25,13 +28,19 @@ export async function askForNotifications(): Promise<boolean> {
 
 /**
  * Shows a notification while the page is not in view (on screen, the page
- * shows its own alert) and vibrates the phone either way.
+ * shows its own alert) and vibrates the phone either way. The installed
+ * phone app shows the phone's notification always, like a WhatsApp message
+ * (see native-notify.ts).
  */
 export function notify(title: string, body: string, tag: string, vibrate: number[] = [180, 80, 180]): void {
   try {
     navigator.vibrate?.(vibrate);
   } catch {
     // Not every browser lets a page vibrate.
+  }
+  if (isNativeApp) {
+    void showNativeNotification(title, body, tag);
+    return;
   }
   if (!notificationsSupported() || Notification.permission !== 'granted' || document.visibilityState === 'visible') {
     return;

@@ -5,11 +5,6 @@ import Card from '@mui/material/Card';
 import Chip from '@mui/material/Chip';
 import Divider from '@mui/material/Divider';
 import Stack from '@mui/material/Stack';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
 import Typography from '@mui/material/Typography';
 import { useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Bot, FileCheck, KeyRound, Settings2, Store } from 'lucide-react';
@@ -24,6 +19,7 @@ import BusinessEInvoicingDrawer from '../../businesses/components/BusinessEInvoi
 import BusinessFeaturesDrawer from '../../businesses/components/BusinessFeaturesDrawer';
 import BusinessMasterKeyDrawer from '../../businesses/components/BusinessMasterKeyDrawer';
 import BusinessTuraDrawer from '../../businesses/components/BusinessTuraDrawer';
+import BusinessUsersTable from '../../businesses/components/BusinessUsersTable';
 import Bars from '../components/Bars';
 import BusinessLogo from '../components/BusinessLogo';
 import Stat, { StatRow } from '../components/Stat';
@@ -206,39 +202,12 @@ function Content({ business, open }: { business: BusinessDetail; open: (drawer: 
         </Section>
       </Box>
 
-      <Section
-        title={`Usuarios (${business.users.length})`}
-        action={<ManageButton icon={<Settings2 size={14} />} label="Restablecer accesos" onClick={() => open('modules')} />}
-      >
-        <Box sx={{ overflowX: 'auto' }}>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>Nombre</TableCell>
-                <TableCell>Correo</TableCell>
-                <TableCell>Rol</TableCell>
-                <TableCell>Estado</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {business.users.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell sx={{ fontWeight: 600 }}>
-                    {user.firstName} {user.lastName}
-                  </TableCell>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell>{user.roleName}</TableCell>
-                  <TableCell>
-                    <StatusChip
-                      label={user.status === 'ACTIVE' ? 'Activo' : 'Inactivo'}
-                      tone={user.status === 'ACTIVE' ? 'success' : 'neutral'}
-                    />
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </Box>
+      <Section title={`Usuarios (${business.users.length})`}>
+        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
+          Si alguien perdió su acceso, restablece su contraseña: verás una temporal que la persona cambia por la
+          suya al entrar.
+        </Typography>
+        <BusinessUsersTable businessId={business.id} users={business.users} />
       </Section>
     </Stack>
   );

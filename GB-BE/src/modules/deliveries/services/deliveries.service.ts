@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { randomInt } from 'node:crypto';
 import {
   BusinessRuleException,
@@ -6,7 +6,10 @@ import {
   EntityNotFoundException,
 } from '../../../common/exceptions';
 import { AuditService } from '../../audit/services/audit.service';
-import { PushNotificationsService } from '../../push-notifications/push-notifications.service';
+import {
+  PushNotificationsService,
+  type PushMessage,
+} from '../../push-notifications/push-notifications.service';
 import { DeliveryPricing, quoteDelivery } from '../domain/delivery-pricing';
 import {
   BranchLocation,
@@ -49,6 +52,9 @@ const COURIER_NEXT: Partial<Record<DeliveryStatus, DeliveryStatus[]>> = {
   IN_TRANSIT: ['DELIVERED'],
 };
 const MAX_LINKABLE_ORDERS = 30;
+
+/** A delivery assigned this long without the courier setting out: they get one reminder. */
+export const START_REMINDER_MINUTES = 10;
 
 /** Where a delivery can go from each status (the courier is set apart, see assignCourier). */
 const NEXT_STATUSES: Record<DeliveryStatus, DeliveryStatus[]> = {
@@ -127,6 +133,8 @@ export interface CreateDeliveryInput {
  */
 @Injectable()
 export class DeliveriesService {
+  private readonly logger = new Logger(DeliveriesService.name);
+
   constructor(
     private readonly repository: DeliveriesRepository,
     private readonly auditService: AuditService,
@@ -390,6 +398,15 @@ export class DeliveriesService {
     if (courierUserId && courierUserId !== row.courier_user_id) {
       this.notifyAssigned(courierUserId, delivery);
     }
+    // The courier who had it: it is not theirs to take anymore.
+    if (row.courier_user_id && row.courier_user_id !== courierUserId) {
+      this.notifyCourier(row.courier_user_id, {
+        title: `Domicilio reasignado · ${row.tracking_code}`,
+        body: `${row.destination_address}: ya no está a tu cargo.`,
+        tag: `unassigned-${id}`,
+        requireInteraction: true,
+      });
+    }
     return delivery;
   }
 
@@ -417,7 +434,62 @@ export class DeliveriesService {
       oldValues: { status: row.status },
       newValues: { status },
     });
+    if (status === 'CANCELLED' && row.courier_user_id) {
+      this.notifyCourier(row.courier_user_id, {
+        title: `Domicilio cancelado · ${row.tracking_code}`,
+        body: `${row.destination_address}: el restaurante lo canceló, no lo lleves.`,
+        tag: `cancelled-${id}`,
+        requireInteraction: true,
+      });
+    }
     return this.findOne(businessId, id);
+  }
+
+  /**
+   * An order was marked ready: the courier of its delivery, assigned and not
+   * yet out, is told to pick it up. Never throws: it must not affect the
+   * order.
+   */
+  async notifyOrderReady(businessId: string, orderId: string): Promise<void> {
+    try {
+      const rows = await this.repository.findWaitingForOrder(
+        businessId,
+        orderId,
+      );
+      for (const row of rows) {
+        this.notifyCourier(row.courier_user_id!, {
+          title: `Pedido listo · ${row.tracking_code}`,
+          body: `El pedido${row.order_number ? ` #${row.order_number}` : ''} ya está listo: pasa a recogerlo.`,
+          tag: `ready-${row.id}`,
+          requireInteraction: true,
+        });
+      }
+    } catch (error) {
+      this.logger.error(
+        'Could not tell the courier the order is ready',
+        error instanceof Error ? error.stack : undefined,
+      );
+    }
+  }
+
+  /**
+   * Reminds each courier, once, of a delivery assigned more than
+   * START_REMINDER_MINUTES ago that they have not started. Returns how many
+   * were reminded. Run every minute (DeliveryRemindersService).
+   */
+  async remindWaitingStarts(): Promise<number> {
+    const rows = await this.repository.claimStartReminders(
+      START_REMINDER_MINUTES,
+    );
+    for (const row of rows) {
+      this.notifyCourier(row.courier_user_id, {
+        title: `Domicilio por salir · ${row.tracking_code}`,
+        body: `${row.destination_address}: lleva más de ${START_REMINDER_MINUTES} minutos asignado. Abre la app y toca «Iniciar ruta».`,
+        tag: `reminder-${row.id}`,
+        requireInteraction: true,
+      });
+    }
+    return rows.length;
   }
 
   /** A courier's own deliveries, for their app. */
@@ -484,6 +556,17 @@ export class DeliveriesService {
       throw new EntityNotFoundException('Delivery', id);
     }
     return row;
+  }
+
+  /** A notification to a courier's phone, opening their app (best-effort: never blocks what caused it). */
+  private notifyCourier(
+    courierUserId: string,
+    message: Omit<PushMessage, 'url'>,
+  ): void {
+    void this.push.sendToUser(courierUserId, {
+      ...message,
+      url: '/domiciliario',
+    });
   }
 
   /** Tells the courier's phone a delivery is theirs (best-effort: never blocks the assignment). */

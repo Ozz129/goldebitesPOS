@@ -47,6 +47,7 @@ import {
 import { discountAmountFor } from '../../discounts/domain/discount';
 import { ORDERS_REPOSITORY } from '../repositories/orders.repository.interface';
 import type { IOrdersRepository } from '../repositories/orders.repository.interface';
+import { DeliveriesService } from '../../deliveries/services/deliveries.service';
 
 /** Target status -> the order column that records when it was reached (null = no dedicated column). */
 const STATUS_TIMESTAMP_COLUMN: Record<OrderStatus, string | null> = {
@@ -84,6 +85,7 @@ export class OrdersService {
     private readonly auditService: AuditService,
     private readonly discountsService: DiscountsService,
     private readonly branchMenuService: BranchMenuService,
+    private readonly deliveriesService: DeliveriesService,
   ) {}
 
   async create(
@@ -612,6 +614,11 @@ export class OrdersService {
       entityId: id,
       action: newStatus,
     });
+
+    // Ready (from the kitchen or the POS): the courier of its delivery picks it up.
+    if (newStatus === OrderStatus.READY) {
+      void this.deliveriesService.notifyOrderReady(businessId, id);
+    }
 
     return this.buildWithItems(updated);
   }

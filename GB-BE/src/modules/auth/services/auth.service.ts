@@ -246,6 +246,15 @@ export class AuthService {
     return { ...tokens, user: await this.buildProfile(user, branch) };
   }
 
+  /**
+   * Signs the user out everywhere: every session they have open (phone,
+   * tablet, computer) ends at its next renewal. For a password reset by the
+   * Golden Bites team.
+   */
+  async endAllSessions(userId: string): Promise<void> {
+    await this.refreshTokenRepository.revokeAllForUser(userId);
+  }
+
   async logout(refreshToken: string): Promise<void> {
     const tokenHash = this.hashToken(refreshToken);
     const record = await this.refreshTokenRepository.findByTokenHash(tokenHash);

@@ -11,6 +11,7 @@ import { PlatformOverviewController } from './controllers/platform-overview.cont
 import { PlatformOverviewRepository } from './repositories/platform-overview.repository';
 import { PlatformAdminService } from './services/platform-admin.service';
 import { PlatformOverviewService } from './services/platform-overview.service';
+import { AuthModule } from '../../modules/auth/auth.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { PlatformOverviewService } from './services/platform-overview.service';
     BusinessFeaturesModule,
     PlatformFeatureFlagsModule,
     AuditModule,
+    AuthModule,
   ],
   controllers: [PlatformAdminController, PlatformOverviewController],
   providers: [

@@ -9,6 +9,7 @@ import { MessageCircle, PhoneCall } from 'lucide-react';
 import { useMarkCourierCallsSeen, useMyCourierCalls } from '../../../modules/deliveries/hooks/use-deliveries';
 import type { CourierCall } from '../../../modules/deliveries/types/delivery.types';
 import { playTableHelpAlertSound } from '../../../modules/orders/utils/notification-sound';
+import { notify } from '../notify';
 
 /** How often it rings and vibrates while the call is not seen. */
 const RING_MS = 2_500;
@@ -35,6 +36,19 @@ export default function IncomingCallDialog({ onOpenChat }: { onOpenChat: (delive
   const markSeen = useMarkCourierCallsSeen();
   const call = calls[0] ?? null;
   const ringing = call?.id ?? null;
+
+  // The phone's notification, once per call (the ringing below repeats).
+  useEffect(() => {
+    if (!call) return;
+    notify(
+      call.calledBy === 'CUSTOMER' ? 'Te llama el cliente' : 'Te llama el restaurante',
+      `${call.delivery.address} · ${call.delivery.trackingCode}. Abre la app para responder.`,
+      `call-${call.deliveryId}`,
+      [500, 200, 500, 200, 500],
+    );
+    // A new call is a new id; the rest of `call` comes with it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ringing]);
 
   useEffect(() => {
     if (!ringing) return;

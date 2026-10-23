@@ -53,5 +53,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     },
     { provide: LOGIN_ATTEMPT_REPOSITORY, useClass: LoginAttemptRepository },
   ],
+  // The platform admin signs a user out everywhere after resetting their password.
+  exports: [AuthService],
 })
 export class AuthModule {}

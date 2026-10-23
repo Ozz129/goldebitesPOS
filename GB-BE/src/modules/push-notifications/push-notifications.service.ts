@@ -32,6 +32,7 @@ const DEAD_TOKEN_CODES = new Set([
  */
 export function androidChannelFor(message: PushMessage): string {
   if (message.tag.startsWith('call-')) return 'calls';
+  if (message.tag.startsWith('help-')) return 'tables';
   return message.requireInteraction ? 'deliveries' : 'messages';
 }
 
@@ -192,6 +193,37 @@ export class PushNotificationsService {
       this.sendNative(userId, message),
     ]);
     return web + native;
+  }
+
+  /**
+   * Sends to the staff of a branch whose role has `permission` (e.g. the
+   * waiters, for a table calling). Never throws. Returns how many devices
+   * accepted it.
+   */
+  async sendToBranchStaff(
+    businessId: string,
+    branchId: string,
+    permission: string,
+    message: PushMessage,
+  ): Promise<number> {
+    if (!this.enabled && !this.firebase) return 0;
+    try {
+      const userIds = await this.repository.findStaffToNotify(
+        businessId,
+        branchId,
+        permission,
+      );
+      const sent = await Promise.all(
+        userIds.map((userId) => this.sendToUser(userId, message)),
+      );
+      return sent.reduce((total, devices) => total + devices, 0);
+    } catch (error) {
+      this.logger.error(
+        'Could not notify the branch staff',
+        error instanceof Error ? error.stack : undefined,
+      );
+      return 0;
+    }
   }
 
   private async sendNative(

@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { generateTemporaryPassword } from '../../../common/utils/generate-password.util';
 import { EntityNotFoundException } from '../../../common/exceptions';
 import { AuditService } from '../../../modules/audit/services/audit.service';
+import { AuthService } from '../../../modules/auth/services/auth.service';
 import { Business } from '../../../modules/businesses/domain/business.interface';
 import { BusinessesService } from '../../../modules/businesses/services/businesses.service';
 import { Branch } from '../../../modules/branches/domain/branch.interface';
@@ -45,6 +46,7 @@ export class PlatformAdminService {
     private readonly businessFeaturesService: BusinessFeaturesService,
     private readonly platformFeatureFlagsService: PlatformFeatureFlagsService,
     private readonly auditService: AuditService,
+    private readonly authService: AuthService,
   ) {}
 
   async listBusinesses(): Promise<Business[]> {
@@ -114,7 +116,11 @@ export class PlatformAdminService {
     }));
   }
 
-  /** Resets a tenant user's password to a new random one, returned once — for when a business's admin is locked out. */
+  /**
+   * Resets a tenant user's password to a new random one, returned once — for
+   * when a user is locked out. It is temporary: on signing in with it the POS
+   * makes them choose their own. The sessions they had open end.
+   */
   async resetUserPassword(
     businessId: string,
     userId: string,
@@ -123,6 +129,7 @@ export class PlatformAdminService {
     const user = await this.usersService.findOne(businessId, userId);
     const temporaryPassword = generateTemporaryPassword();
     await this.usersService.setPasswordHash(user.id, temporaryPassword, true);
+    await this.authService.endAllSessions(user.id);
 
     await this.auditService.record({
       businessId,

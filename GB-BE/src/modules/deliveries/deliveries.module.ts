@@ -8,16 +8,20 @@ import { DeliveryTrackingRepository } from './repositories/delivery-tracking.rep
 import { DeliveriesService } from './services/deliveries.service';
 import { DeliveryLocationService } from './services/delivery-location.service';
 import { DeliveryTrackingService } from './services/delivery-tracking.service';
+import { DeliveryRemindersService } from './services/delivery-reminders.service';
 
 @Module({
   imports: [AuditModule, PushNotificationsModule],
   controllers: [DeliveriesController, PublicDeliveryTrackingController],
   providers: [
     DeliveriesService,
+    DeliveryRemindersService,
     DeliveryLocationService,
     DeliveryTrackingService,
     DeliveriesRepository,
     DeliveryTrackingRepository,
   ],
+  // The orders tell it when an order is ready (the courier picks it up).
+  exports: [DeliveriesService],
 })
 export class DeliveriesModule {}

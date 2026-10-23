@@ -14,6 +14,7 @@ describe('PlatformAdminService', () => {
     setFlag: jest.Mock;
   };
   let auditService: { record: jest.Mock };
+  let authService: { endAllSessions: jest.Mock };
   let service: PlatformAdminService;
 
   const businessId = 'business-1';
@@ -35,6 +36,7 @@ describe('PlatformAdminService', () => {
       setFlag: jest.fn(),
     };
     auditService = { record: jest.fn() };
+    authService = { endAllSessions: jest.fn().mockResolvedValue(undefined) };
     service = new PlatformAdminService(
       businessesService as never,
       branchesService as never,
@@ -43,6 +45,7 @@ describe('PlatformAdminService', () => {
       businessFeaturesService as never,
       platformFeatureFlagsService as never,
       auditService as never,
+      authService as never,
     );
   });
 
@@ -185,6 +188,47 @@ describe('PlatformAdminService', () => {
         service.setFeatureFlag('bogus', true, actorUserId),
       ).rejects.toThrow('unknown key');
       expect(auditService.record).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('resetUserPassword', () => {
+    it('gives a temporary password the user must change, and signs them out everywhere', async () => {
+      const setPasswordHash = jest.fn().mockResolvedValue(undefined);
+      usersService = {
+        findOne: jest.fn().mockResolvedValue({ id: 'user-1' }),
+        setPasswordHash,
+      };
+      service = new PlatformAdminService(
+        businessesService as never,
+        branchesService as never,
+        rolesService as never,
+        usersService as never,
+        businessFeaturesService as never,
+        platformFeatureFlagsService as never,
+        auditService as never,
+        authService as never,
+      );
+
+      const result = await service.resetUserPassword(
+        businessId,
+        'user-1',
+        actorUserId,
+      );
+
+      expect(result.temporaryPassword).toHaveLength(12);
+      // true: on signing in with it, the POS asks for a new one.
+      expect(setPasswordHash).toHaveBeenCalledWith(
+        'user-1',
+        result.temporaryPassword,
+        true,
+      );
+      expect(authService.endAllSessions).toHaveBeenCalledWith('user-1');
+      expect(auditService.record).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: 'PLATFORM_RESET_CREDENTIALS',
+          entityId: 'user-1',
+        }),
+      );
     });
   });
 });

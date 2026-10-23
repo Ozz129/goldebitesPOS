@@ -308,6 +308,49 @@ export class DeliveriesRepository {
     };
   }
 
+  /** The deliveries of an order assigned to a courier who has not set out yet. */
+  async findWaitingForOrder(
+    businessId: string,
+    orderId: string,
+  ): Promise<DeliveryRow[]> {
+    const result = await this.db.query<DeliveryRow>(
+      `${DELIVERY_SELECT}
+       WHERE d.business_id = $1 AND d.order_id = $2
+         AND d.status = 'ASSIGNED' AND d.courier_user_id IS NOT NULL`,
+      [businessId, orderId],
+    );
+    return result.rows;
+  }
+
+  /**
+   * Deliveries assigned more than `minutes` ago that the courier has not
+   * started and was not reminded of: marks them reminded and returns them
+   * (one statement, so two servers never remind twice).
+   */
+  async claimStartReminders(minutes: number): Promise<
+    {
+      id: string;
+      courier_user_id: string;
+      tracking_code: string;
+      destination_address: string;
+    }[]
+  > {
+    const result = await this.db.query<{
+      id: string;
+      courier_user_id: string;
+      tracking_code: string;
+      destination_address: string;
+    }>(
+      `UPDATE deliveries SET start_reminded_at = now()
+       WHERE status = 'ASSIGNED' AND courier_user_id IS NOT NULL
+         AND start_reminded_at IS NULL
+         AND assigned_at < now() - make_interval(mins => $1)
+       RETURNING id, courier_user_id, tracking_code, destination_address`,
+      [minutes],
+    );
+    return result.rows;
+  }
+
   async findById(businessId: string, id: string): Promise<DeliveryRow | null> {
     const result = await this.db.query<DeliveryRow>(
       `${DELIVERY_SELECT} WHERE d.id = $1 AND d.business_id = $2`,
@@ -358,6 +401,7 @@ export class DeliveriesRepository {
            WHEN $3::uuid IS NULL AND status = 'ASSIGNED' THEN 'PENDING'
            ELSE status END,
          assigned_at = CASE WHEN $3::uuid IS NULL THEN NULL ELSE now() END,
+         start_reminded_at = NULL,
          updated_at = now()
        WHERE id = $1 AND business_id = $2`,
       [id, businessId, courierUserId],

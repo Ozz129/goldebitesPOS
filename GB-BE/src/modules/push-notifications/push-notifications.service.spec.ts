@@ -51,6 +51,7 @@ describe('PushNotificationsService', () => {
       touchNativeToken: jest.fn().mockResolvedValue(undefined),
       removeNativeTokenById: jest.fn().mockResolvedValue(undefined),
       upsertNativeToken: jest.fn().mockResolvedValue(undefined),
+      findStaffToNotify: jest.fn().mockResolvedValue(['waiter-1', 'waiter-2']),
     };
   });
 
@@ -66,6 +67,13 @@ describe('PushNotificationsService', () => {
       }),
     ).toBe('deliveries');
     expect(androidChannelFor(chat)).toBe('messages');
+    expect(
+      androidChannelFor({
+        ...chat,
+        tag: 'help-b1-5',
+        requireInteraction: true,
+      }),
+    ).toBe('tables');
   });
 
   it('tells the app where a tapped notification leads', () => {
@@ -110,6 +118,31 @@ describe('PushNotificationsService', () => {
     ]);
     expect(repository.touchNativeToken).toHaveBeenCalledWith('t1');
     expect(repository.removeNativeTokenById).toHaveBeenCalledWith('t2');
+  });
+
+  it("rings every phone of the branch's staff with the permission", async () => {
+    const service = build({ FCM_SERVICE_ACCOUNT: serviceAccount });
+    repository.findNativeTokensForUser.mockImplementation((userId: string) =>
+      Promise.resolve([{ id: `t-${userId}`, token: `token-${userId}` }]),
+    );
+    sendEach.mockResolvedValue({
+      successCount: 1,
+      responses: [{ success: true }],
+    });
+
+    const devices = await service.sendToBranchStaff(
+      'business-1',
+      'branch-1',
+      'orders.update',
+      { ...chat, tag: 'help-branch-1-5' },
+    );
+
+    expect(repository.findStaffToNotify).toHaveBeenCalledWith(
+      'business-1',
+      'branch-1',
+      'orders.update',
+    );
+    expect(devices).toBe(2);
   });
 
   it('never throws when Firebase fails', async () => {

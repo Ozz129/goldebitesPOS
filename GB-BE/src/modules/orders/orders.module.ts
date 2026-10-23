@@ -13,10 +13,12 @@ import { OrdersController } from './controllers/orders.controller';
 import { OrdersRepository } from './repositories/orders.repository';
 import { ORDERS_REPOSITORY } from './repositories/orders.repository.interface';
 import { OrdersService } from './services/orders.service';
+import { DeliveriesModule } from '../deliveries/deliveries.module';
 
 @Module({
   imports: [
     BranchesModule,
+    DeliveriesModule,
     ProductsModule,
     RecipesModule,
     CustomersModule,

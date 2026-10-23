@@ -56,6 +56,7 @@ describe('OrdersService', () => {
   let transactionService: { execute: jest.Mock };
   let auditService: { record: jest.Mock };
   let branchMenuService: { forBranch: jest.Mock };
+  let deliveriesService: { notifyOrderReady: jest.Mock };
   let discountsService: {
     resolve: jest.Mock;
     takeUse: jest.Mock;
@@ -191,6 +192,9 @@ describe('OrdersService', () => {
     };
 
     branchMenuService = { forBranch: jest.fn().mockResolvedValue(new Map()) };
+    deliveriesService = {
+      notifyOrderReady: jest.fn().mockResolvedValue(undefined),
+    };
 
     service = new OrdersService(
       repository,
@@ -206,6 +210,7 @@ describe('OrdersService', () => {
       auditService as never,
       discountsService as never,
       branchMenuService as never,
+      deliveriesService as never,
     );
   });
 
@@ -1353,6 +1358,29 @@ describe('OrdersService', () => {
         0,
         18000,
         expect.anything(),
+      );
+    });
+  });
+
+  describe('a ready order and its delivery', () => {
+    it('tells the delivery when the order is ready, so its courier picks it up', async () => {
+      repository.findById.mockResolvedValue(
+        makeOrderRow({ status: OrderStatus.PREPARING }),
+      );
+      repository.setStatus.mockResolvedValue(
+        makeOrderRow({ status: OrderStatus.READY }),
+      );
+
+      await service.updateStatus(
+        businessId,
+        'order-1',
+        OrderStatus.READY,
+        'user-1',
+      );
+
+      expect(deliveriesService.notifyOrderReady).toHaveBeenCalledWith(
+        businessId,
+        'order-1',
       );
     });
   });

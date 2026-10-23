@@ -72,6 +72,33 @@ export class PushNotificationsRepository {
     );
   }
 
+  /**
+   * The users of a branch whose role has `permission` and that have a device
+   * to notify (a phone app or a browser subscribed): the staff to ring.
+   */
+  async findStaffToNotify(
+    businessId: string,
+    branchId: string,
+    permission: string,
+  ): Promise<string[]> {
+    const result = await this.db.query<{ id: string }>(
+      `SELECT u.id FROM users u
+       WHERE u.business_id = $1 AND u.branch_id = $2
+         AND u.deleted_at IS NULL AND u.status = 'ACTIVE'
+         AND EXISTS (
+           SELECT 1 FROM role_permissions rp
+           JOIN permissions p ON p.id = rp.permission_id
+           WHERE rp.role_id = u.role_id AND p.code = $3
+         )
+         AND (
+           EXISTS (SELECT 1 FROM push_native_tokens t WHERE t.user_id = u.id)
+           OR EXISTS (SELECT 1 FROM push_subscriptions s WHERE s.user_id = u.id)
+         )`,
+      [businessId, branchId, permission],
+    );
+    return result.rows.map((row) => row.id);
+  }
+
   // ---- The installed phone apps (Firebase Cloud Messaging) ----
 
   /** Saves the phone's token for this user (a phone moves to the last user who signed in on it). */

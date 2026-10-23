@@ -12,6 +12,7 @@ import {
   usePendingTableHelpRequests,
 } from '../../../modules/table-help-requests/hooks/use-table-help-requests';
 import { formatStopwatch } from '../../../utils/format';
+import { notify } from '../../deliveries/notify';
 
 /** Cada cuánto se repite el sonido mientras quede alguna mesa sin atender. */
 const REPEAT_SOUND_MS = 20_000;
@@ -53,13 +54,25 @@ export default function TableHelpAlerts({ branchId, tableNames, sx }: TableHelpA
   const pendingKey = requests.map((request) => request.id).join(',');
   useEffect(() => {
     const ids = pendingKey ? pendingKey.split(',') : [];
-    const hasNew = ids.some((id) => !heardIds.current.has(id));
+    const fresh = requests.filter((request) => !heardIds.current.has(request.id));
     heardIds.current = new Set(ids);
-    if (hasNew) playTableHelpAlertSound();
+    if (fresh.length > 0) playTableHelpAlertSound();
+    // The phone's notification too (the installed app; a browser in another tab).
+    for (const request of fresh) {
+      const table = tableNames[request.tableNumber] ?? request.tableNumber;
+      notify(
+        `Mesa ${table} pide ayuda`,
+        'Llamaron al mesero desde el menú de la mesa.',
+        `help-${request.branchId}-${request.tableNumber}`,
+        [400, 150, 400],
+      );
+    }
     if (ids.length === 0) return;
 
     const interval = window.setInterval(playTableHelpAlertSound, REPEAT_SOUND_MS);
     return () => window.clearInterval(interval);
+    // pendingKey stands for the list.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingKey]);
 
   if (requests.length === 0) return null;

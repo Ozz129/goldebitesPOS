@@ -85,6 +85,8 @@ describe('DeliveriesService', () => {
       setCourier: jest.fn().mockResolvedValue(undefined),
       setStatus: jest.fn().mockResolvedValue(undefined),
       setOrder: jest.fn().mockResolvedValue(undefined),
+      findWaitingForOrder: jest.fn().mockResolvedValue([]),
+      claimStartReminders: jest.fn().mockResolvedValue([]),
     };
     auditService = { record: jest.fn().mockResolvedValue(undefined) };
     push = { sendToUser: jest.fn().mockResolvedValue(1) };
@@ -385,6 +387,119 @@ describe('DeliveriesService', () => {
       await service.assignCourier(businessId, 'delivery-1', 'courier-1', actor);
 
       expect(push.sendToUser).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('more notifications to the courier', () => {
+    it('tells the courier their delivery was cancelled', async () => {
+      repository.findById.mockResolvedValue(
+        makeRow({ status: 'ASSIGNED', courier_user_id: 'courier-1' }),
+      );
+
+      await service.changeStatus(businessId, 'delivery-1', 'CANCELLED', actor);
+
+      expect(push.sendToUser).toHaveBeenCalledWith(
+        'courier-1',
+        expect.objectContaining({
+          title: 'Domicilio cancelado · ABC234',
+          tag: 'cancelled-delivery-1',
+          url: '/domiciliario',
+        }),
+      );
+    });
+
+    it('tells nobody when a delivery without a courier is cancelled', async () => {
+      await service.changeStatus(businessId, 'delivery-1', 'CANCELLED', actor);
+
+      expect(push.sendToUser).not.toHaveBeenCalled();
+    });
+
+    it('tells the courier who had it when it goes to another, and the new one it is theirs', async () => {
+      repository.findById.mockResolvedValue(
+        makeRow({ status: 'ASSIGNED', courier_user_id: 'courier-1' }),
+      );
+      repository.findCourier.mockResolvedValue({ id: 'courier-2' });
+
+      await service.assignCourier(businessId, 'delivery-1', 'courier-2', actor);
+
+      expect(push.sendToUser).toHaveBeenCalledWith(
+        'courier-1',
+        expect.objectContaining({ tag: 'unassigned-delivery-1' }),
+      );
+      expect(push.sendToUser).toHaveBeenCalledWith(
+        'courier-2',
+        expect.objectContaining({ tag: 'assigned-delivery-1' }),
+      );
+    });
+
+    it('tells the courier when the delivery is taken off them', async () => {
+      repository.findById.mockResolvedValue(
+        makeRow({ status: 'ASSIGNED', courier_user_id: 'courier-1' }),
+      );
+
+      await service.assignCourier(businessId, 'delivery-1', null, actor);
+
+      expect(push.sendToUser).toHaveBeenCalledTimes(1);
+      expect(push.sendToUser).toHaveBeenCalledWith(
+        'courier-1',
+        expect.objectContaining({ tag: 'unassigned-delivery-1' }),
+      );
+    });
+
+    it('tells the courier waiting for an order that it is ready', async () => {
+      repository.findWaitingForOrder.mockResolvedValue([
+        makeRow({
+          status: 'ASSIGNED',
+          courier_user_id: 'courier-1',
+          order_id: 'order-1',
+          order_number: '1021',
+        }),
+      ]);
+
+      await service.notifyOrderReady(businessId, 'order-1');
+
+      expect(repository.findWaitingForOrder).toHaveBeenCalledWith(
+        businessId,
+        'order-1',
+      );
+      expect(push.sendToUser).toHaveBeenCalledWith(
+        'courier-1',
+        expect.objectContaining({
+          body: 'El pedido #1021 ya está listo: pasa a recogerlo.',
+          tag: 'ready-delivery-1',
+        }),
+      );
+    });
+
+    it('never fails the order when telling the courier fails', async () => {
+      repository.findWaitingForOrder.mockRejectedValue(new Error('db down'));
+
+      await expect(
+        service.notifyOrderReady(businessId, 'order-1'),
+      ).resolves.toBeUndefined();
+    });
+
+    it('reminds each courier of the deliveries waiting for them to set out', async () => {
+      repository.claimStartReminders.mockResolvedValue([
+        {
+          id: 'delivery-1',
+          courier_user_id: 'courier-1',
+          tracking_code: 'ABC234',
+          destination_address: 'Calle 93 #11-27',
+        },
+      ]);
+
+      const reminded = await service.remindWaitingStarts();
+
+      expect(repository.claimStartReminders).toHaveBeenCalledWith(10);
+      expect(reminded).toBe(1);
+      expect(push.sendToUser).toHaveBeenCalledWith(
+        'courier-1',
+        expect.objectContaining({
+          title: 'Domicilio por salir · ABC234',
+          tag: 'reminder-delivery-1',
+        }),
+      );
     });
   });
 });

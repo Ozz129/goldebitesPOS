@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../../database/database.service';
-import { TableHelpRequestRow } from '../domain/table-help-request.interface';
+import {
+  OpenedTableHelpRequestRow,
+  TableHelpRequestRow,
+} from '../domain/table-help-request.interface';
 import { ITableHelpRequestsRepository } from './table-help-requests.repository.interface';
 
 const SELECT_COLUMNS = `id, business_id, branch_id, table_number, created_at, attended_at`;
@@ -20,8 +23,9 @@ export class TableHelpRequestsRepository implements ITableHelpRequestsRepository
     businessId: string,
     branchId: string,
     tableNumber: string,
-  ): Promise<TableHelpRequestRow> {
-    const result = await this.db.query<TableHelpRequestRow>(
+  ): Promise<OpenedTableHelpRequestRow> {
+    // created_at = now() only when this statement opened or renewed the request.
+    const result = await this.db.query<OpenedTableHelpRequestRow>(
       `INSERT INTO table_help_requests (business_id, branch_id, table_number)
        VALUES ($1, $2, $3)
        ON CONFLICT (branch_id, table_number) WHERE attended_at IS NULL
@@ -29,7 +33,7 @@ export class TableHelpRequestsRepository implements ITableHelpRequestsRepository
          WHEN table_help_requests.created_at < now() - ${ALERT_WINDOW} THEN now()
          ELSE table_help_requests.created_at
        END
-       RETURNING ${SELECT_COLUMNS}`,
+       RETURNING ${SELECT_COLUMNS}, (created_at = now()) AS is_new`,
       [businessId, branchId, tableNumber],
     );
     return result.rows[0];

@@ -70,6 +70,9 @@ describe('TableHelpRequestsRepository (integration)', () => {
 
     expect(second.id).toBe(first.id);
     expect(second.created_at).toEqual(first.created_at);
+    // The first press is a new call (it rings the staff); the second is not.
+    expect(first.is_new).toBe(true);
+    expect(second.is_new).toBe(false);
     expect(await repository.findPending(businessId)).toHaveLength(1);
   });
 
@@ -129,6 +132,7 @@ describe('TableHelpRequestsRepository (integration)', () => {
 
     const renewed = await repository.openForTable(businessId, branchId, '5');
     expect(renewed.id).toBe(request.id);
+    expect(renewed.is_new).toBe(true);
     expect(await repository.findPending(businessId)).toHaveLength(1);
   });
 });

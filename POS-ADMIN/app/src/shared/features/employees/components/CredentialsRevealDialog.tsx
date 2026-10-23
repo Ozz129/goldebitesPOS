@@ -38,9 +38,12 @@ export default function CredentialsRevealDialog({
       <DialogContent>
         <Stack spacing={2} sx={{ mt: 1 }}>
           <Alert severity="warning">
-            Esta contraseña solo se muestra una vez. Compártela con el empleado de forma segura — no
+            Esta contraseña solo se muestra una vez. Compártela con la persona de forma segura — no
             quedará visible después de cerrar este mensaje.
           </Alert>
+          <Typography variant="body2" color="text.secondary">
+            Es temporal: al entrar con ella, el sistema le pedirá crear su propia contraseña.
+          </Typography>
           {email && (
             <Typography variant="body2" color="text.secondary">
               Usuario: <strong>{email}</strong>

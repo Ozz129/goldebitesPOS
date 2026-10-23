@@ -11,9 +11,15 @@ import { TableHelpRequestsRepository } from './repositories/table-help-requests.
 import { TABLE_HELP_REQUESTS_REPOSITORY } from './repositories/table-help-requests.repository.interface';
 import { NfcTagsService } from './services/nfc-tags.service';
 import { TableHelpRequestsService } from './services/table-help-requests.service';
+import { PushNotificationsModule } from '../push-notifications/push-notifications.module';
 
 @Module({
-  imports: [AuditModule, BranchesModule, TableNamesModule],
+  imports: [
+    AuditModule,
+    BranchesModule,
+    TableNamesModule,
+    PushNotificationsModule,
+  ],
   controllers: [NfcTagsController, PublicNfcController, TableHelpRequestsController],
   providers: [
     NfcTagsService,

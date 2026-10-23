@@ -9,6 +9,7 @@ describe('TableHelpRequestsService', () => {
     markAttended: jest.Mock;
   };
   let nfcTagsService: { resolvePublic: jest.Mock };
+  let push: { sendToBranchStaff: jest.Mock };
   let service: TableHelpRequestsService;
 
   const businessId = 'business-1';
@@ -30,7 +31,7 @@ describe('TableHelpRequestsService', () => {
 
   beforeEach(() => {
     helpRequestsRepository = {
-      openForTable: jest.fn().mockResolvedValue(makeRow()),
+      openForTable: jest.fn().mockResolvedValue({ ...makeRow(), is_new: true }),
       findPending: jest.fn().mockResolvedValue([makeRow()]),
       markAttended: jest
         .fn()
@@ -46,9 +47,11 @@ describe('TableHelpRequestsService', () => {
         tableName: null,
       }),
     };
+    push = { sendToBranchStaff: jest.fn().mockResolvedValue(1) };
     service = new TableHelpRequestsService(
       helpRequestsRepository as never,
       nfcTagsService as never,
+      push as never,
     );
   });
 
@@ -78,6 +81,41 @@ describe('TableHelpRequestsService', () => {
       await service.requestFromToken('raw-token');
 
       expect(helpRequestsRepository.openForTable).toHaveBeenCalled();
+    });
+
+    it("rings the branch's staff who attend tables, by the table's name", async () => {
+      nfcTagsService.resolvePublic.mockResolvedValue({
+        businessId,
+        branchId,
+        businessName: 'Golden Bites',
+        tableNumber: '5',
+        selfServiceEnabled: true,
+        tableName: 'Terraza 2',
+      });
+
+      await service.requestFromToken('raw-token');
+
+      expect(push.sendToBranchStaff).toHaveBeenCalledWith(
+        businessId,
+        branchId,
+        'orders.update',
+        expect.objectContaining({
+          title: 'Mesa Terraza 2 pide ayuda',
+          tag: `help-${branchId}-5`,
+          url: '/tablet/mesero',
+        }),
+      );
+    });
+
+    it('does not ring again when the table presses while still waiting', async () => {
+      helpRequestsRepository.openForTable.mockResolvedValue({
+        ...makeRow(),
+        is_new: false,
+      });
+
+      await service.requestFromToken('raw-token');
+
+      expect(push.sendToBranchStaff).not.toHaveBeenCalled();
     });
 
     it('opens nothing when the token does not resolve', async () => {
